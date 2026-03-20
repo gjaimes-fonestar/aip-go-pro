@@ -1,0 +1,43 @@
+appId: com.fonestar.aip-go-pro
+productName: AIP Go Pro
+copyright: Copyright © 2026 Fonestar
+
+directories:
+  buildResources: resources
+  output: dist
+
+files:
+  - out/**/*
+
+extraResources:
+  - from: resources/bin/${os}/
+    to: bin/
+    filter:
+      - "**/*"
+  - from: resources/icons/
+    to: icons/
+    filter:
+      - "**/*"
+
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+  icon: resources/icons/icon.ico
+
+linux:
+  target:
+    - target: AppImage
+      arch: [x64]
+    - target: deb
+      arch: [x64]
+  icon: resources/icons/512x512.png
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  deleteAppDataOnUninstall: true
+
+publish:
+  provider: generic
+  url: https://releases.example.com/aip-go-pro

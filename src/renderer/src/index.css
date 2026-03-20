@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Smooth scrollbar for the whole app */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: theme('colors.gray.400') transparent;
+}

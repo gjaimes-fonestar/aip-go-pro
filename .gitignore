@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+
+# Build output
+out/
+dist/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env
+.env.*
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Go binaries — place compiled binaries here, do not commit them
+resources/bin/linux/
+resources/bin/windows/
+!resources/bin/linux/.gitkeep
+!resources/bin/windows/.gitkeep
+
+# Electron builder release artifacts
+release/

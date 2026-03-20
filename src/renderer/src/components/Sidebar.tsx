@@ -1,0 +1,197 @@
+import { NavLink } from 'react-router-dom'
+import { useAppStore } from '../store/app.store'
+import type { BackendStatus } from '@shared/ipc'
+
+// ─── Icons ────────────────────────────────────────────────────────────────────
+
+const Icons = {
+  Devices: () => (
+    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+    </svg>
+  ),
+  Channels: () => (
+    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.14 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
+    </svg>
+  ),
+  Groups: () => (
+    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+    </svg>
+  ),
+  Areas: () => (
+    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+    </svg>
+  ),
+  ActionControl: () => (
+    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+    </svg>
+  ),
+  Voice: () => (
+    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+    </svg>
+  ),
+  Messages: () => (
+    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+    </svg>
+  ),
+  Events: () => (
+    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+    </svg>
+  ),
+  Scenes: () => (
+    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
+    </svg>
+  ),
+  Log: () => (
+    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+    </svg>
+  ),
+  Transfers: () => (
+    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+    </svg>
+  ),
+  Sonometers: () => (
+    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+    </svg>
+  ),
+  SipDevices: () => (
+    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+    </svg>
+  ),
+  Multicast: () => (
+    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+    </svg>
+  ),
+}
+
+// ─── Navigation groups ────────────────────────────────────────────────────────
+
+const NAV_GROUPS = [
+  {
+    label: 'Network',
+    items: [
+      { to: '/devices',     label: 'Devices',        Icon: Icons.Devices      },
+      { to: '/channels',    label: 'Channels',       Icon: Icons.Channels     },
+      { to: '/groups',      label: 'Groups',         Icon: Icons.Groups       },
+      { to: '/areas',       label: 'Areas',          Icon: Icons.Areas        },
+      { to: '/sip-devices', label: 'SIP Devices',    Icon: Icons.SipDevices   },
+    ],
+  },
+  {
+    label: 'Audio',
+    items: [
+      { to: '/voice',     label: 'Voice',        Icon: Icons.Voice      },
+      { to: '/messages',  label: 'Messages',     Icon: Icons.Messages   },
+      { to: '/multicast', label: 'Multicast',    Icon: Icons.Multicast  },
+      { to: '/sonometers',label: 'Sonometers',   Icon: Icons.Sonometers },
+    ],
+  },
+  {
+    label: 'Automation',
+    items: [
+      { to: '/action-control', label: 'Action Control', Icon: Icons.ActionControl },
+      { to: '/events',         label: 'Events',         Icon: Icons.Events        },
+      { to: '/scenes',         label: 'Scenes',         Icon: Icons.Scenes        },
+      { to: '/transfers',      label: 'Transfers',      Icon: Icons.Transfers     },
+    ],
+  },
+  {
+    label: 'System',
+    items: [
+      { to: '/log', label: 'Log', Icon: Icons.Log },
+    ],
+  },
+]
+
+// ─── Status dot ───────────────────────────────────────────────────────────────
+
+const STATUS_DOT: Record<BackendStatus, string> = {
+  ready:    'bg-green-400',
+  starting: 'bg-yellow-400 animate-pulse',
+  error:    'bg-red-400',
+  stopped:  'bg-gray-500',
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
+export default function Sidebar() {
+  const { sidebarOpen, backend } = useAppStore()
+
+  if (!sidebarOpen) return null
+
+  return (
+    <aside className="fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
+      {/* Logo */}
+      <div className="flex h-16 shrink-0 items-center gap-3 border-b border-gray-200 px-5 dark:border-gray-700">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-white text-xs font-bold">
+          AIP
+        </div>
+        <div>
+          <p className="text-sm font-bold text-gray-900 dark:text-white leading-none">AIP Go Pro</p>
+          <p className="text-[10px] text-gray-400 mt-0.5">Management Console</p>
+        </div>
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
+        {NAV_GROUPS.map(({ label, items }) => (
+          <div key={label}>
+            <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+              {label}
+            </p>
+            <div className="space-y-0.5">
+              {items.map(({ to, label: itemLabel, Icon }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                      isActive
+                        ? 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-300'
+                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white'
+                    }`
+                  }
+                >
+                  <Icon />
+                  {itemLabel}
+                </NavLink>
+              ))}
+            </div>
+          </div>
+        ))}
+      </nav>
+
+      {/* Backend status footer */}
+      <div className="shrink-0 border-t border-gray-200 px-4 py-3 dark:border-gray-700">
+        <div className="flex items-center gap-2">
+          <span className={`h-2 w-2 rounded-full ${STATUS_DOT[backend.status]}`} />
+          <span className="text-xs text-gray-500 dark:text-gray-400">
+            Backend:{' '}
+            <span className="font-medium text-gray-700 dark:text-gray-300 capitalize">
+              {backend.status}
+            </span>
+          </span>
+        </div>
+        {backend.url && backend.status === 'ready' && (
+          <p className="mt-0.5 truncate text-[10px] text-gray-400">{backend.url}</p>
+        )}
+        {backend.error && (
+          <p className="mt-0.5 truncate text-[10px] text-red-400">{backend.error}</p>
+        )}
+      </div>
+    </aside>
+  )
+}
