@@ -7,11 +7,16 @@
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "preview": "electron-vite preview",
+    "daemon:build": "cmake --build ../aip-go-services/build --target aip-daemon",
+    "daemon:copy:linux": "mkdir -p resources/bin/linux && cp ../aip-go-services/build/bin/aip-daemon resources/bin/linux/aip-daemon && chmod +x resources/bin/linux/aip-daemon",
+    "daemon:copy:win":   "mkdir -p resources/bin/windows && cp ../aip-go-services/build/bin/aip-daemon.exe resources/bin/windows/aip-daemon.exe",
+    "daemon:install:linux": "npm run daemon:build && npm run daemon:copy:linux",
     "package:win": "npm run build && electron-builder --win",
     "package:linux": "npm run build && electron-builder --linux",
     "package": "npm run build && electron-builder --win --linux"
   },
   "dependencies": {
+    "aip-client": "file:../aip-go-services/aip-client",
     "axios": "^1.7.9",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
