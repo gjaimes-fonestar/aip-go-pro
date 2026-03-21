@@ -1,85 +1,58 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Badge } from '../components/ui/Badge'
 import CreateChannelModal, { type NewChannelForm } from '../components/channels/CreateChannelModal'
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-type PlayState   = 'playing' | 'paused' | 'stopped'
-type SourceType  = 'local' | 'online' | 'windows'
-
-interface Track {
-  id:       string
-  label:    string
-  duration: string
-}
-
-interface Channel {
-  id:           string
-  name:         string
-  sourceType:   SourceType
-  streamUrl:    string
-  quality:      string
-  audioChannels: string
-  loopAll:      boolean
-  shuffle:      boolean
-  permanent:    boolean
-  state:        PlayState
-  currentTrack: number
-  elapsed:      string
-  tracks:       Track[]
-  devices:      string[]
-}
-
-// ─── Mock data ────────────────────────────────────────────────────────────────
-
-let _nextId = 3
-const genId = () => String(_nextId++)
-
-const INITIAL: Channel[] = [
-  {
-    id: '1', name: 'Channel 1', sourceType: 'online',
-    streamUrl: 'http://167.114.131.90:5626/',
-    quality: 'Normal', audioChannels: 'Stereo',
-    loopAll: false, shuffle: false, permanent: false,
-    state: 'playing', currentTrack: 0, elapsed: '00:04:12',
-    tracks: [
-      { id: 't1', label: 'http://167.114.131.90:5626/', duration: '∞' },
-    ],
-    devices: ['Player 103', 'Player 104'],
-  },
-  {
-    id: '2', name: 'Channel 2', sourceType: 'local',
-    streamUrl: 'Files',
-    quality: 'High', audioChannels: 'Stereo',
-    loopAll: true, shuffle: true, permanent: true,
-    state: 'stopped', currentTrack: 0, elapsed: '00:00:00',
-    tracks: [
-      { id: 't2', label: 'morning-playlist.mp3',  duration: '03:45' },
-      { id: 't3', label: 'ambient-background.mp3', duration: '05:20' },
-      { id: 't4', label: 'corporate-hold.mp3',     duration: '02:10' },
-    ],
-    devices: ['Amp Zone A'],
-  },
-]
+import { useDevicesStore } from '../store/devices.store'
+import type { AipChannelInfo, AipChannelConfig, AipDeviceJson, AipChannelPlayerEvent } from '@shared/ipc'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+type SourceType = 'local' | 'online' | 'windows'
+
+const QUALITY_MAP: Record<string, 0 | 1 | 2> = { low: 0, normal: 1, high: 2 }
+const AUDIO_MAP:   Record<string, 1 | 2>     = { mono: 1, stereo: 2 }
+
+// PlayerState: 0=Idle 1=Playing 2=Paused 3=Stopped 4=Error
+const STATE_DOT: Record<number, string> = {
+  0: 'bg-gray-400',
+  1: 'bg-green-400',
+  2: 'bg-yellow-400',
+  3: 'bg-gray-400',
+  4: 'bg-red-400',
+}
+
 const SOURCE_VARIANT: Record<SourceType, 'info' | 'success' | 'warning'> = {
-  local:   'info',
-  online:  'success',
-  windows: 'warning',
+  local: 'info', online: 'success', windows: 'warning',
 }
 
 const SOURCE_LABEL: Record<SourceType, string> = {
-  local:   'Local',
-  online:  'Online',
-  windows: 'Capture',
+  local: 'Local', online: 'Online', windows: 'Capture',
 }
 
-const STATE_COLORS: Record<PlayState, string> = {
-  playing: 'bg-green-400',
-  paused:  'bg-yellow-400',
-  stopped: 'bg-gray-400',
+function detectSourceType(urls: string[]): SourceType {
+  const u = (urls[0] ?? '').toLowerCase()
+  if (u.startsWith('http') || u.startsWith('rtsp')) return 'online'
+  if (u.startsWith('wasapi'))                        return 'windows'
+  return 'local'
+}
+
+/** Convert an absolute filesystem path from Electron's file dialog to a file:// URI for GStreamer. */
+function toFileUri(filePath: string): string {
+  const normalized = filePath.replace(/\\/g, '/')
+  return normalized.startsWith('/') ? `file://${normalized}` : `file:///${normalized}`
+}
+
+function qualityLabel(q: number): string {
+  return (['Low', 'Normal', 'High'] as const)[q] ?? '—'
+}
+
+function audioLabel(m: number): string {
+  return m === 1 ? 'Mono' : 'Stereo'
+}
+
+function urlLabel(url: string): string {
+  // Strip file:// prefix before extracting the filename
+  const clean = url.replace(/^file:\/\//, '').replace(/\\/g, '/')
+  return clean.split('/').pop() || url
 }
 
 // ─── Transport icons ──────────────────────────────────────────────────────────
@@ -140,12 +113,6 @@ const Ico = {
     <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
         d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-    </svg>
-  ),
-  Device: () => (
-    <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-        d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
     </svg>
   ),
 }
@@ -218,24 +185,37 @@ function DeleteConfirm({ name, onConfirm, onCancel }: {
 
 function ChannelRow({
   channel,
-  onStateChange,
+  devices,
+  errorMessage,
+  onPlay,
+  onStop,
+  onPrev,
+  onNext,
   onDelete,
+  onDismissError,
 }: {
-  channel:       Channel
-  onStateChange: (id: string, state: PlayState) => void
-  onDelete:      (id: string) => void
+  channel:       AipChannelInfo
+  devices:       AipDeviceJson[]
+  errorMessage?: string
+  onPlay:        (id: number, isPlaying: boolean) => void
+  onStop:        (id: number) => void
+  onPrev:        (id: number) => void
+  onNext:        (id: number) => void
+  onDelete:      (id: number) => void
+  onDismissError:(id: number) => void
 }) {
-  const [expanded, setExpanded] = useState(false)
+  const [expanded, setExpanded]           = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
 
-  const isPlaying = channel.state === 'playing'
-  const isPaused  = channel.state === 'paused'
-  const current   = channel.tracks[channel.currentTrack]
+  const sourceType = detectSourceType(channel.urls)
+  const isPlaying  = channel.state === 1
+  const isPaused   = channel.state === 2
+  const currentUrl = channel.currentUrl || channel.urls[channel.trackIndex] || ''
 
-  const handlePlay  = (e: React.MouseEvent) => { e.stopPropagation(); onStateChange(channel.id, isPlaying ? 'paused' : 'playing') }
-  const handleStop  = (e: React.MouseEvent) => { e.stopPropagation(); onStateChange(channel.id, 'stopped') }
-  const handlePrev  = (e: React.MouseEvent) => { e.stopPropagation() }
-  const handleNext  = (e: React.MouseEvent) => { e.stopPropagation() }
+  const handlePlay  = (e: React.MouseEvent) => { e.stopPropagation(); onPlay(channel.id, isPlaying) }
+  const handleStop  = (e: React.MouseEvent) => { e.stopPropagation(); onStop(channel.id) }
+  const handlePrev  = (e: React.MouseEvent) => { e.stopPropagation(); onPrev(channel.id) }
+  const handleNext  = (e: React.MouseEvent) => { e.stopPropagation(); onNext(channel.id) }
   const handleDel   = (e: React.MouseEvent) => { e.stopPropagation(); setConfirmDelete(true) }
 
   return (
@@ -248,7 +228,30 @@ function ChannelRow({
         />
       )}
 
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+      <div className={`overflow-hidden rounded-xl border shadow-sm ${
+        errorMessage
+          ? 'border-red-300 bg-white dark:border-red-700 dark:bg-gray-800'
+          : 'border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800'
+      }`}>
+        {/* ── Error banner ── */}
+        {errorMessage && (
+          <div className="flex items-start gap-3 border-b border-red-200 bg-red-50 px-4 py-2.5 dark:border-red-800 dark:bg-red-900/20">
+            <svg className="mt-0.5 h-4 w-4 shrink-0 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <p className="flex-1 text-xs text-red-700 dark:text-red-300">{errorMessage}</p>
+            <button
+              onClick={(e) => { e.stopPropagation(); onDismissError(channel.id) }}
+              className="text-red-400 hover:text-red-600 dark:hover:text-red-300"
+              title="Dismiss"
+            >
+              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        )}
         {/* ── Collapsed / summary row ── */}
         <div
           role="button"
@@ -258,30 +261,28 @@ function ChannelRow({
           className="flex cursor-pointer items-center gap-4 px-5 py-4 hover:bg-gray-50/50 dark:hover:bg-gray-700/30 transition-colors"
         >
           {/* Status dot */}
-          <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${STATE_COLORS[channel.state]}`} />
+          <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${STATE_DOT[channel.state] ?? 'bg-gray-400'}`} />
 
           {/* Name + meta */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="font-semibold text-gray-900 dark:text-white text-sm">{channel.name}</span>
-              <Badge label={SOURCE_LABEL[channel.sourceType]} variant={SOURCE_VARIANT[channel.sourceType]} />
-              {channel.permanent && <Badge label="Permanent" variant="default" />}
-              {channel.loopAll  && <Badge label="Loop"    variant="default" />}
-              {channel.shuffle  && <Badge label="Shuffle" variant="default" />}
+              <Badge label={SOURCE_LABEL[sourceType]} variant={SOURCE_VARIANT[sourceType]} />
+              {channel.loop    && <Badge label="Loop"    variant="default" />}
+              {channel.shuffle && <Badge label="Shuffle" variant="default" />}
             </div>
             <p className="mt-0.5 truncate text-xs text-gray-400 dark:text-gray-500">
               {isPlaying || isPaused
-                ? <><span className="text-primary font-medium">{current?.label ?? '—'}</span> · {channel.elapsed}</>
-                : channel.streamUrl
+                ? <span className="text-primary font-medium">{urlLabel(currentUrl)}</span>
+                : (channel.urls[0] ? urlLabel(channel.urls[0]) : '—')
               }
             </p>
           </div>
 
           {/* Info chips */}
           <div className="hidden sm:flex items-center gap-3 text-xs text-gray-400 dark:text-gray-500 shrink-0">
-            <span className="flex items-center gap-1"><Ico.Music />{channel.tracks.length}</span>
-            <span className="flex items-center gap-1"><Ico.Device />{channel.devices.length}</span>
-            <span>{channel.quality} · {channel.audioChannels}</span>
+            <span className="flex items-center gap-1"><Ico.Music />{channel.trackCount}</span>
+            <span>{qualityLabel(channel.quality)} · {audioLabel(channel.audioMode)}</span>
           </div>
 
           {/* Mini transport */}
@@ -312,11 +313,7 @@ function ChannelRow({
               <TransportBtn onClick={handleNext} title="Next"><Ico.Next /></TransportBtn>
               <TransportBtn onClick={handleStop} title="Stop"><Ico.Stop /></TransportBtn>
 
-              {/* Progress */}
               <div className="flex flex-1 items-center gap-3 mx-2">
-                <span className="shrink-0 tabular-nums text-xs text-gray-500 dark:text-gray-400 w-14 text-right">
-                  {channel.elapsed}
-                </span>
                 <div className="flex-1 h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
                   <div
                     className="h-full rounded-full bg-primary transition-all"
@@ -326,7 +323,7 @@ function ChannelRow({
               </div>
 
               {/* Flags */}
-              <TransportBtn onClick={(e) => e.stopPropagation()} active={channel.loopAll} title="Loop">
+              <TransportBtn onClick={(e) => e.stopPropagation()} active={channel.loop} title="Loop">
                 <Ico.Loop />
               </TransportBtn>
               <TransportBtn onClick={(e) => e.stopPropagation()} active={channel.shuffle} title="Shuffle">
@@ -334,36 +331,36 @@ function ChannelRow({
               </TransportBtn>
             </div>
 
-            <div className="grid grid-cols-1 divide-y divide-gray-100 dark:divide-gray-700 sm:grid-cols-2 sm:divide-x sm:divide-y-0">
+            {/* Track list + devices — two-column grid on wider screens */}
+            <div className="grid grid-cols-1 gap-0 sm:grid-cols-2">
               {/* Tracks */}
               <div className="p-4">
                 <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
                   <Ico.Music /> Tracks
                 </p>
-                {channel.tracks.length === 0 ? (
+                {channel.urls.length === 0 ? (
                   <p className="text-xs text-gray-400">No tracks.</p>
                 ) : (
                   <ul className="space-y-1">
-                    {channel.tracks.map((t, i) => (
+                    {channel.urls.map((url, i) => (
                       <li
-                        key={t.id}
+                        key={i}
                         className={`flex items-center justify-between rounded-lg px-3 py-1.5 text-xs ${
-                          i === channel.currentTrack && isPlaying
+                          i === channel.trackIndex && isPlaying
                             ? 'bg-primary/10 text-primary font-medium dark:bg-primary/20'
                             : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700/50'
                         }`}
                       >
                         <span className="truncate flex items-center gap-2">
-                          {i === channel.currentTrack && isPlaying && (
+                          {i === channel.trackIndex && isPlaying && (
                             <span className="flex h-3 items-end gap-px">
                               {[1, 2, 3].map((b) => (
                                 <span key={b} className="w-0.5 rounded-sm bg-primary animate-pulse" style={{ height: `${b * 4}px`, animationDelay: `${b * 100}ms` }} />
                               ))}
                             </span>
                           )}
-                          {i + 1}. {t.label}
+                          {i + 1}. {urlLabel(url)}
                         </span>
-                        <span className="shrink-0 ml-3 tabular-nums text-gray-400">{t.duration}</span>
                       </li>
                     ))}
                   </ul>
@@ -371,18 +368,34 @@ function ChannelRow({
               </div>
 
               {/* Devices */}
-              <div className="p-4">
-                <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-                  <Ico.Device /> Assigned devices
+              <div className="border-t border-gray-100 p-4 sm:border-l sm:border-t-0 dark:border-gray-700">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                  Devices
                 </p>
-                {channel.devices.length === 0 ? (
-                  <p className="text-xs text-gray-400">No devices assigned.</p>
+                {devices.length === 0 ? (
+                  <p className="text-xs text-gray-400 dark:text-gray-500">No devices online.</p>
                 ) : (
                   <ul className="space-y-1">
-                    {channel.devices.map((d) => (
-                      <li key={d} className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700/50">
-                        <span className="h-1.5 w-1.5 rounded-full bg-green-400" />
-                        {d}
+                    {devices.map((d) => (
+                      <li key={d.mac} className="flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-xs font-medium text-gray-800 dark:text-gray-200">{d.name}</p>
+                          <p className="font-mono text-xs text-gray-400 dark:text-gray-500">{d.network.ip}</p>
+                        </div>
+                        <div className="flex shrink-0 gap-1">
+                          <button
+                            onClick={() => window.electronAPI.aip.linkChannelToDevice(channel.id, d.mac).catch(console.error)}
+                            className="rounded-md bg-primary px-2 py-1 text-xs font-medium text-white hover:bg-primary/90"
+                          >
+                            Assign
+                          </button>
+                          <button
+                            onClick={() => window.electronAPI.aip.stopAudio(d.mac).catch(console.error)}
+                            className="rounded-md border border-gray-200 px-2 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+                          >
+                            Stop
+                          </button>
+                        </div>
                       </li>
                     ))}
                   </ul>
@@ -398,39 +411,132 @@ function ChannelRow({
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
+const ALLOWED_STREAM_SCHEMES = ['http://', 'https://', 'rtsp://', 'rtsps://']
+
 export default function Channels() {
-  const [channels, setChannels]   = useState<Channel[]>(INITIAL)
-  const [showCreate, setCreate]   = useState(false)
+  const { aipReady, entries } = useDevicesStore()
 
-  const handleCreate = (form: NewChannelForm) => {
-    const newCh: Channel = {
-      id:           genId(),
-      name:         form.name,
-      sourceType:   form.sourceType,
-      streamUrl:    form.sourceType === 'local'   ? `Files (${form.startWith})`
-                  : form.sourceType === 'windows' ? form.windowsDevice
-                  : 'Online stream',
-      quality:      form.quality.charAt(0).toUpperCase() + form.quality.slice(1),
-      audioChannels: form.audioChannels === 'mono' ? 'Mono' : 'Stereo',
-      loopAll:      form.loopAll,
-      shuffle:      form.shuffle,
-      permanent:    form.permanent,
-      state:        form.startOnCreate ? 'playing' : 'stopped',
-      currentTrack: 0,
-      elapsed:      '00:00:00',
-      tracks:       [],
-      devices:      [],
+  const [channels, setChannels] = useState<AipChannelInfo[]>([])
+  const [showCreate, setCreate] = useState(false)
+  const [channelErrors, setChannelErrors] = useState<Record<number, string>>({})
+  const unsubRef = useRef<(() => void) | null>(null)
+
+  const devices = useMemo<AipDeviceJson[]>(
+    () => Array.from(entries.values()).map((e) => e.device),
+    [entries]
+  )
+
+  const refreshChannels = useCallback(async (delayMs = 0) => {
+    if (!aipReady) return
+    if (delayMs > 0) await new Promise((r) => setTimeout(r, delayMs))
+    const list = await window.electronAPI.aip.getChannels()
+    setChannels(list)
+  }, [aipReady])
+
+  useEffect(() => {
+    refreshChannels().catch(console.error)
+  }, [aipReady])
+
+  // Subscribe to channel player events pushed from the main process.
+  useEffect(() => {
+    if (!aipReady) return
+
+    unsubRef.current = window.electronAPI.aip.onChannelEvent((ev: AipChannelPlayerEvent) => {
+      if (ev.event === 'channel_error') {
+        setChannelErrors((prev) => ({ ...prev, [ev.channel_id]: ev.message ?? 'Unknown error' }))
+      }
+      // Refresh state on transitions that change PlayerState
+      const refreshEvents = new Set([
+        'channel_started', 'channel_stopped', 'channel_paused',
+        'channel_resumed', 'channel_finished', 'channel_track_changed',
+      ])
+      if (refreshEvents.has(ev.event)) {
+        refreshChannels(150).catch(console.error)
+      }
+    })
+
+    return () => {
+      unsubRef.current?.()
+      unsubRef.current = null
     }
-    setChannels((prev) => [...prev, newCh])
-  }
+  }, [aipReady, refreshChannels])
 
-  const handleStateChange = (id: string, state: PlayState) =>
-    setChannels((prev) => prev.map((c) => c.id === id ? { ...c, state } : c))
+  const handleCreate = useCallback(async (form: NewChannelForm) => {
+    let urls: string[] = []
 
-  const handleDelete = (id: string) =>
-    setChannels((prev) => prev.filter((c) => c.id !== id))
+    if (form.sourceType === 'local') {
+      const files = await window.electronAPI.dialog.openFile({
+        title: 'Select audio files',
+        filters: [{ name: 'Audio', extensions: ['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a'] }],
+        multiSelections: true,
+      })
+      if (!files || files.length === 0) return
+      // GStreamer's uridecodebin requires file:// URIs, not raw filesystem paths
+      urls = files.map(toFileUri)
+    } else if (form.sourceType === 'online') {
+      const trimmed = form.streamUrl.trim()
+      if (!trimmed) return
+      const lower = trimmed.toLowerCase()
+      if (!ALLOWED_STREAM_SCHEMES.some((s) => lower.startsWith(s))) {
+        console.error('createChannel: rejected URL with unsupported scheme:', trimmed)
+        return
+      }
+      urls = [trimmed]
+    } else {
+      urls = [`wasapi://${form.windowsDevice}`]
+    }
 
-  const playingCount = channels.filter((c) => c.state === 'playing').length
+    const config: AipChannelConfig = {
+      name:      form.name,
+      urls,
+      quality:   QUALITY_MAP[form.quality],
+      audioMode: AUDIO_MAP[form.audioChannels],
+      loop:      form.loopAll,
+      shuffle:   form.shuffle,
+    }
+
+    try {
+      const id = await window.electronAPI.aip.createChannel(config)
+      if (form.startOnCreate) {
+        await window.electronAPI.aip.playChannel(id).catch(console.error)
+      }
+      await refreshChannels()
+    } catch (e) {
+      console.error('createChannel failed:', e)
+    }
+  }, [refreshChannels])
+
+  const handlePlay = useCallback(async (id: number, isPlaying: boolean) => {
+    if (isPlaying) {
+      await window.electronAPI.aip.pauseChannel(id).catch(console.error)
+    } else {
+      await window.electronAPI.aip.playChannel(id).catch(console.error)
+    }
+    // Small delay for the GLib main-loop thread to settle the new state.
+    await refreshChannels(200)
+  }, [refreshChannels])
+
+  const handleStop = useCallback(async (id: number) => {
+    await window.electronAPI.aip.stopChannel(id).catch(console.error)
+    await refreshChannels()
+  }, [refreshChannels])
+
+  const handlePrev = useCallback(async (id: number) => {
+    await window.electronAPI.aip.previousChannel(id).catch(console.error)
+    await refreshChannels(300)
+  }, [refreshChannels])
+
+  const handleNext = useCallback(async (id: number) => {
+    await window.electronAPI.aip.nextChannel(id).catch(console.error)
+    await refreshChannels(300)
+  }, [refreshChannels])
+
+  const handleDelete = useCallback(async (id: number) => {
+    await window.electronAPI.aip.destroyChannel(id).catch(console.error)
+    await refreshChannels()
+  }, [refreshChannels])
+
+  const playingCount = channels.filter((c) => c.state === 1).length
 
   return (
     <>
@@ -453,7 +559,8 @@ export default function Channels() {
 
           <button
             onClick={() => setCreate(true)}
-            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-600 transition-colors shadow-sm"
+            disabled={!aipReady}
+            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-600 transition-colors shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -463,7 +570,12 @@ export default function Channels() {
         </div>
 
         {/* Channel list */}
-        {channels.length === 0 ? (
+        {!aipReady ? (
+          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 bg-white py-16 dark:border-gray-700 dark:bg-gray-800">
+            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">AIP not initialized</p>
+            <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">Go to Devices to initialize AIP first.</p>
+          </div>
+        ) : channels.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 bg-white py-16 dark:border-gray-700 dark:bg-gray-800">
             <svg className="mb-3 h-10 w-10 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
@@ -478,8 +590,16 @@ export default function Channels() {
               <ChannelRow
                 key={ch.id}
                 channel={ch}
-                onStateChange={handleStateChange}
+                devices={devices}
+                errorMessage={channelErrors[ch.id]}
+                onPlay={handlePlay}
+                onStop={handleStop}
+                onPrev={handlePrev}
+                onNext={handleNext}
                 onDelete={handleDelete}
+                onDismissError={(id) =>
+                  setChannelErrors((prev) => { const n = { ...prev }; delete n[id]; return n })
+                }
               />
             ))}
           </div>

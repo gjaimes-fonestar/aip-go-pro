@@ -11,6 +11,7 @@ export interface NewChannelForm {
   name:           string
   sourceType:     AudioSource
   startWith:      StartWith
+  streamUrl:      string
   windowsDevice:  string
   quality:        Quality
   audioChannels:  Channels
@@ -32,6 +33,7 @@ const DEFAULTS: NewChannelForm = {
   name:           '',
   sourceType:     'local',
   startWith:      'files',
+  streamUrl:      '',
   windowsDevice:  'Default audio device',
   quality:        'normal',
   audioChannels:  'stereo',
@@ -190,6 +192,8 @@ export default function CreateChannelModal({ open, onClose, onCreate }: Props) {
                 <div className="ml-6">
                   <input
                     type="text"
+                    value={form.streamUrl}
+                    onChange={(e) => set('streamUrl', e.target.value)}
                     placeholder="http:// or rtsp:// stream URL"
                     className="w-full rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs text-gray-900 placeholder-gray-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                   />
