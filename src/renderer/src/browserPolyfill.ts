@@ -7,8 +7,12 @@
  *
  * Install by calling installBrowserPolyfill() before ReactDOM.createRoot().
  * In Electron the preload already sets window.electronAPI, so this is a no-op.
+ *
+ * The static `import` below only pulls in the module graph — no WebSocket
+ * connection is opened until aip.configure() is called inside the guard.
  */
 
+import * as aip from 'aip-client'
 import type {
     AipChannelConfig,
     AipChannelInfo,
@@ -21,10 +25,6 @@ export function installBrowserPolyfill(): void {
     if (typeof (window as { electronAPI?: unknown }).electronAPI !== 'undefined') {
         return  // Running inside Electron — preload already set window.electronAPI
     }
-
-    // Lazy import so aip-client is never initialised in the Electron context
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const aip = require('aip-client') as typeof import('aip-client')
 
     aip.configure({ url: 'ws://127.0.0.1:9000', reconnectDelay: 2000 })
 
