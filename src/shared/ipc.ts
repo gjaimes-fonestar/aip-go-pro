@@ -18,6 +18,34 @@ export const IPC = {
     OPEN_FILE: 'dialog:openFile',
     SAVE_FILE: 'dialog:saveFile',
   },
+  AIP: {
+    // Core
+    GET_INTERFACES: 'aip:getInterfaces',
+    INITIALIZE:     'aip:initialize',
+    SHUTDOWN:       'aip:shutdown',
+    DEVICE_EVENT:   'aip:deviceEvent',         // push: main → renderer
+    CHANNEL_EVENT:  'aip:channelEvent',        // push: main → renderer
+
+    // Devices
+    GET_DEVICES:    'aip:getDevices',
+    GET_DEVICE:     'aip:getDevice',
+    SET_VOLUME:     'aip:setVolume',
+    STOP_AUDIO:     'aip:stopAudio',
+
+    // Channels
+    CREATE_CHANNEL:         'aip:createChannel',
+    DESTROY_CHANNEL:        'aip:destroyChannel',
+    GET_CHANNEL:            'aip:getChannel',
+    GET_CHANNELS:           'aip:getChannels',
+    GET_FOREIGN_CHANNELS:   'aip:getForeignChannels',
+    PLAY_CHANNEL:           'aip:playChannel',
+    PAUSE_CHANNEL:          'aip:pauseChannel',
+    STOP_CHANNEL:           'aip:stopChannel',
+    NEXT_CHANNEL:           'aip:nextChannel',
+    PREVIOUS_CHANNEL:       'aip:previousChannel',
+    SET_CHANNEL_VOLUME:     'aip:setChannelVolume',
+    LINK_CHANNEL_TO_DEVICE: 'aip:linkChannelToDevice',
+  },
 } as const
 
 // ─── Backend ─────────────────────────────────────────────────────────────────
@@ -29,6 +57,138 @@ export interface BackendInfo {
   url: string | null
   pid: number | null
   error?: string
+}
+
+// ─── AIP — Core ──────────────────────────────────────────────────────────────
+
+/** A local network interface available for AIP multicast discovery. */
+export interface AipNetworkInterface {
+  name:    string
+  address: string
+}
+
+// ─── AIP — Devices ───────────────────────────────────────────────────────────
+
+/** Network sub-object within AipDeviceJson. */
+export interface AipNetworkConfig {
+  dhcp:        boolean
+  ip:          string
+  subnet_mask: string
+  gateway:     string
+}
+
+/** Volume sub-object within AipDeviceJson. */
+export interface AipVolumeConfig {
+  normal:    number
+  by_action: boolean
+  message:   number
+  event:     number
+  voice:     number
+}
+
+/**
+ * JSON shape produced by the C++ NlohmannSerializer for a single device.
+ * Matches the output of `aip::getDevicesJson()` / `aip::getDeviceByMacJson()`.
+ */
+export interface AipDeviceJson {
+  mac:                string
+  name:               string
+  network:            AipNetworkConfig
+  volume:             number
+  volume_locked:      boolean
+  channels_locked:    boolean
+  menu_locked:        boolean
+  latency:            number
+  device_type:        number
+  device_sub_type:    number
+  software_version:   string
+  communication_port: number
+  volumes:            AipVolumeConfig
+}
+
+/** Event payload for device_added / device_updated. */
+export interface AipDeviceChangedEvent extends AipDeviceJson {
+  event: 'device_added' | 'device_updated'
+}
+
+/** Event payload for device_removed. */
+export interface AipDeviceRemovedEvent {
+  event: 'device_removed'
+  mac:   string
+  name:  string
+}
+
+export type AipDeviceEvent = AipDeviceChangedEvent | AipDeviceRemovedEvent
+
+// ─── AIP — Channel player events ─────────────────────────────────────────────
+
+export type AipChannelEventType =
+  | 'channel_started'
+  | 'channel_stopped'
+  | 'channel_paused'
+  | 'channel_resumed'
+  | 'channel_finished'
+  | 'channel_track_changed'
+  | 'channel_position'
+  | 'channel_metadata'
+  | 'channel_error'
+
+export interface AipChannelPlayerEvent {
+  event:      AipChannelEventType
+  channel_id: number
+  // channel_track_changed
+  track_index?: number
+  url?:         string
+  // channel_position
+  elapsed_sec?: number
+  total_sec?:   number
+  // channel_metadata
+  title?:       string
+  artist?:      string
+  // channel_error
+  message?:     string
+}
+
+// ─── AIP — Channels ──────────────────────────────────────────────────────────
+
+export type AipChannelQuality = 0 | 1 | 2
+export type AipAudioMode      = 1 | 2
+export type AipPlayerState    = 0 | 1 | 2 | 3 | 4
+
+export interface AipChannelConfig {
+  name:       string
+  urls:       string[]
+  quality?:   AipChannelQuality
+  audioMode?: AipAudioMode
+  loop?:      boolean
+  shuffle?:   boolean
+}
+
+export interface AipChannelInfo {
+  id:           number
+  name:         string
+  urls:         string[]
+  quality:      AipChannelQuality
+  audioMode:    AipAudioMode
+  loop:         boolean
+  shuffle:      boolean
+  state:        AipPlayerState
+  currentUrl:   string
+  trackIndex:   number
+  trackCount:   number
+}
+
+export interface AipForeignChannelInfo {
+  sourceMac:      string
+  name:           string
+  multicastGroup: string
+  port:           number
+  channelNumber:  number
+  quality:        AipChannelQuality
+  audioMode:      AipAudioMode
+  bitrateKbps:    number
+  encrypted:      boolean
+  repeat:         boolean
 }
 
 // ─── Dialogs ─────────────────────────────────────────────────────────────────
