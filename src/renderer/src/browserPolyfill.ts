@@ -23,7 +23,8 @@ import type {
 // Minimal request/response WebSocket client matching aip-daemon's JSON protocol
 class DaemonClient {
     private _ws: WebSocket | null = null
-    private _pending = new Map<string, { resolve: (v: unknown) => void; reject: (e: Error) => void }>()
+    private _pending  = new Map<string, { resolve: (v: unknown) => void; reject: (e: Error) => void }>()
+    private _queued:  Array<{ id: string; msg: string; resolve: (v: unknown) => void; reject: (e: Error) => void }> = []
     private _seq = 0
     private _stopped = false
     private _reconnectDelay: number
@@ -40,21 +41,29 @@ class DaemonClient {
 
     send(cmd: string, params?: Record<string, unknown>): Promise<unknown> {
         return new Promise((resolve, reject) => {
-            const id = String(++this._seq)
+            const id  = String(++this._seq)
             const msg = JSON.stringify({ id, cmd, ...params })
-            this._pending.set(id, { resolve, reject })
-            if (!this._ws || this._ws.readyState !== WebSocket.OPEN) {
-                this._pending.delete(id)
-                reject(new Error('DaemonClient: not connected'))
-                return
+            if (this._ws && this._ws.readyState === WebSocket.OPEN) {
+                this._pending.set(id, { resolve, reject })
+                this._ws.send(msg)
+            } else {
+                // Socket not ready yet — queue until onopen fires
+                this._queued.push({ id, msg, resolve, reject })
             }
-            this._ws.send(msg)
         })
     }
 
     private _open(): void {
         const ws = new WebSocket(this._url)
         this._ws = ws
+
+        ws.onopen = () => {
+            const queued = this._queued.splice(0)
+            for (const { id, msg, resolve, reject } of queued) {
+                this._pending.set(id, { resolve, reject })
+                ws.send(msg)
+            }
+        }
 
         ws.onmessage = (ev) => {
             let msg: Record<string, unknown>
@@ -87,6 +96,8 @@ class DaemonClient {
             const pending = this._pending
             this._pending = new Map()
             pending.forEach((p) => p.reject(new Error('DaemonClient: connection lost')))
+            const queued = this._queued.splice(0)
+            queued.forEach((q) => q.reject(new Error('DaemonClient: connection lost')))
             if (!this._stopped) {
                 setTimeout(() => { if (!this._stopped) this._open() }, this._reconnectDelay)
             }
