@@ -10,6 +10,9 @@ export default defineConfig({
     plugins: [externalizeDepsPlugin()],
   },
   renderer: {
+    server: {
+      host: '0.0.0.0',   // listen on all interfaces so LAN devices can reach the dev server
+    },
     resolve: {
       alias: {
         '@': resolve(__dirname, 'src/renderer/src'),

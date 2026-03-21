@@ -110,7 +110,10 @@ export function installBrowserPolyfill(): void {
         return  // Running inside Electron — preload already set window.electronAPI
     }
 
-    const c = new DaemonClient('ws://127.0.0.1:9000')
+    // Allow overriding the daemon URL via ?daemon=ws://192.168.1.x:9000
+    const params    = new URLSearchParams(window.location.search)
+    const daemonUrl = params.get('daemon') ?? `ws://${window.location.hostname}:9000`
+    const c = new DaemonClient(daemonUrl)
 
     const polyfill = {
         backend: {
