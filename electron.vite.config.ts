@@ -14,6 +14,8 @@ export default defineConfig({
       alias: {
         '@': resolve(__dirname, 'src/renderer/src'),
         '@shared': resolve(__dirname, 'src/shared'),
+        // Stub the Node.js `ws` package — aip-client uses native WebSocket in browsers
+        'ws': resolve(__dirname, 'src/renderer/wsStub.ts'),
       },
     },
     plugins: [react()],
