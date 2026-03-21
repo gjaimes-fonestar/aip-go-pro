@@ -51,7 +51,7 @@ app.whenReady().then(async () => {
   // The daemon starts with a default interface; the user will pick a real one
   // in the UI which triggers daemonManager.restart(iface) via aip:initialize.
   backendManager.start().catch(console.error)
-  daemonManager.start('127.0.0.1').catch(console.error)
+  // Daemon is started by the user via the interface selection modal (aip:initialize)
 
   createWindow()
 

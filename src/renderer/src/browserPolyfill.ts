@@ -116,6 +116,8 @@ export function installBrowserPolyfill(): void {
     const c = new DaemonClient(daemonUrl)
 
     const polyfill = {
+        __isBrowserPolyfill: true as const,
+
         backend: {
             getInfo:  () => Promise.resolve({ status: 'ready' as const, url: null, pid: null }),
             getUrl:   () => Promise.resolve(null as string | null),

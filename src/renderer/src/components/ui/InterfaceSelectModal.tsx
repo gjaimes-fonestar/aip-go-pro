@@ -17,30 +17,29 @@ export function InterfaceSelectModal({ onConfirm }: Props) {
   const [error,       setError]       = useState<string | null>(null)
 
   useEffect(() => {
-    // If the daemon is already initialized (e.g. Electron started it), skip the modal.
-    window.electronAPI.aip.getStatus()
-      .then(({ initialized }) => {
-        if (initialized) { onConfirm(''); return }
-        return window.electronAPI.aip
-          .getInterfaces()
-          .then((ifaces) => {
-            setInterfaces(ifaces)
-            if (ifaces.length > 0) setSelected(ifaces[0].address)
-          })
-          .catch(() => setError('Could not enumerate network interfaces.'))
-          .finally(() => setLoading(false))
-      })
-      .catch(() => {
-        // getStatus not supported — fall back to normal flow
-        window.electronAPI.aip
-          .getInterfaces()
-          .then((ifaces) => {
-            setInterfaces(ifaces)
-            if (ifaces.length > 0) setSelected(ifaces[0].address)
-          })
-          .catch(() => setError('Could not enumerate network interfaces.'))
-          .finally(() => setLoading(false))
-      })
+    const api = window.electronAPI
+    const isBrowser = '__isBrowserPolyfill' in api && (api as unknown as { __isBrowserPolyfill: boolean }).__isBrowserPolyfill
+
+    const loadInterfaces = (): void => {
+      api.aip
+        .getInterfaces()
+        .then((ifaces) => {
+          setInterfaces(ifaces)
+          if (ifaces.length > 0) setSelected(ifaces[0].address)
+        })
+        .catch(() => setError('Could not enumerate network interfaces.'))
+        .finally(() => setLoading(false))
+    }
+
+    if (isBrowser) {
+      // In browser: skip modal if the daemon was already initialized by Electron
+      api.aip.getStatus()
+        .then(({ initialized }) => { initialized ? onConfirm('') : loadInterfaces() })
+        .catch(loadInterfaces)
+    } else {
+      // In Electron: always show the interface selector
+      loadInterfaces()
+    }
   }, [])
 
   async function handleStart() {
