@@ -1,7 +1,9 @@
 import { app, BrowserWindow, shell } from 'electron'
 import { join } from 'path'
 import { backendManager } from './backend'
+import { daemonManager } from './daemon'
 import { registerIpcHandlers } from './ipc'
+import { aipCore } from './aip'
 
 const isDev = !app.isPackaged
 
@@ -23,10 +25,8 @@ function createWindow(): BrowserWindow {
     },
   })
 
-  // Show the window once the renderer is ready to avoid a blank flash
   win.on('ready-to-show', () => win.show())
 
-  // Open target="_blank" links in the system browser
   win.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url)
     return { action: 'deny' }
@@ -47,18 +47,51 @@ function createWindow(): BrowserWindow {
 app.whenReady().then(async () => {
   registerIpcHandlers()
 
-  // Start the Go backend early; the renderer polls its status
+  // Start the Go backend and aip-daemon in parallel.
+  // The daemon starts with a default interface; the user will pick a real one
+  // in the UI which triggers daemonManager.restart(iface) via aip:initialize.
   backendManager.start().catch(console.error)
+  daemonManager.start('127.0.0.1').catch(console.error)
 
   createWindow()
 
-  // macOS: re-create a window when the dock icon is clicked and no windows are open
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
 })
 
-app.on('window-all-closed', async () => {
-  await backendManager.stop()
+// ─── Cleanup ─────────────────────────────────────────────────────────────────
+
+let cleanupStarted = false
+
+async function runCleanup(): Promise<void> {
+  if (cleanupStarted) return
+  cleanupStarted = true
+
+  aipCore.disconnect()
+
+  try {
+    await Promise.race([
+      Promise.allSettled([
+        daemonManager.stop(),
+        backendManager.stop(),
+      ]),
+      new Promise<void>((resolve) => setTimeout(resolve, 8_000)),
+    ])
+  } catch {
+    // ignore — we are exiting regardless
+  }
+}
+
+app.on('before-quit', (event) => {
+  if (cleanupStarted) return
+  event.preventDefault()
+  runCleanup().finally(() => app.exit(0))
+})
+
+app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()
 })
+
+process.on('SIGTERM', () => app.quit())
+process.on('SIGINT',  () => app.quit())
