@@ -20,6 +20,7 @@ export const IPC = {
   },
   AIP: {
     // Core
+    GET_STATUS:     'aip:getStatus',
     GET_INTERFACES: 'aip:getInterfaces',
     INITIALIZE:     'aip:initialize',
     SHUTDOWN:       'aip:shutdown',

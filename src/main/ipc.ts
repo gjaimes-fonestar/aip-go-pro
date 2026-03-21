@@ -37,6 +37,9 @@ export function registerIpcHandlers(): void {
   })
 
   // ── AIP — Core ───────────────────────────────────────────────────────────
+  // In Electron the daemon is always managed by DaemonManager; report initialized=true
+  // once the client is connected so the renderer never shows the interface modal.
+  ipcMain.handle(IPC.AIP.GET_STATUS,     () => ({ initialized: daemonManager.isRunning() }))
   ipcMain.handle(IPC.AIP.GET_INTERFACES, () => aipCore.getNetworkInterfaces())
 
   // initialize: (re)start the daemon on the chosen network interface

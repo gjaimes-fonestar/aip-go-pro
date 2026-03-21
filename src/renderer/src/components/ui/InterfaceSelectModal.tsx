@@ -17,14 +17,30 @@ export function InterfaceSelectModal({ onConfirm }: Props) {
   const [error,       setError]       = useState<string | null>(null)
 
   useEffect(() => {
-    window.electronAPI.aip
-      .getInterfaces()
-      .then((ifaces) => {
-        setInterfaces(ifaces)
-        if (ifaces.length > 0) setSelected(ifaces[0].address)
+    // If the daemon is already initialized (e.g. Electron started it), skip the modal.
+    window.electronAPI.aip.getStatus()
+      .then(({ initialized }) => {
+        if (initialized) { onConfirm(''); return }
+        return window.electronAPI.aip
+          .getInterfaces()
+          .then((ifaces) => {
+            setInterfaces(ifaces)
+            if (ifaces.length > 0) setSelected(ifaces[0].address)
+          })
+          .catch(() => setError('Could not enumerate network interfaces.'))
+          .finally(() => setLoading(false))
       })
-      .catch(() => setError('Could not enumerate network interfaces.'))
-      .finally(() => setLoading(false))
+      .catch(() => {
+        // getStatus not supported — fall back to normal flow
+        window.electronAPI.aip
+          .getInterfaces()
+          .then((ifaces) => {
+            setInterfaces(ifaces)
+            if (ifaces.length > 0) setSelected(ifaces[0].address)
+          })
+          .catch(() => setError('Could not enumerate network interfaces.'))
+          .finally(() => setLoading(false))
+      })
   }, [])
 
   async function handleStart() {

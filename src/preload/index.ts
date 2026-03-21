@@ -36,6 +36,9 @@ const electronAPI = {
 
   aip: {
     // ── Core ───────────────────────────────────────────────────────────────
+    getStatus: (): Promise<{ initialized: boolean }> =>
+      ipcRenderer.invoke(IPC.AIP.GET_STATUS),
+
     getInterfaces: (): Promise<AipNetworkInterface[]> =>
       ipcRenderer.invoke(IPC.AIP.GET_INTERFACES),
 

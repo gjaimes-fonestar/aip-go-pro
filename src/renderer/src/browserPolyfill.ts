@@ -133,6 +133,9 @@ export function installBrowserPolyfill(): void {
         },
 
         aip: {
+            getStatus: (): Promise<{ initialized: boolean }> =>
+                c.send('getStatus') as Promise<{ initialized: boolean }>,
+
             getInterfaces: (): Promise<AipNetworkInterface[]> =>
                 c.send('getInterfaces') as Promise<AipNetworkInterface[]>,
 
