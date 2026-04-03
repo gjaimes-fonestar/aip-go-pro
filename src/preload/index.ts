@@ -9,6 +9,12 @@ import type {
   AipChannelInfo,
   AipForeignChannelInfo,
   AipChannelPlayerEvent,
+  AipSipConfigWrite,
+  AipSipConfigChangedEvent,
+  AipSoundMeterConfig,
+  AipSoundMeterConfigChangedEvent,
+  AipDeviceNetworkConfig,
+  AipSensorRelayConfig,
 } from '../shared/ipc'
 
 /**
@@ -55,13 +61,31 @@ const electronAPI = {
       return () => ipcRenderer.removeListener(IPC.AIP.DEVICE_EVENT, listener)
     },
 
-    /** Subscribe to channel player push events (state changes, errors, metadata, …). */
+    /** Subscribe to channel player push events. */
     onChannelEvent: (cb: (event: AipChannelPlayerEvent) => void): (() => void) => {
       const listener = (_e: Electron.IpcRendererEvent, json: string): void => {
         try { cb(JSON.parse(json) as AipChannelPlayerEvent) } catch { /* ignore malformed */ }
       }
       ipcRenderer.on(IPC.AIP.CHANNEL_EVENT, listener)
       return () => ipcRenderer.removeListener(IPC.AIP.CHANNEL_EVENT, listener)
+    },
+
+    /** Subscribe to SIP config changed push events. */
+    onSipConfigEvent: (cb: (event: AipSipConfigChangedEvent) => void): (() => void) => {
+      const listener = (_e: Electron.IpcRendererEvent, json: string): void => {
+        try { cb(JSON.parse(json) as AipSipConfigChangedEvent) } catch { /* ignore malformed */ }
+      }
+      ipcRenderer.on(IPC.AIP.SIP_CONFIG_EVENT, listener)
+      return () => ipcRenderer.removeListener(IPC.AIP.SIP_CONFIG_EVENT, listener)
+    },
+
+    /** Subscribe to sound meter config changed push events. */
+    onSoundMeterConfigEvent: (cb: (event: AipSoundMeterConfigChangedEvent) => void): (() => void) => {
+      const listener = (_e: Electron.IpcRendererEvent, json: string): void => {
+        try { cb(JSON.parse(json) as AipSoundMeterConfigChangedEvent) } catch { /* ignore malformed */ }
+      }
+      ipcRenderer.on(IPC.AIP.SOUND_METER_CONFIG_EVENT, listener)
+      return () => ipcRenderer.removeListener(IPC.AIP.SOUND_METER_CONFIG_EVENT, listener)
     },
 
     // ── Devices ────────────────────────────────────────────────────────────
@@ -76,6 +100,34 @@ const electronAPI = {
 
     stopAudio: (mac: string): Promise<void> =>
       ipcRenderer.invoke(IPC.AIP.STOP_AUDIO, mac),
+
+    // ── Device configuration ───────────────────────────────────────────────
+    changeButtonColor: (mac: string, r: number, g: number, b: number): Promise<void> =>
+      ipcRenderer.invoke(IPC.AIP.CHANGE_BUTTON_COLOR, mac, r, g, b),
+
+    requestSIPConfig: (mac: string): Promise<void> =>
+      ipcRenderer.invoke(IPC.AIP.REQUEST_SIP_CONFIG, mac),
+
+    changeSIPConfig: (mac: string, config: AipSipConfigWrite): Promise<void> =>
+      ipcRenderer.invoke(IPC.AIP.CHANGE_SIP_CONFIG, mac, config),
+
+    requestSoundMeterConfig: (mac: string): Promise<void> =>
+      ipcRenderer.invoke(IPC.AIP.REQUEST_SOUND_METER_CONFIG, mac),
+
+    changeSoundMeterConfig: (mac: string, config: AipSoundMeterConfig): Promise<void> =>
+      ipcRenderer.invoke(IPC.AIP.CHANGE_SOUND_METER_CONFIG, mac, config),
+
+    changeSoundMeterSetting: (mac: string, config: AipSoundMeterConfig): Promise<void> =>
+      ipcRenderer.invoke(IPC.AIP.CHANGE_SOUND_METER_SETTING, mac, config),
+
+    changeNetworkConfig: (mac: string, config: AipDeviceNetworkConfig): Promise<void> =>
+      ipcRenderer.invoke(IPC.AIP.CHANGE_NETWORK_CONFIG, mac, config),
+
+    changeSensorRelayConfig: (mac: string, config: AipSensorRelayConfig): Promise<void> =>
+      ipcRenderer.invoke(IPC.AIP.CHANGE_SENSOR_RELAY_CONFIG, mac, config),
+
+    changeStartupMode: (mac: string, mode: number): Promise<void> =>
+      ipcRenderer.invoke(IPC.AIP.CHANGE_STARTUP_MODE, mac, mode),
 
     // ── Channels ───────────────────────────────────────────────────────────
     createChannel: (config: AipChannelConfig): Promise<number> =>

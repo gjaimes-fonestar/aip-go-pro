@@ -1,7 +1,13 @@
 import type { AipCore } from './core'
+import type {
+  AipSipConfigWrite,
+  AipSoundMeterConfig,
+  AipDeviceNetworkConfig,
+  AipSensorRelayConfig,
+} from '../../shared/ipc'
 
 /**
- * Device queries and audio commands.
+ * Device queries and audio/configuration commands.
  * Delegates to the AipClient held by AipCore.
  */
 export class AipDevices {
@@ -27,15 +33,51 @@ export class AipDevices {
     }
   }
 
-  // Mutations
+  // Audio commands
 
   async setVolume(mac: string, volume: number): Promise<void> {
     await this.core.client.setVolume(mac, volume)
   }
 
-  // Audio commands
-
   async stopAudio(mac: string): Promise<void> {
     await this.core.client.stopAudio(mac)
+  }
+
+  // Device configuration commands
+
+  async changeButtonColor(mac: string, r: number, g: number, b: number): Promise<void> {
+    await this.core.client.changeButtonColor(mac, r, g, b)
+  }
+
+  async requestSIPConfig(mac: string): Promise<void> {
+    await this.core.client.requestSIPConfig(mac)
+  }
+
+  async changeSIPConfig(mac: string, config: AipSipConfigWrite): Promise<void> {
+    await this.core.client.changeSIPConfig(mac, config)
+  }
+
+  async requestSoundMeterConfig(mac: string): Promise<void> {
+    await this.core.client.requestSoundMeterConfig(mac)
+  }
+
+  async changeSoundMeterConfig(mac: string, config: AipSoundMeterConfig): Promise<void> {
+    await this.core.client.changeSoundMeterConfig(mac, config)
+  }
+
+  async changeSoundMeterSetting(mac: string, config: AipSoundMeterConfig): Promise<void> {
+    await this.core.client.changeSoundMeterSetting(mac, config)
+  }
+
+  async changeNetworkConfig(mac: string, config: AipDeviceNetworkConfig): Promise<void> {
+    await this.core.client.changeNetworkConfig(mac, config)
+  }
+
+  async changeSensorRelayConfig(mac: string, config: AipSensorRelayConfig): Promise<void> {
+    await this.core.client.changeSensorRelayConfig(mac, config)
+  }
+
+  async changeStartupMode(mac: string, mode: number): Promise<void> {
+    await this.core.client.changeStartupMode(mac, mode)
   }
 }

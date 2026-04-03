@@ -1,6 +1,12 @@
 import { ipcMain, dialog, app } from 'electron'
 import { IPC } from '../shared/ipc'
-import type { AipChannelConfig } from '../shared/ipc'
+import type {
+  AipChannelConfig,
+  AipSipConfigWrite,
+  AipSoundMeterConfig,
+  AipDeviceNetworkConfig,
+  AipSensorRelayConfig,
+} from '../shared/ipc'
 import { backendManager } from './backend'
 import { daemonManager } from './daemon'
 import { aipCore, aipDevices, aipChannels } from './aip'
@@ -37,12 +43,9 @@ export function registerIpcHandlers(): void {
   })
 
   // ── AIP — Core ───────────────────────────────────────────────────────────
-  // In Electron the daemon is always managed by DaemonManager; report initialized=true
-  // once the client is connected so the renderer never shows the interface modal.
   ipcMain.handle(IPC.AIP.GET_STATUS,     () => ({ initialized: daemonManager.isRunning() }))
   ipcMain.handle(IPC.AIP.GET_INTERFACES, () => aipCore.getNetworkInterfaces())
 
-  // initialize: (re)start the daemon on the chosen network interface
   ipcMain.handle(IPC.AIP.INITIALIZE, (_e, networkInterface: string) =>
     daemonManager.restart(networkInterface)
   )
@@ -62,6 +65,43 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle(IPC.AIP.STOP_AUDIO, (_e, mac: string) =>
     aipDevices.stopAudio(mac)
+  )
+
+  // ── AIP — Device configuration ───────────────────────────────────────────
+  ipcMain.handle(IPC.AIP.CHANGE_BUTTON_COLOR, (_e, mac: string, r: number, g: number, b: number) =>
+    aipDevices.changeButtonColor(mac, r, g, b)
+  )
+
+  ipcMain.handle(IPC.AIP.REQUEST_SIP_CONFIG, (_e, mac: string) =>
+    aipDevices.requestSIPConfig(mac)
+  )
+
+  ipcMain.handle(IPC.AIP.CHANGE_SIP_CONFIG, (_e, mac: string, config: AipSipConfigWrite) =>
+    aipDevices.changeSIPConfig(mac, config)
+  )
+
+  ipcMain.handle(IPC.AIP.REQUEST_SOUND_METER_CONFIG, (_e, mac: string) =>
+    aipDevices.requestSoundMeterConfig(mac)
+  )
+
+  ipcMain.handle(IPC.AIP.CHANGE_SOUND_METER_CONFIG, (_e, mac: string, config: AipSoundMeterConfig) =>
+    aipDevices.changeSoundMeterConfig(mac, config)
+  )
+
+  ipcMain.handle(IPC.AIP.CHANGE_SOUND_METER_SETTING, (_e, mac: string, config: AipSoundMeterConfig) =>
+    aipDevices.changeSoundMeterSetting(mac, config)
+  )
+
+  ipcMain.handle(IPC.AIP.CHANGE_NETWORK_CONFIG, (_e, mac: string, config: AipDeviceNetworkConfig) =>
+    aipDevices.changeNetworkConfig(mac, config)
+  )
+
+  ipcMain.handle(IPC.AIP.CHANGE_SENSOR_RELAY_CONFIG, (_e, mac: string, config: AipSensorRelayConfig) =>
+    aipDevices.changeSensorRelayConfig(mac, config)
+  )
+
+  ipcMain.handle(IPC.AIP.CHANGE_STARTUP_MODE, (_e, mac: string, mode: number) =>
+    aipDevices.changeStartupMode(mac, mode)
   )
 
   // ── AIP — Channels ───────────────────────────────────────────────────────

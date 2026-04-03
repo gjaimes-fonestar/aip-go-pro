@@ -24,14 +24,27 @@ export const IPC = {
     GET_INTERFACES: 'aip:getInterfaces',
     INITIALIZE:     'aip:initialize',
     SHUTDOWN:       'aip:shutdown',
-    DEVICE_EVENT:   'aip:deviceEvent',         // push: main → renderer
-    CHANNEL_EVENT:  'aip:channelEvent',        // push: main → renderer
+    DEVICE_EVENT:   'aip:deviceEvent',                    // push: main → renderer
+    CHANNEL_EVENT:  'aip:channelEvent',                   // push: main → renderer
+    SIP_CONFIG_EVENT:         'aip:sipConfigEvent',        // push: main → renderer
+    SOUND_METER_CONFIG_EVENT: 'aip:soundMeterConfigEvent', // push: main → renderer
 
     // Devices
     GET_DEVICES:    'aip:getDevices',
     GET_DEVICE:     'aip:getDevice',
     SET_VOLUME:     'aip:setVolume',
     STOP_AUDIO:     'aip:stopAudio',
+
+    // Device configuration commands
+    CHANGE_BUTTON_COLOR:         'aip:changeButtonColor',
+    REQUEST_SIP_CONFIG:          'aip:requestSIPConfig',
+    CHANGE_SIP_CONFIG:           'aip:changeSIPConfig',
+    REQUEST_SOUND_METER_CONFIG:  'aip:requestSoundMeterConfig',
+    CHANGE_SOUND_METER_CONFIG:   'aip:changeSoundMeterConfig',
+    CHANGE_SOUND_METER_SETTING:  'aip:changeSoundMeterSetting',
+    CHANGE_NETWORK_CONFIG:       'aip:changeNetworkConfig',
+    CHANGE_SENSOR_RELAY_CONFIG:  'aip:changeSensorRelayConfig',
+    CHANGE_STARTUP_MODE:         'aip:changeStartupMode',
 
     // Channels
     CREATE_CHANNEL:         'aip:createChannel',
@@ -120,6 +133,87 @@ export interface AipDeviceRemovedEvent {
 }
 
 export type AipDeviceEvent = AipDeviceChangedEvent | AipDeviceRemovedEvent
+
+// ─── AIP — Device configuration types ────────────────────────────────────────
+
+/** SIP configuration received from a device (matches daemon JSON). */
+export interface AipSipConfig {
+  configured:           boolean
+  state:                number
+  serverIp:             string
+  serverPort:           number
+  clientAudioPort:      number
+  clientAudioPortRange: number
+  username:             string
+  sipVolume:            number
+  zones:                boolean[]
+  relays:               boolean[]
+}
+
+/** SIP configuration for sending to a device (includes optional password). */
+export interface AipSipConfigWrite extends AipSipConfig {
+  password?: string
+}
+
+/** Sound meter configuration received from / sent to a device. */
+export interface AipSoundMeterConfig {
+  hasAutomaticVolume: boolean
+  sensitivity:        number
+  dynamicModeEnabled: boolean
+  limiterSensitivity: number
+  meterMac:           number[]
+  perActionVolumes:   boolean[]
+  multiplier:         number[]
+  limiterEnabled:     boolean[]
+  maxDb:              number[]
+}
+
+/** Network configuration payload for sending to a device. */
+export interface AipDeviceNetworkConfig {
+  dhcp:       boolean
+  ipAddress:  string
+  subnetMask: string
+  gateway:    string
+}
+
+/** Sensor and relay configuration for a device. */
+export interface AipSensorRelayConfig {
+  changeSensors: boolean
+  changeRelays:  boolean
+  sensorValues:  boolean[]
+  relayValues:   boolean[]
+}
+
+/** SIP config changed push event (inner JSON from daemon). */
+export interface AipSipConfigChangedEvent {
+  event:                'sip_config_changed'
+  mac:                  string
+  configured:           boolean
+  state:                number
+  serverIp:             string
+  serverPort:           number
+  clientAudioPort:      number
+  clientAudioPortRange: number
+  username:             string
+  sipVolume:            number
+  zones:                boolean[]
+  relays:               boolean[]
+}
+
+/** Sound meter config changed push event (inner JSON from daemon). */
+export interface AipSoundMeterConfigChangedEvent {
+  event:              'sound_meter_config_changed'
+  mac:                string
+  hasAutomaticVolume: boolean
+  sensitivity:        number
+  dynamicModeEnabled: boolean
+  limiterSensitivity: number
+  meterMac:           number[]
+  perActionVolumes:   boolean[]
+  multiplier:         number[]
+  limiterEnabled:     boolean[]
+  maxDb:              number[]
+}
 
 // ─── AIP — Channel player events ─────────────────────────────────────────────
 

@@ -30,6 +30,20 @@ export class AipCore {
       }
     })
 
+    this.client.setOnSipConfigChanged((json: string) => {
+      for (const win of BrowserWindow.getAllWindows()) {
+        if (!win.isDestroyed())
+          win.webContents.send(IPC.AIP.SIP_CONFIG_EVENT, json)
+      }
+    })
+
+    this.client.setOnSoundMeterConfigChanged((json: string) => {
+      for (const win of BrowserWindow.getAllWindows()) {
+        if (!win.isDestroyed())
+          win.webContents.send(IPC.AIP.SOUND_METER_CONFIG_EVENT, json)
+      }
+    })
+
     this.client.connect()
   }
 
