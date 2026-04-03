@@ -46,6 +46,14 @@ export const IPC = {
     CHANGE_SENSOR_RELAY_CONFIG:  'aip:changeSensorRelayConfig',
     CHANGE_STARTUP_MODE:         'aip:changeStartupMode',
 
+    // Network channel repository
+    GET_NETWORK_CHANNELS:          'aip:getNetworkChannels',
+    GET_LOCAL_NETWORK_CHANNELS:    'aip:getLocalNetworkChannels',
+    SAVE_NETWORK_CHANNEL:          'aip:saveNetworkChannel',
+    REMOVE_NETWORK_CHANNEL:        'aip:removeNetworkChannel',
+    REMOVE_NETWORK_CHANNEL_BY_KEY: 'aip:removeNetworkChannelByKey',
+    REQUEST_ALL_STREAMS:           'aip:requestAllStreams',
+
     // Channels
     CREATE_CHANNEL:         'aip:createChannel',
     DESTROY_CHANNEL:        'aip:destroyChannel',
@@ -242,6 +250,23 @@ export interface AipChannelPlayerEvent {
   artist?:      string
   // channel_error
   message?:     string
+}
+
+// ─── AIP — Network channel repository ────────────────────────────────────────
+
+/** A network/multicast channel stored in the channel repository. */
+export interface AipNetworkChannel {
+  sourceMac:        string
+  name:             string
+  channelNumber:    number
+  streamType:       number
+  multicastAddress: string
+  port:             number
+  encrypted:        boolean
+  encryptionKey:    string
+  repeat:           boolean
+  local:            boolean
+  linkedDevices:    string[]
 }
 
 // ─── AIP — Channels ──────────────────────────────────────────────────────────

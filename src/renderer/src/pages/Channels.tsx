@@ -2,7 +2,13 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Badge } from '../components/ui/Badge'
 import CreateChannelModal, { type NewChannelForm } from '../components/channels/CreateChannelModal'
 import { useDevicesStore } from '../store/devices.store'
-import type { AipChannelInfo, AipChannelConfig, AipDeviceJson, AipChannelPlayerEvent } from '@shared/ipc'
+import type {
+  AipChannelInfo,
+  AipChannelConfig,
+  AipDeviceJson,
+  AipChannelPlayerEvent,
+  AipNetworkChannel,
+} from '@shared/ipc'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -409,6 +415,69 @@ function ChannelRow({
   )
 }
 
+// ─── Network channel row ──────────────────────────────────────────────────────
+
+const STREAM_TYPE_LABEL: Record<number, string> = {
+  0: 'Unicast', 1: 'Multicast', 2: 'Broadcast',
+}
+
+function NetworkChannelRow({
+  channel,
+  onRemove,
+}: {
+  channel: AipNetworkChannel
+  onRemove: (mac: string, channelNumber: number) => void
+}) {
+  const [confirmDelete, setConfirmDelete] = useState(false)
+
+  return (
+    <>
+      {confirmDelete && (
+        <DeleteConfirm
+          name={channel.name}
+          onConfirm={() => { setConfirmDelete(false); onRemove(channel.sourceMac, channel.channelNumber) }}
+          onCancel={() => setConfirmDelete(false)}
+        />
+      )}
+      <div className="flex items-center gap-4 rounded-xl border border-gray-200 bg-white px-5 py-3.5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        {/* Local indicator */}
+        <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${channel.local ? 'bg-primary' : 'bg-gray-400'}`}
+          title={channel.local ? 'Local' : 'Remote'} />
+
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="font-semibold text-gray-900 dark:text-white text-sm">{channel.name}</span>
+            <Badge label={channel.local ? 'Local' : 'Remote'} variant={channel.local ? 'info' : 'default'} />
+            {channel.encrypted && <Badge label="Encrypted" variant="warning" />}
+            {channel.repeat    && <Badge label="Repeat"    variant="default" />}
+          </div>
+          <p className="mt-0.5 font-mono text-xs text-gray-400 dark:text-gray-500">
+            {channel.multicastAddress}:{channel.port}
+            {' · '}ch {channel.channelNumber}
+            {' · '}{STREAM_TYPE_LABEL[channel.streamType] ?? `Type ${channel.streamType}`}
+          </p>
+        </div>
+
+        {/* Source MAC */}
+        <div className="hidden lg:block shrink-0 text-right">
+          <p className="text-xs text-gray-400 dark:text-gray-500">Source</p>
+          <p className="font-mono text-xs text-gray-600 dark:text-gray-300">{channel.sourceMac}</p>
+        </div>
+
+        {/* Remove */}
+        <button
+          onClick={() => setConfirmDelete(true)}
+          title="Remove channel"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors dark:hover:bg-red-900/20"
+        >
+          <Ico.Trash />
+        </button>
+      </div>
+    </>
+  )
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 const ALLOWED_STREAM_SCHEMES = ['http://', 'https://', 'rtsp://', 'rtsps://']
@@ -416,10 +485,14 @@ const ALLOWED_STREAM_SCHEMES = ['http://', 'https://', 'rtsp://', 'rtsps://']
 export default function Channels() {
   const { aipReady, entries } = useDevicesStore()
 
+  const [activeTab, setActiveTab] = useState<'playback' | 'network'>('playback')
+
   const [channels, setChannels] = useState<AipChannelInfo[]>([])
   const [showCreate, setCreate] = useState(false)
   const [channelErrors, setChannelErrors] = useState<Record<number, string>>({})
   const unsubRef = useRef<(() => void) | null>(null)
+
+  const [networkChannels, setNetworkChannels] = useState<AipNetworkChannel[]>([])
 
   const devices = useMemo<AipDeviceJson[]>(
     () => Array.from(entries.values()).map((e) => e.device),
@@ -433,8 +506,18 @@ export default function Channels() {
     setChannels(list)
   }, [aipReady])
 
+  const refreshNetworkChannels = useCallback(async () => {
+    if (!aipReady) return
+    const list = await window.electronAPI.aip.getNetworkChannels()
+    setNetworkChannels(list)
+  }, [aipReady])
+
   useEffect(() => {
     refreshChannels().catch(console.error)
+  }, [aipReady])
+
+  useEffect(() => {
+    refreshNetworkChannels().catch(console.error)
   }, [aipReady])
 
   // Subscribe to channel player events pushed from the main process.
@@ -536,6 +619,11 @@ export default function Channels() {
     await refreshChannels()
   }, [refreshChannels])
 
+  const handleRemoveNetworkChannel = useCallback(async (mac: string, channelNumber: number) => {
+    await window.electronAPI.aip.removeNetworkChannelByKey(mac, channelNumber).catch(console.error)
+    await refreshNetworkChannels()
+  }, [refreshNetworkChannels])
+
   const playingCount = channels.filter((c) => c.state === 1).length
 
   return (
@@ -552,57 +640,133 @@ export default function Channels() {
           <div>
             <h1 className="text-xl font-bold text-gray-900 dark:text-white">Channels</h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              {channels.length} channel{channels.length !== 1 ? 's' : ''}
-              {playingCount > 0 && <> · <span className="text-green-600 dark:text-green-400 font-medium">{playingCount} playing</span></>}
+              {activeTab === 'playback'
+                ? <>{channels.length} channel{channels.length !== 1 ? 's' : ''}{playingCount > 0 && <> · <span className="text-green-600 dark:text-green-400 font-medium">{playingCount} playing</span></>}</>
+                : <>{networkChannels.length} network channel{networkChannels.length !== 1 ? 's' : ''}</>
+              }
             </p>
           </div>
 
-          <button
-            onClick={() => setCreate(true)}
-            disabled={!aipReady}
-            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-600 transition-colors shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            Create channel
-          </button>
+          <div className="flex items-center gap-3">
+            {/* Tab switcher */}
+            <div className="flex rounded-lg border border-gray-200 p-0.5 dark:border-gray-700">
+              <button
+                onClick={() => setActiveTab('playback')}
+                className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                  activeTab === 'playback'
+                    ? 'bg-primary text-white shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                }`}
+              >
+                Playback
+              </button>
+              <button
+                onClick={() => { setActiveTab('network'); refreshNetworkChannels().catch(console.error) }}
+                className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                  activeTab === 'network'
+                    ? 'bg-primary text-white shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                }`}
+              >
+                Network
+              </button>
+            </div>
+
+            {activeTab === 'playback' && (
+              <button
+                onClick={() => setCreate(true)}
+                disabled={!aipReady}
+                className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-600 transition-colors shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Create channel
+              </button>
+            )}
+
+            {activeTab === 'network' && (
+              <button
+                onClick={() => refreshNetworkChannels().catch(console.error)}
+                disabled={!aipReady}
+                title="Refresh"
+                className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors shadow-sm disabled:opacity-40 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Refresh
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* Channel list */}
-        {!aipReady ? (
-          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 bg-white py-16 dark:border-gray-700 dark:bg-gray-800">
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">AIP not initialized</p>
-            <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">Go to Devices to initialize AIP first.</p>
-          </div>
-        ) : channels.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 bg-white py-16 dark:border-gray-700 dark:bg-gray-800">
-            <svg className="mb-3 h-10 w-10 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-                d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.14 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
-            </svg>
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">No channels yet</p>
-            <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">Click "Create channel" to add the first one.</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {channels.map((ch) => (
-              <ChannelRow
-                key={ch.id}
-                channel={ch}
-                devices={devices}
-                errorMessage={channelErrors[ch.id]}
-                onPlay={handlePlay}
-                onStop={handleStop}
-                onPrev={handlePrev}
-                onNext={handleNext}
-                onDelete={handleDelete}
-                onDismissError={(id) =>
-                  setChannelErrors((prev) => { const n = { ...prev }; delete n[id]; return n })
-                }
-              />
-            ))}
-          </div>
+        {/* Playback channels tab */}
+        {activeTab === 'playback' && (
+          !aipReady ? (
+            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 bg-white py-16 dark:border-gray-700 dark:bg-gray-800">
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">AIP not initialized</p>
+              <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">Go to Devices to initialize AIP first.</p>
+            </div>
+          ) : channels.length === 0 ? (
+            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 bg-white py-16 dark:border-gray-700 dark:bg-gray-800">
+              <svg className="mb-3 h-10 w-10 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                  d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.14 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
+              </svg>
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">No channels yet</p>
+              <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">Click "Create channel" to add the first one.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {channels.map((ch) => (
+                <ChannelRow
+                  key={ch.id}
+                  channel={ch}
+                  devices={devices}
+                  errorMessage={channelErrors[ch.id]}
+                  onPlay={handlePlay}
+                  onStop={handleStop}
+                  onPrev={handlePrev}
+                  onNext={handleNext}
+                  onDelete={handleDelete}
+                  onDismissError={(id) =>
+                    setChannelErrors((prev) => { const n = { ...prev }; delete n[id]; return n })
+                  }
+                />
+              ))}
+            </div>
+          )
+        )}
+
+        {/* Network channels tab */}
+        {activeTab === 'network' && (
+          !aipReady ? (
+            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 bg-white py-16 dark:border-gray-700 dark:bg-gray-800">
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">AIP not initialized</p>
+              <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">Go to Devices to initialize AIP first.</p>
+            </div>
+          ) : networkChannels.length === 0 ? (
+            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 bg-white py-16 dark:border-gray-700 dark:bg-gray-800">
+              <svg className="mb-3 h-10 w-10 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                  d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.14 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
+              </svg>
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">No network channels in repository</p>
+              <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">Channels discovered via AIP multicast will appear here.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {networkChannels.map((ch) => (
+                <NetworkChannelRow
+                  key={`${ch.sourceMac}-${ch.channelNumber}`}
+                  channel={ch}
+                  onRemove={handleRemoveNetworkChannel}
+                />
+              ))}
+            </div>
+          )
         )}
       </div>
     </>

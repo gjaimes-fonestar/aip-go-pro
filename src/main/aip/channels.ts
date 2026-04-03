@@ -1,8 +1,13 @@
 import type { AipCore } from './core'
-import type { AipChannelConfig, AipChannelInfo, AipForeignChannelInfo } from '../../shared/ipc'
+import type {
+  AipChannelConfig,
+  AipChannelInfo,
+  AipForeignChannelInfo,
+  AipNetworkChannel,
+} from '../../shared/ipc'
 
 /**
- * Channel lifecycle, playback control and device linking.
+ * Channel lifecycle, playback control, device linking, and network channel repository.
  * Delegates to the AipClient held by AipCore.
  */
 export class AipChannels {
@@ -48,5 +53,31 @@ export class AipChannels {
 
   async linkChannelToDevice(channelId: number, deviceMac: string): Promise<void> {
     return this.core.client.linkChannelToDevice(channelId, deviceMac)
+  }
+
+  // Network channel repository
+
+  async getNetworkChannels(): Promise<AipNetworkChannel[]> {
+    return this.core.client.getNetworkChannels() as Promise<AipNetworkChannel[]>
+  }
+
+  async getLocalNetworkChannels(): Promise<AipNetworkChannel[]> {
+    return this.core.client.getLocalNetworkChannels() as Promise<AipNetworkChannel[]>
+  }
+
+  async saveNetworkChannel(channel: AipNetworkChannel): Promise<void> {
+    return this.core.client.saveNetworkChannel(channel)
+  }
+
+  async removeNetworkChannel(mac: string): Promise<{ removed: boolean }> {
+    return this.core.client.removeNetworkChannel(mac)
+  }
+
+  async removeNetworkChannelByKey(mac: string, channelNumber: number): Promise<{ removed: boolean }> {
+    return this.core.client.removeNetworkChannelByKey(mac, channelNumber)
+  }
+
+  async requestAllStreams(): Promise<void> {
+    return this.core.client.requestAllStreams()
   }
 }

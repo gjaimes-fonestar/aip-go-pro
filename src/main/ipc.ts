@@ -6,6 +6,7 @@ import type {
   AipSoundMeterConfig,
   AipDeviceNetworkConfig,
   AipSensorRelayConfig,
+  AipNetworkChannel,
 } from '../shared/ipc'
 import { backendManager } from './backend'
 import { daemonManager } from './daemon'
@@ -134,4 +135,22 @@ export function registerIpcHandlers(): void {
   ipcMain.handle(IPC.AIP.LINK_CHANNEL_TO_DEVICE, (_e, channelId: number, deviceMac: string) =>
     aipChannels.linkChannelToDevice(channelId, deviceMac)
   )
+
+  // ── AIP — Network channel repository ────────────────────────────────────────
+  ipcMain.handle(IPC.AIP.GET_NETWORK_CHANNELS,       () => aipChannels.getNetworkChannels())
+  ipcMain.handle(IPC.AIP.GET_LOCAL_NETWORK_CHANNELS, () => aipChannels.getLocalNetworkChannels())
+
+  ipcMain.handle(IPC.AIP.SAVE_NETWORK_CHANNEL, (_e, channel: AipNetworkChannel) =>
+    aipChannels.saveNetworkChannel(channel)
+  )
+
+  ipcMain.handle(IPC.AIP.REMOVE_NETWORK_CHANNEL, (_e, mac: string) =>
+    aipChannels.removeNetworkChannel(mac)
+  )
+
+  ipcMain.handle(IPC.AIP.REMOVE_NETWORK_CHANNEL_BY_KEY, (_e, mac: string, channelNumber: number) =>
+    aipChannels.removeNetworkChannelByKey(mac, channelNumber)
+  )
+
+  ipcMain.handle(IPC.AIP.REQUEST_ALL_STREAMS, () => aipChannels.requestAllStreams())
 }

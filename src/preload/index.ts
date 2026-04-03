@@ -15,6 +15,7 @@ import type {
   AipSoundMeterConfigChangedEvent,
   AipDeviceNetworkConfig,
   AipSensorRelayConfig,
+  AipNetworkChannel,
 } from '../shared/ipc'
 
 /**
@@ -156,6 +157,25 @@ const electronAPI = {
 
     linkChannelToDevice: (channelId: number, deviceMac: string): Promise<void> =>
       ipcRenderer.invoke(IPC.AIP.LINK_CHANNEL_TO_DEVICE, channelId, deviceMac),
+
+    // ── Network channel repository ─────────────────────────────────────────
+    getNetworkChannels: (): Promise<AipNetworkChannel[]> =>
+      ipcRenderer.invoke(IPC.AIP.GET_NETWORK_CHANNELS),
+
+    getLocalNetworkChannels: (): Promise<AipNetworkChannel[]> =>
+      ipcRenderer.invoke(IPC.AIP.GET_LOCAL_NETWORK_CHANNELS),
+
+    saveNetworkChannel: (channel: AipNetworkChannel): Promise<void> =>
+      ipcRenderer.invoke(IPC.AIP.SAVE_NETWORK_CHANNEL, channel),
+
+    removeNetworkChannel: (mac: string): Promise<{ removed: boolean }> =>
+      ipcRenderer.invoke(IPC.AIP.REMOVE_NETWORK_CHANNEL, mac),
+
+    removeNetworkChannelByKey: (mac: string, channelNumber: number): Promise<{ removed: boolean }> =>
+      ipcRenderer.invoke(IPC.AIP.REMOVE_NETWORK_CHANNEL_BY_KEY, mac, channelNumber),
+
+    requestAllStreams: (): Promise<void> =>
+      ipcRenderer.invoke(IPC.AIP.REQUEST_ALL_STREAMS),
   },
 }
 
