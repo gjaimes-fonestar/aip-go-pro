@@ -482,8 +482,7 @@ function NetworkChannelRow({
 
 const ALLOWED_STREAM_SCHEMES = ['http://', 'https://', 'rtsp://', 'rtsps://']
 
-const DISCOVERY_MS      = 120_000  // 2 minutes — wait for AIP multicast discovery
-const POLL_INTERVAL_MS  =  30_000  // re-request all streams every 30 s
+const DISCOVERY_MS = 120_000  // 2 minutes — wait for AIP multicast discovery
 
 function formatCountdown(seconds: number): string {
   const m = Math.floor(seconds / 60)
@@ -522,16 +521,6 @@ export default function Channels() {
     const tick = setInterval(update, 1000)
     return () => clearInterval(tick)
   }, [discoveryStartedAt])
-
-  // requestAllStreams polling — starts once on init, continues across navigations
-  useEffect(() => {
-    if (!aipReady) return
-    window.electronAPI.aip.requestAllStreams().catch(console.error)
-    const poll = setInterval(() => {
-      window.electronAPI.aip.requestAllStreams().catch(console.error)
-    }, POLL_INTERVAL_MS)
-    return () => clearInterval(poll)
-  }, [aipReady])
 
   const devices = useMemo<AipDeviceJson[]>(
     () => Array.from(entries.values()).map((e) => e.device),
@@ -654,6 +643,7 @@ export default function Channels() {
   }, [refreshChannels])
 
   const handleDelete = useCallback(async (id: number) => {
+    await window.electronAPI.aip.stopChannel(id).catch(console.error)
     await window.electronAPI.aip.destroyChannel(id).catch(console.error)
     await refreshChannels()
   }, [refreshChannels])
