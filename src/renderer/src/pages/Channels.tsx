@@ -482,6 +482,15 @@ function NetworkChannelRow({
 
 const ALLOWED_STREAM_SCHEMES = ['http://', 'https://', 'rtsp://', 'rtsps://']
 
+const DISCOVERY_MS      = 120_000  // 2 minutes — wait for AIP multicast discovery
+const POLL_INTERVAL_MS  =  30_000  // re-request all streams every 30 s
+
+function formatCountdown(seconds: number): string {
+  const m = Math.floor(seconds / 60)
+  const s = seconds % 60
+  return m > 0 ? `${m}m ${s.toString().padStart(2, '0')}s` : `${s}s`
+}
+
 export default function Channels() {
   const { aipReady, entries } = useDevicesStore()
 
@@ -493,6 +502,41 @@ export default function Channels() {
   const unsubRef = useRef<(() => void) | null>(null)
 
   const [networkChannels, setNetworkChannels] = useState<AipNetworkChannel[]>([])
+
+  // ── Discovery phase (2 min after initialization) ──────────────────────────
+  const discoveryStartRef = useRef<number | null>(null)
+  const [secondsLeft, setSecondsLeft] = useState(DISCOVERY_MS / 1000)
+  const discovering = secondsLeft > 0 && discoveryStartRef.current !== null
+
+  useEffect(() => {
+    if (!aipReady) {
+      discoveryStartRef.current = null
+      setSecondsLeft(DISCOVERY_MS / 1000)
+      return
+    }
+
+    discoveryStartRef.current = Date.now()
+    setSecondsLeft(DISCOVERY_MS / 1000)
+
+    // Kick off immediately, then every 30 s
+    window.electronAPI.aip.requestAllStreams().catch(console.error)
+    const poll = setInterval(() => {
+      window.electronAPI.aip.requestAllStreams().catch(console.error)
+    }, POLL_INTERVAL_MS)
+
+    // 1-second countdown display
+    const tick = setInterval(() => {
+      const elapsed = Date.now() - discoveryStartRef.current!
+      const left = Math.max(0, Math.ceil((DISCOVERY_MS - elapsed) / 1000))
+      setSecondsLeft(left)
+      if (left === 0) clearInterval(tick)
+    }, 1000)
+
+    return () => {
+      clearInterval(poll)
+      clearInterval(tick)
+    }
+  }, [aipReady])
 
   const devices = useMemo<AipDeviceJson[]>(
     () => Array.from(entries.values()).map((e) => e.device),
@@ -675,13 +719,26 @@ export default function Channels() {
             {activeTab === 'playback' && (
               <button
                 onClick={() => setCreate(true)}
-                disabled={!aipReady}
+                disabled={!aipReady || discovering}
+                title={discovering ? `Network discovery in progress — ready in ${formatCountdown(secondsLeft)}` : undefined}
                 className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-600 transition-colors shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                Create channel
+                {discovering ? (
+                  <>
+                    <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                    </svg>
+                    {formatCountdown(secondsLeft)}
+                  </>
+                ) : (
+                  <>
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    Create channel
+                  </>
+                )}
               </button>
             )}
 
@@ -708,6 +765,29 @@ export default function Channels() {
             <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 bg-white py-16 dark:border-gray-700 dark:bg-gray-800">
               <p className="text-sm font-medium text-gray-500 dark:text-gray-400">AIP not initialized</p>
               <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">Go to Devices to initialize AIP first.</p>
+            </div>
+          ) : discovering ? (
+            <div className="flex flex-col items-center justify-center gap-4 rounded-xl border border-blue-200 bg-blue-50 py-16 dark:border-blue-800 dark:bg-blue-900/20">
+              <svg className="h-10 w-10 animate-spin text-primary" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+              </svg>
+              <div className="text-center">
+                <p className="text-sm font-semibold text-blue-700 dark:text-blue-300">
+                  Discovering network channels…
+                </p>
+                <p className="mt-1 text-xs text-blue-500 dark:text-blue-400">
+                  Channel creation available in {formatCountdown(secondsLeft)}
+                </p>
+                <p className="mt-0.5 text-xs text-blue-400 dark:text-blue-500">
+                  Requesting all streams every 30 seconds
+                </p>
+              </div>
+              {channels.length > 0 && (
+                <p className="text-xs text-blue-500 dark:text-blue-400">
+                  {channels.length} existing channel{channels.length !== 1 ? 's' : ''} loaded
+                </p>
+              )}
             </div>
           ) : channels.length === 0 ? (
             <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 bg-white py-16 dark:border-gray-700 dark:bg-gray-800">

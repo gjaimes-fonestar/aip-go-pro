@@ -9,7 +9,7 @@
  *   Unknown             → Main · Network · Options
  */
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import type {
   AipDeviceJson,
   AipSipConfigChangedEvent,
@@ -518,6 +518,7 @@ function TabSIP({
   device: AipDeviceJson
   sipConfig?: AipSipConfigChangedEvent
 }) {
+  const [loading,     setLoading]     = useState(!sipConfig)
   const [activated,   setActivated]   = useState(sipConfig?.configured ?? false)
   const [serverIp,    setServerIp]    = useState(sipConfig?.serverIp ?? '')
   const [serverPort,  setServerPort]  = useState(sipConfig?.serverPort ?? 5060)
@@ -530,8 +531,10 @@ function TabSIP({
     sipConfig?.relays ?? [false, false, false, false]
   )
 
+  // When sipConfig arrives (push event), populate form and stop spinner
   useEffect(() => {
     if (!sipConfig) return
+    setLoading(false)
     setActivated(sipConfig.configured)
     setServerIp(sipConfig.serverIp)
     setServerPort(sipConfig.serverPort)
@@ -542,8 +545,10 @@ function TabSIP({
     setRelayActive(sipConfig.relays ?? [false, false, false, false])
   }, [sipConfig?.mac])
 
-  const handleRequest = () =>
+  const handleRequest = () => {
+    setLoading(true)
     window.electronAPI.aip.requestSIPConfig(device.mac).catch(console.error)
+  }
 
   const handleApply = useCallback(() => {
     const config: AipSipConfigWrite = {
@@ -562,6 +567,18 @@ function TabSIP({
     window.electronAPI.aip.changeSIPConfig(device.mac, config).catch(console.error)
   }, [device.mac, activated, serverIp, serverPort, username, password,
       audioPortFrom, audioPortRange, sipVolume, relayActive, sipConfig])
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-3 py-16">
+        <svg className="h-8 w-8 animate-spin text-primary" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+        </svg>
+        <p className="text-sm text-gray-500 dark:text-gray-400">Reading SIP config from device…</p>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-5">
@@ -591,7 +608,7 @@ function TabSIP({
             title="Read current config from device"
             className="rounded border border-gray-200 px-3 py-1 text-xs text-gray-500 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800"
           >
-            {sipConfig ? 'Refresh' : 'Read from device'}
+            Refresh
           </button>
         </div>
       </div>
@@ -776,11 +793,14 @@ export function DeviceConfigPanel({
     if (!caps.tabs.includes(activeTab)) setActiveTab(caps.tabs[0])
   }, [caps.tabs, activeTab])
 
-  // Auto-request SIP config from device when SIP tab is opened and no data yet
+  // Auto-request SIP config when SIP tab is opened (always refresh on first open per device)
+  const sipRequestedRef = useRef<string | null>(null)
   useEffect(() => {
-    if (activeTab === 'sip' && !sipConfig) {
-      window.electronAPI.aip.requestSIPConfig(device.mac).catch(console.error)
-    }
+    if (activeTab !== 'sip') return
+    // Only auto-request once per device MAC (Refresh button re-requests manually)
+    if (sipRequestedRef.current === device.mac) return
+    sipRequestedRef.current = device.mac
+    window.electronAPI.aip.requestSIPConfig(device.mac).catch(console.error)
   }, [activeTab, device.mac])
 
   return (
