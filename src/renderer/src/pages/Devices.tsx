@@ -5,7 +5,7 @@ import { InterfaceSelectModal } from '../components/ui/InterfaceSelectModal'
 import { DeviceConfigPanel } from '../components/devices/DeviceConfigPanel'
 import { useDevicesStore } from '../store/devices.store'
 import { useDeviceConfigStore } from '../store/device-config.store'
-import type { AipDeviceJson, AipChannelInfo } from '@shared/ipc'
+import type { AipDeviceJson, AipChannelInfo, AipNetworkChannel } from '@shared/ipc'
 
 // PlayerState dot colours
 const CH_STATE_DOT: Record<number, string> = {
@@ -16,20 +16,29 @@ const CH_STATE_DOT: Record<number, string> = {
   4: 'bg-red-400',
 }
 
-// ─── Device helpers ───────────────────────────────────────────────────────────
+// ─── Device type capabilities ─────────────────────────────────────────────────
 
-function deviceTypeName(type: number): string {
-  switch (type) {
-    case 1: return 'Receiver'
-    case 2: return 'Transmitter'
-    case 3: return 'Amplifier'
-    case 4: return 'Gate'
-    default: return `Type-${type.toString(16).toUpperCase()}`
-  }
+interface DevTypeCaps {
+  label:      string
+  model:      string
+  hasVolume:  boolean
 }
 
-function deviceModel(d: AipDeviceJson): string {
-  return `AIP-${deviceTypeName(d.device_type).toUpperCase()}`
+function devTypeCaps(type: number): DevTypeCaps {
+  switch (type) {
+    case 0x01: return { label: 'Receiver',    model: 'AIP-3010', hasVolume: true  }
+    case 0x02: return { label: 'Transmitter', model: 'AIP-4010', hasVolume: true  }
+    case 0x03: return { label: 'Amplifier',   model: 'AIP-AMP',  hasVolume: true  }
+    case 0x04: return { label: 'Gate',        model: 'AIP-GATE', hasVolume: false }
+    case 0x09: return { label: 'Webserver',   model: 'AIP-WEB',  hasVolume: false }
+    case 0x0A: return { label: 'Sound Meter', model: 'AIP-SM',   hasVolume: false }
+    case 0x0B: return { label: 'Sensor I/O',  model: 'AIP-IO',   hasVolume: false }
+    default:   return {
+      label:     `Device`,
+      model:     `0x${type.toString(16).toUpperCase().padStart(2, '0')}`,
+      hasVolume: false,
+    }
+  }
 }
 
 function formatLastSeen(epoch: number): string {
@@ -132,6 +141,7 @@ function ActionsPanel({
   onConfigure:   () => void
 }) {
   const optimisticVolume = useDevicesStore((s) => s.optimisticVolume)
+  const caps = device ? devTypeCaps(device.device_type) : null
   const [sliderVolume,      setSliderVolume]      = useState(50)
   const [availableChannels, setAvailableChannels] = useState<AipChannelInfo[]>([])
   const [selectedChannelId, setSelectedChannelId] = useState<number | ''>('')
@@ -170,7 +180,7 @@ function ActionsPanel({
       {/* Identity */}
       <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800">
         <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-          {deviceTypeName(device.device_type)}
+          {devTypeCaps(device.device_type).label}
         </p>
         <p className="mt-0.5 font-semibold text-gray-900 dark:text-white">{device.name}</p>
         <p className="text-xs text-gray-500">{device.network.ip}</p>
@@ -185,23 +195,25 @@ function ActionsPanel({
         </div>
       </div>
 
-      {/* Volume */}
-      <div>
-        <div className="mb-1.5 flex items-center justify-between">
-          <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">Volume</span>
-          <span className="text-xs font-medium tabular-nums text-gray-700 dark:text-gray-300">
-            {sliderVolume}%
-          </span>
+      {/* Volume — only for devices that support it */}
+      {caps?.hasVolume && (
+        <div>
+          <div className="mb-1.5 flex items-center justify-between">
+            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">Volume</span>
+            <span className="text-xs font-medium tabular-nums text-gray-700 dark:text-gray-300">
+              {sliderVolume}%
+            </span>
+          </div>
+          <input
+            type="range" min={0} max={100} value={sliderVolume}
+            disabled={device.volume_locked}
+            onChange={(e) => setSliderVolume(Number(e.target.value))}
+            onMouseUp={() => handleVolumeCommit(sliderVolume)}
+            onTouchEnd={() => handleVolumeCommit(sliderVolume)}
+            className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-gray-200 accent-primary disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-700"
+          />
         </div>
-        <input
-          type="range" min={0} max={100} value={sliderVolume}
-          disabled={device.volume_locked}
-          onChange={(e) => setSliderVolume(Number(e.target.value))}
-          onMouseUp={() => handleVolumeCommit(sliderVolume)}
-          onTouchEnd={() => handleVolumeCommit(sliderVolume)}
-          className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-gray-200 accent-primary disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-700"
-        />
-      </div>
+      )}
 
       {/* Channel assignment */}
       <div className="flex flex-col gap-2">
@@ -252,14 +264,15 @@ function ActionsPanel({
 type GroupBy = 'none' | 'areas' | 'groups'
 
 const COLUMNS = [
-  { key: 'type',   label: 'Type'      },
-  { key: 'model',  label: 'Model'     },
-  { key: 'name',   label: 'Name'      },
-  { key: 'status', label: 'Status'    },
-  { key: 'volume', label: 'Volume'    },
-  { key: 'ip',     label: 'IP'        },
-  { key: 'mac',    label: 'MAC'       },
-  { key: 'time',   label: 'Last seen' },
+  { key: 'type',    label: 'Type'      },
+  { key: 'model',   label: 'Model'     },
+  { key: 'name',    label: 'Name'      },
+  { key: 'status',  label: 'Status'    },
+  { key: 'channel', label: 'Channel'   },
+  { key: 'volume',  label: 'Volume'    },
+  { key: 'ip',      label: 'IP'        },
+  { key: 'mac',     label: 'MAC'       },
+  { key: 'time',    label: 'Last seen' },
 ] as const
 
 export default function Devices() {
@@ -268,15 +281,29 @@ export default function Devices() {
   const { applySipConfigEvent, applySoundMeterConfigEvent, getSipConfig, getSoundMeterConfig } =
     useDeviceConfigStore()
 
-  const [groupBy,      setGroupBy]    = useState<GroupBy>('none')
-  const [filterEnabled, setFilter]   = useState(false)
-  const [filterType,   setFilterType] = useState<string>('None')
-  const [search,       setSearch]    = useState('')
-  const [configOpen,   setConfigOpen] = useState(false)
+  const [groupBy,       setGroupBy]    = useState<GroupBy>('none')
+  const [filterEnabled, setFilter]    = useState(false)
+  const [filterType,    setFilterType] = useState<string>('None')
+  const [search,        setSearch]    = useState('')
+  const [configOpen,    setConfigOpen] = useState(false)
   const unsubRefs = useRef<Array<() => void>>([])
 
   const [ctxMenu,     setCtxMenu]     = useState<{ x: number; y: number; mac: string; name: string } | null>(null)
   const [ctxChannels, setCtxChannels] = useState<AipChannelInfo[]>([])
+
+  // Network channels from repository — used to show which channel is assigned to each device
+  const [networkChannels, setNetworkChannels] = useState<AipNetworkChannel[]>([])
+
+  // Map from device MAC → channel name (from linkedDevices in the channel repository)
+  const deviceChannelMap = useMemo<Map<string, string>>(() => {
+    const map = new Map<string, string>()
+    for (const ch of networkChannels) {
+      for (const mac of ch.linkedDevices) {
+        map.set(mac, ch.name)
+      }
+    }
+    return map
+  }, [networkChannels])
 
   // ── Push event subscriptions ───────────────────────────────────────────────
   useEffect(() => {
@@ -287,6 +314,7 @@ export default function Devices() {
 
     if (aipReady) {
       window.electronAPI.aip.getDevices().then(loadAll).catch(console.error)
+      window.electronAPI.aip.getNetworkChannels().then(setNetworkChannels).catch(console.error)
     }
 
     return () => { unsubRefs.current.forEach((fn) => fn()); unsubRefs.current = [] }
@@ -304,9 +332,9 @@ export default function Devices() {
     if (search &&
       !device.name.toLowerCase().includes(search.toLowerCase()) &&
       !device.network.ip.includes(search) &&
-      !deviceModel(device).toLowerCase().includes(search.toLowerCase())
+      !devTypeCaps(device.device_type).model.toLowerCase().includes(search.toLowerCase())
     ) return false
-    if (filterEnabled && filterType !== 'None' && deviceTypeName(device.device_type) !== filterType)
+    if (filterEnabled && filterType !== 'None' && devTypeCaps(device.device_type).label !== filterType)
       return false
     return true
   }), [allEntries, search, filterEnabled, filterType])
@@ -368,7 +396,10 @@ export default function Devices() {
                 />
               </div>
               <button
-                onClick={() => window.electronAPI.aip.getDevices().then(loadAll).catch(console.error)}
+                onClick={() => {
+                  window.electronAPI.aip.getDevices().then(loadAll).catch(console.error)
+                  window.electronAPI.aip.getNetworkChannels().then(setNetworkChannels).catch(console.error)
+                }}
                 disabled={!aipReady}
                 title="Refresh"
                 className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 disabled:opacity-40 dark:border-gray-600 dark:bg-gray-800 dark:hover:bg-gray-700"
@@ -403,8 +434,10 @@ export default function Devices() {
                   </tr>
                 )}
                 {visible.map(({ device, lastSeen }) => {
-                  const isSelected = device.mac === selectedMac
-                  const hasSip     = getSipConfig(device.mac)?.config.configured === true
+                  const isSelected  = device.mac === selectedMac
+                  const hasSip      = getSipConfig(device.mac)?.config.configured === true
+                  const caps        = devTypeCaps(device.device_type)
+                  const channelName = deviceChannelMap.get(device.mac)
                   return (
                     <tr
                       key={device.mac}
@@ -429,12 +462,12 @@ export default function Devices() {
                         <div className="flex items-center gap-2">
                           <span className="h-2 w-2 rounded-full bg-green-400" />
                           <span className="text-sm font-medium text-gray-900 dark:text-white">
-                            {deviceTypeName(device.device_type)}
+                            {caps.label}
                           </span>
                         </div>
                       </td>
                       <td className="whitespace-nowrap px-4 py-2.5 text-sm text-gray-500 dark:text-gray-400">
-                        {deviceModel(device)}
+                        {caps.model}
                       </td>
                       <td className="whitespace-nowrap px-4 py-2.5">
                         <span className="text-sm font-semibold text-gray-900 dark:text-white">
@@ -448,7 +481,19 @@ export default function Devices() {
                         </div>
                       </td>
                       <td className="whitespace-nowrap px-4 py-2.5">
-                        <VolumeBar value={device.volume} />
+                        {channelName ? (
+                          <div className="flex items-center gap-1.5">
+                            <span className="h-1.5 w-1.5 rounded-full bg-green-400" />
+                            <span className="max-w-[120px] truncate text-xs font-medium text-gray-700 dark:text-gray-300">
+                              {channelName}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-300 dark:text-gray-600">—</span>
+                        )}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-2.5">
+                        {caps.hasVolume ? <VolumeBar value={device.volume} /> : <span className="text-xs text-gray-300 dark:text-gray-600">—</span>}
                       </td>
                       <td className="whitespace-nowrap px-4 py-2.5 font-mono text-xs text-gray-600 dark:text-gray-300">
                         {device.network.ip}

@@ -19,7 +19,6 @@ interface DevicesState {
   aipReady:     boolean
   /** Epoch ms when AIP was last successfully initialized. Null if never. */
   discoveryStartedAt: number | null
-
   // ── Setters ──
   setAipReady:    (ready: boolean) => void
   selectDevice:   (mac: string | null) => void
@@ -32,6 +31,7 @@ interface DevicesState {
 
   /** Optimistically update a device's volume before the round-trip event arrives. */
   optimisticVolume: (mac: string, volume: number) => void
+
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -63,7 +63,6 @@ export const useDevicesStore = create<DevicesState>((set) => ({
 
   setAipReady: (ready) => set((state) => ({
     aipReady: ready,
-    // Record the start time only on the first transition to true (or on re-init)
     discoveryStartedAt: ready && !state.aipReady ? Date.now() : state.discoveryStartedAt,
   })),
 
@@ -104,11 +103,9 @@ export const useDevicesStore = create<DevicesState>((set) => ({
       const entry = state.entries.get(mac)
       if (!entry) return {}
       const next = new Map(state.entries)
-      next.set(mac, {
-        ...entry,
-        device: { ...entry.device, volume },
-      })
+      next.set(mac, { ...entry, device: { ...entry.device, volume } })
       return { entries: next }
     })
   },
+
 }))
