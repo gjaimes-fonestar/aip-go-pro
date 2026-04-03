@@ -71,6 +71,13 @@ const electronAPI = {
       return () => ipcRenderer.removeListener(IPC.AIP.CHANNEL_EVENT, listener)
     },
 
+    /** Subscribe to network channel push events (added / updated / removed). */
+    onNetworkChannelEvent: (cb: (json: string) => void): (() => void) => {
+      const listener = (_e: Electron.IpcRendererEvent, json: string): void => cb(json)
+      ipcRenderer.on(IPC.AIP.NETWORK_CHANNEL_EVENT, listener)
+      return () => ipcRenderer.removeListener(IPC.AIP.NETWORK_CHANNEL_EVENT, listener)
+    },
+
     /** Subscribe to SIP config changed push events. */
     onSipConfigEvent: (cb: (event: AipSipConfigChangedEvent) => void): (() => void) => {
       const listener = (_e: Electron.IpcRendererEvent, json: string): void => {

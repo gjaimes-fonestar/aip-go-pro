@@ -30,6 +30,13 @@ export class AipCore {
       }
     })
 
+    this.client.setOnNetworkChannelEvent((json: string) => {
+      for (const win of BrowserWindow.getAllWindows()) {
+        if (!win.isDestroyed())
+          win.webContents.send(IPC.AIP.NETWORK_CHANNEL_EVENT, json)
+      }
+    })
+
     this.client.setOnSipConfigChanged((json: string) => {
       for (const win of BrowserWindow.getAllWindows()) {
         if (!win.isDestroyed())

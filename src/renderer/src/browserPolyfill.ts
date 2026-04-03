@@ -30,8 +30,9 @@ class DaemonClient {
     private _reconnectDelay: number
     private _url: string
 
-    readonly deviceSubs  = new Set<(json: string) => void>()
-    readonly channelSubs = new Set<(json: string) => void>()
+    readonly deviceSubs         = new Set<(json: string) => void>()
+    readonly channelSubs        = new Set<(json: string) => void>()
+    readonly networkChannelSubs = new Set<(json: string) => void>()
 
     constructor(url: string, reconnectDelay = 2000) {
         this._url = url
@@ -74,8 +75,9 @@ class DaemonClient {
                 const type = msg['type'] as string
                 const inner = msg['json'] as string | undefined
                 if (inner) {
-                    if (type === 'device_event')  this.deviceSubs.forEach((cb) => cb(inner))
-                    if (type === 'channel_event') this.channelSubs.forEach((cb) => cb(inner))
+                    if (type === 'device_event')          this.deviceSubs.forEach((cb) => cb(inner))
+                    if (type === 'channel_event')         this.channelSubs.forEach((cb) => cb(inner))
+                    if (type === 'network_channel_event') this.networkChannelSubs.forEach((cb) => cb(inner))
                 }
                 return
             }
@@ -158,6 +160,11 @@ export function installBrowserPolyfill(): void {
                 }
                 c.channelSubs.add(wrapped)
                 return () => { c.channelSubs.delete(wrapped) }
+            },
+
+            onNetworkChannelEvent: (cb: (json: string) => void): (() => void) => {
+                c.networkChannelSubs.add(cb)
+                return () => { c.networkChannelSubs.delete(cb) }
             },
 
             getDevices: (): Promise<string> =>

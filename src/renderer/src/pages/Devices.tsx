@@ -356,7 +356,10 @@ export default function Devices() {
     const unsubDevice     = window.electronAPI.aip.onDeviceEvent((json) => applyEvent(json))
     const unsubSip        = window.electronAPI.aip.onSipConfigEvent((e)  => applySipConfigEvent(e))
     const unsubSoundMeter = window.electronAPI.aip.onSoundMeterConfigEvent((e) => applySoundMeterConfigEvent(e))
-    unsubRefs.current = [unsubDevice, unsubSip, unsubSoundMeter]
+    const unsubNetCh      = window.electronAPI.aip.onNetworkChannelEvent(() => {
+      window.electronAPI.aip.getNetworkChannels().then(setNetworkChannels).catch(console.error)
+    })
+    unsubRefs.current = [unsubDevice, unsubSip, unsubSoundMeter, unsubNetCh]
 
     if (aipReady) {
       window.electronAPI.aip.getDevices().then(loadAll).catch(console.error)
@@ -364,6 +367,16 @@ export default function Devices() {
     }
 
     return () => { unsubRefs.current.forEach((fn) => fn()); unsubRefs.current = [] }
+  }, [aipReady])
+
+  // ── 5-second periodic refresh ─────────────────────────────────────────────
+  useEffect(() => {
+    if (!aipReady) return
+    const tick = setInterval(() => {
+      window.electronAPI.aip.getDevices().then(loadAll).catch(console.error)
+      window.electronAPI.aip.getNetworkChannels().then(setNetworkChannels).catch(console.error)
+    }, 5_000)
+    return () => clearInterval(tick)
   }, [aipReady])
 
   const handleInitialized = useCallback(async () => {

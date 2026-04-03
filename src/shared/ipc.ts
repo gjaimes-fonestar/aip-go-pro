@@ -25,7 +25,8 @@ export const IPC = {
     INITIALIZE:     'aip:initialize',
     SHUTDOWN:       'aip:shutdown',
     DEVICE_EVENT:   'aip:deviceEvent',                    // push: main → renderer
-    CHANNEL_EVENT:  'aip:channelEvent',                   // push: main → renderer
+    CHANNEL_EVENT:         'aip:channelEvent',              // push: main → renderer
+    NETWORK_CHANNEL_EVENT: 'aip:networkChannelEvent',      // push: main → renderer
     SIP_CONFIG_EVENT:         'aip:sipConfigEvent',        // push: main → renderer
     SOUND_METER_CONFIG_EVENT: 'aip:soundMeterConfigEvent', // push: main → renderer
 
