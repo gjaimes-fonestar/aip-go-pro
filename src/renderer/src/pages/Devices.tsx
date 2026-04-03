@@ -26,13 +26,17 @@ interface DevTypeCaps {
 
 function devTypeCaps(type: number): DevTypeCaps {
   switch (type) {
-    case 0x01: return { label: 'Receiver',    model: 'AIP-3010', hasVolume: true  }
-    case 0x02: return { label: 'Transmitter', model: 'AIP-4010', hasVolume: true  }
-    case 0x03: return { label: 'Amplifier',   model: 'AIP-AMP',  hasVolume: true  }
-    case 0x04: return { label: 'Gate',        model: 'AIP-GATE', hasVolume: false }
-    case 0x09: return { label: 'Webserver',   model: 'AIP-WEB',  hasVolume: false }
-    case 0x0A: return { label: 'Sound Meter', model: 'AIP-SM',   hasVolume: false }
-    case 0x0B: return { label: 'Sensor I/O',  model: 'AIP-IO',   hasVolume: false }
+    case 0x00: return { label: 'Player',          model: 'AIP-3010',  hasVolume: true  }
+    case 0x01: return { label: 'Amplifier',        model: 'AIP-3010A', hasVolume: true  }
+    case 0x02: return { label: 'PC Server',        model: 'AIP-PC',    hasVolume: false }
+    case 0x03: return { label: 'Microphone',       model: 'AIP-MIC',   hasVolume: false }
+    case 0x04: return { label: 'Pro Microphone',   model: 'AIP-PMIC',  hasVolume: false }
+    case 0x05: return { label: 'Intercom',         model: 'AIP-INT',   hasVolume: true  }
+    case 0x07: return { label: 'Gateway',          model: 'AIP-GW',    hasVolume: false }
+    case 0x08: return { label: 'Transmitter',      model: 'AIP-4010',  hasVolume: true  }
+    case 0x09: return { label: 'Webserver',        model: 'AIP-WEB',   hasVolume: false }
+    case 0x0A: return { label: 'Sound Meter',      model: 'AIP-SM',    hasVolume: false }
+    case 0x0B: return { label: 'Sensor I/O',       model: 'AIP-IO',    hasVolume: false }
     default:   return {
       label:     `Device`,
       model:     `0x${type.toString(16).toUpperCase().padStart(2, '0')}`,
@@ -50,14 +54,16 @@ function formatLastSeen(epoch: number): string {
 // ─── Context menu ─────────────────────────────────────────────────────────────
 
 function DeviceContextMenu({
-  x, y, mac, name, channels, onClose, onAssign, onStop, onConfigure,
+  x, y, mac, name, isPlayer, channels, networkChannels, onClose, onAssign, onAssignNetwork, onStop, onConfigure,
 }: {
-  x: number; y: number; mac: string; name: string
-  channels: AipChannelInfo[]
-  onClose:     () => void
-  onAssign:    (id: number) => void
-  onStop:      () => void
-  onConfigure: () => void
+  x: number; y: number; mac: string; name: string; isPlayer: boolean
+  channels:        AipChannelInfo[]
+  networkChannels: AipNetworkChannel[]
+  onClose:          () => void
+  onAssign:         (id: number) => void
+  onAssignNetwork:  (channelMac: string, channelNumber: number) => void
+  onStop:           () => void
+  onConfigure:      () => void
 }) {
   const ref = useRef<HTMLDivElement>(null)
 
@@ -74,14 +80,30 @@ function DeviceContextMenu({
     }
   }, [onClose])
 
+  // Group remote (non-local) network channels by sourceMac
+  const remoteByMac = useMemo(() => {
+    const map = new Map<string, AipNetworkChannel[]>()
+    for (const ch of networkChannels) {
+      if (ch.local) continue
+      const list = map.get(ch.sourceMac) ?? []
+      list.push(ch)
+      map.set(ch.sourceMac, list)
+    }
+    return map
+  }, [networkChannels])
+
+  const hasLocalChannels  = channels.length > 0
+  const hasRemoteChannels = remoteByMac.size > 0
+  const hasAnyChannels    = hasLocalChannels || hasRemoteChannels
+
   return (
     <div
       ref={ref}
-      style={{ position: 'fixed', left: x, top: y, zIndex: 1000, minWidth: '200px' }}
+      style={{ position: 'fixed', left: x, top: y, zIndex: 1000, minWidth: '220px' }}
       className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-800"
     >
       <div className="border-b border-gray-100 px-3 py-2 dark:border-gray-700">
-        <p className="max-w-[180px] truncate text-xs font-semibold text-gray-800 dark:text-gray-200">{name}</p>
+        <p className="max-w-[200px] truncate text-xs font-semibold text-gray-800 dark:text-gray-200">{name}</p>
         <p className="font-mono text-xs text-gray-400">{mac}</p>
       </div>
 
@@ -97,21 +119,45 @@ function DeviceContextMenu({
         Configure device
       </button>
 
-      {channels.length > 0 && (
+      {isPlayer && hasAnyChannels && (
         <>
           <div className="border-t border-gray-100 dark:border-gray-700" />
-          <p className="px-3 pb-0.5 pt-2 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-            Assign channel
-          </p>
-          {channels.map((ch) => (
-            <button
-              key={ch.id}
-              onClick={() => onAssign(ch.id)}
-              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700"
-            >
-              <span className={`h-2 w-2 shrink-0 rounded-full ${CH_STATE_DOT[ch.state] ?? 'bg-gray-400'}`} />
-              <span className="truncate">{ch.name}</span>
-            </button>
+
+          {hasLocalChannels && (
+            <>
+              <p className="px-3 pb-0.5 pt-2 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                Local channels
+              </p>
+              {channels.map((ch) => (
+                <button
+                  key={ch.id}
+                  onClick={() => onAssign(ch.id)}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700"
+                >
+                  <span className={`h-2 w-2 shrink-0 rounded-full ${CH_STATE_DOT[ch.state] ?? 'bg-gray-400'}`} />
+                  <span className="truncate">{ch.name}</span>
+                </button>
+              ))}
+            </>
+          )}
+
+          {hasRemoteChannels && Array.from(remoteByMac.entries()).map(([srcMac, chs]) => (
+            <div key={srcMac}>
+              {hasLocalChannels && <div className="border-t border-gray-100/60 dark:border-gray-700/60" />}
+              <p className="px-3 pb-0.5 pt-2 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                Remote — <span className="font-mono normal-case">{srcMac}</span>
+              </p>
+              {chs.map((ch) => (
+                <button
+                  key={`${ch.sourceMac}-${ch.channelNumber}`}
+                  onClick={() => onAssignNetwork(ch.sourceMac, ch.channelNumber)}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700"
+                >
+                  <span className="h-2 w-2 shrink-0 rounded-full bg-blue-400" />
+                  <span className="truncate">{ch.name || `Ch ${ch.channelNumber}`}</span>
+                </button>
+              ))}
+            </div>
           ))}
         </>
       )}
@@ -288,7 +334,7 @@ export default function Devices() {
   const [configOpen,    setConfigOpen] = useState(false)
   const unsubRefs = useRef<Array<() => void>>([])
 
-  const [ctxMenu,     setCtxMenu]     = useState<{ x: number; y: number; mac: string; name: string } | null>(null)
+  const [ctxMenu,     setCtxMenu]     = useState<{ x: number; y: number; mac: string; name: string; deviceType: number } | null>(null)
   const [ctxChannels, setCtxChannels] = useState<AipChannelInfo[]>([])
 
   // Network channels from repository — used to show which channel is assigned to each device
@@ -449,7 +495,7 @@ export default function Devices() {
                       onContextMenu={(e) => {
                         e.preventDefault()
                         if (!aipReady) return
-                        setCtxMenu({ x: e.clientX, y: e.clientY, mac: device.mac, name: device.name })
+                        setCtxMenu({ x: e.clientX, y: e.clientY, mac: device.mac, name: device.name, deviceType: device.device_type })
                         window.electronAPI.aip.getChannels().then(setCtxChannels).catch(console.error)
                       }}
                       className={`cursor-pointer select-none transition-colors ${
@@ -460,7 +506,13 @@ export default function Devices() {
                     >
                       <td className="whitespace-nowrap px-4 py-2.5">
                         <div className="flex items-center gap-2">
-                          <span className="h-2 w-2 rounded-full bg-green-400" />
+                          <span
+                            className="h-2.5 w-2.5 shrink-0 rounded-full border border-black/10"
+                            style={device.button_color
+                              ? { backgroundColor: `rgb(${device.button_color.r},${device.button_color.g},${device.button_color.b})` }
+                              : { backgroundColor: '#9ca3af' }
+                            }
+                          />
                           <span className="text-sm font-medium text-gray-900 dark:text-white">
                             {caps.label}
                           </span>
@@ -589,7 +641,9 @@ export default function Devices() {
           y={ctxMenu.y}
           mac={ctxMenu.mac}
           name={ctxMenu.name}
+          isPlayer={ctxMenu.deviceType === 0}
           channels={ctxChannels}
+          networkChannels={networkChannels}
           onClose={() => setCtxMenu(null)}
           onConfigure={() => {
             selectDevice(ctxMenu.mac)
@@ -598,6 +652,10 @@ export default function Devices() {
           }}
           onAssign={(id) => {
             window.electronAPI.aip.linkChannelToDevice(id, ctxMenu.mac).catch(console.error)
+            setCtxMenu(null)
+          }}
+          onAssignNetwork={(channelMac, channelNumber) => {
+            window.electronAPI.aip.linkNetworkChannelToDevice(channelMac, channelNumber, ctxMenu.mac).catch(console.error)
             setCtxMenu(null)
           }}
           onStop={() => {

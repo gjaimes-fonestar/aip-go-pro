@@ -158,6 +158,13 @@ const electronAPI = {
     linkChannelToDevice: (channelId: number, deviceMac: string): Promise<void> =>
       ipcRenderer.invoke(IPC.AIP.LINK_CHANNEL_TO_DEVICE, channelId, deviceMac),
 
+    linkNetworkChannelToDevice: (
+      channelMac: string,
+      channelNumber: number,
+      deviceMac: string,
+    ): Promise<void> =>
+      ipcRenderer.invoke(IPC.AIP.LINK_NETWORK_CHANNEL_TO_DEVICE, channelMac, channelNumber, deviceMac),
+
     // ── Network channel repository ─────────────────────────────────────────
     getNetworkChannels: (): Promise<AipNetworkChannel[]> =>
       ipcRenderer.invoke(IPC.AIP.GET_NETWORK_CHANNELS),

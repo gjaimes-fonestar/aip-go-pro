@@ -136,6 +136,12 @@ export function registerIpcHandlers(): void {
     aipChannels.linkChannelToDevice(channelId, deviceMac)
   )
 
+  ipcMain.handle(
+    IPC.AIP.LINK_NETWORK_CHANNEL_TO_DEVICE,
+    (_e, channelMac: string, channelNumber: number, deviceMac: string) =>
+      aipChannels.linkNetworkChannelToDevice(channelMac, channelNumber, deviceMac),
+  )
+
   // ── AIP — Network channel repository ────────────────────────────────────────
   ipcMain.handle(IPC.AIP.GET_NETWORK_CHANNELS,       () => aipChannels.getNetworkChannels())
   ipcMain.handle(IPC.AIP.GET_LOCAL_NETWORK_CHANNELS, () => aipChannels.getLocalNetworkChannels())

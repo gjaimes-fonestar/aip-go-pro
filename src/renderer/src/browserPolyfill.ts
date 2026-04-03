@@ -198,6 +198,9 @@ export function installBrowserPolyfill(): void {
 
             linkChannelToDevice: (channelId: number, deviceMac: string): Promise<void> =>
                 c.send('linkChannelToDevice', { channelId, mac: deviceMac }) as Promise<void>,
+
+            linkNetworkChannelToDevice: (channelMac: string, channelNumber: number, deviceMac: string): Promise<void> =>
+                c.send('linkNetworkChannelToDevice', { channelMac, channelNumber, deviceMac }) as Promise<void>,
         },
     }
 

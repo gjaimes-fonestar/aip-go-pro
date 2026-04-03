@@ -55,6 +55,14 @@ export class AipChannels {
     return this.core.client.linkChannelToDevice(channelId, deviceMac)
   }
 
+  async linkNetworkChannelToDevice(
+    channelMac: string,
+    channelNumber: number,
+    deviceMac: string,
+  ): Promise<void> {
+    return this.core.client.linkNetworkChannelToDevice(channelMac, channelNumber, deviceMac)
+  }
+
   // Network channel repository
 
   async getNetworkChannels(): Promise<AipNetworkChannel[]> {

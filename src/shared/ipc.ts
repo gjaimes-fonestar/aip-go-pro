@@ -66,7 +66,8 @@ export const IPC = {
     NEXT_CHANNEL:           'aip:nextChannel',
     PREVIOUS_CHANNEL:       'aip:previousChannel',
     SET_CHANNEL_VOLUME:     'aip:setChannelVolume',
-    LINK_CHANNEL_TO_DEVICE: 'aip:linkChannelToDevice',
+    LINK_CHANNEL_TO_DEVICE:         'aip:linkChannelToDevice',
+    LINK_NETWORK_CHANNEL_TO_DEVICE: 'aip:linkNetworkChannelToDevice',
   },
 } as const
 
@@ -126,6 +127,7 @@ export interface AipDeviceJson {
   software_version:   string
   communication_port: number
   volumes:            AipVolumeConfig
+  button_color:       { r: number; g: number; b: number }
 }
 
 /** Event payload for device_added / device_updated. */
