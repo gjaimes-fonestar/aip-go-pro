@@ -15,7 +15,6 @@ import type {
   AipSipConfigChangedEvent,
   AipSoundMeterConfigChangedEvent,
   AipSipConfigWrite,
-  AipSoundMeterConfig,
   AipDeviceNetworkConfig,
   AipSensorRelayConfig,
 } from '@shared/ipc'
@@ -30,13 +29,20 @@ interface DeviceCaps {
 
 function deviceCaps(deviceType: number): DeviceCaps {
   switch (deviceType) {
-    case 1: // Receiver / Player
-    case 3: // Amplifier
+    case 0: // Player
+    case 1: // PlayerAmplifier
+    case 5: // Intercom
       return { tabs: ['main', 'audio', 'network', 'io', 'sip', 'options'] }
-    case 2: // Transmitter
+    case 3: // SimpleMicrophone
+    case 4: // ProMicrophone
+    case 8: // Transmitter
       return { tabs: ['main', 'audio', 'network', 'options'] }
-    case 4: // Gate / Controller
+    case 7: // PCGateway
+    case 9: // WebServer
       return { tabs: ['main', 'network', 'datetime', 'webserver', 'options'] }
+    case 10: // SoundMeter
+    case 11: // SensorRelay
+      return { tabs: ['main', 'network', 'io', 'options'] }
     default:
       return { tabs: ['main', 'network', 'options'] }
   }
@@ -774,12 +780,12 @@ export interface DeviceConfigPanelProps {
 export function DeviceConfigPanel({
   device,
   sipConfig,
-  soundMeterConfig,
+  soundMeterConfig: _soundMeterConfig,
   open,
   onClose,
 }: DeviceConfigPanelProps) {
   const caps = deviceCaps(device.device_type)
-  const isGate = device.device_type === 4
+  const isGate = device.device_type === 7 || device.device_type === 9
 
   const [activeTab, setActiveTab] = useState<ConfigTab>(caps.tabs[0])
 
@@ -793,15 +799,15 @@ export function DeviceConfigPanel({
     if (!caps.tabs.includes(activeTab)) setActiveTab(caps.tabs[0])
   }, [caps.tabs, activeTab])
 
-  // Auto-request SIP config when SIP tab is opened (always refresh on first open per device)
+  // Fallback: request SIP config on tab open only if not yet pre-loaded
   const sipRequestedRef = useRef<string | null>(null)
   useEffect(() => {
     if (activeTab !== 'sip') return
-    // Only auto-request once per device MAC (Refresh button re-requests manually)
+    if (sipConfig) return // already available from background pre-load
     if (sipRequestedRef.current === device.mac) return
     sipRequestedRef.current = device.mac
     window.electronAPI.aip.requestSIPConfig(device.mac).catch(console.error)
-  }, [activeTab, device.mac])
+  }, [activeTab, device.mac, sipConfig])
 
   return (
     <div
