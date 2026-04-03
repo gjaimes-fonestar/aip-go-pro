@@ -492,7 +492,7 @@ function formatCountdown(seconds: number): string {
 }
 
 export default function Channels() {
-  const { aipReady, entries } = useDevicesStore()
+  const { aipReady, entries, discoveryStartedAt } = useDevicesStore()
 
   const [activeTab, setActiveTab] = useState<'playback' | 'network'>('playback')
 
@@ -503,39 +503,34 @@ export default function Channels() {
 
   const [networkChannels, setNetworkChannels] = useState<AipNetworkChannel[]>([])
 
-  // ── Discovery phase (2 min after initialization) ──────────────────────────
-  const discoveryStartRef = useRef<number | null>(null)
-  const [secondsLeft, setSecondsLeft] = useState(DISCOVERY_MS / 1000)
-  const discovering = secondsLeft > 0 && discoveryStartRef.current !== null
+  // ── Discovery phase: countdown derived from store timestamp ───────────────
+  const [secondsLeft, setSecondsLeft] = useState(() => {
+    if (!discoveryStartedAt) return 0
+    return Math.max(0, Math.ceil((DISCOVERY_MS - (Date.now() - discoveryStartedAt)) / 1000))
+  })
+  const discovering = secondsLeft > 0
 
+  // Countdown tick — runs only while discovering, survives page navigation
   useEffect(() => {
-    if (!aipReady) {
-      discoveryStartRef.current = null
-      setSecondsLeft(DISCOVERY_MS / 1000)
-      return
+    if (!discoveryStartedAt) return
+
+    const update = () => {
+      const left = Math.max(0, Math.ceil((DISCOVERY_MS - (Date.now() - discoveryStartedAt)) / 1000))
+      setSecondsLeft(left)
     }
+    update()
+    const tick = setInterval(update, 1000)
+    return () => clearInterval(tick)
+  }, [discoveryStartedAt])
 
-    discoveryStartRef.current = Date.now()
-    setSecondsLeft(DISCOVERY_MS / 1000)
-
-    // Kick off immediately, then every 30 s
+  // requestAllStreams polling — starts once on init, continues across navigations
+  useEffect(() => {
+    if (!aipReady) return
     window.electronAPI.aip.requestAllStreams().catch(console.error)
     const poll = setInterval(() => {
       window.electronAPI.aip.requestAllStreams().catch(console.error)
     }, POLL_INTERVAL_MS)
-
-    // 1-second countdown display
-    const tick = setInterval(() => {
-      const elapsed = Date.now() - discoveryStartRef.current!
-      const left = Math.max(0, Math.ceil((DISCOVERY_MS - elapsed) / 1000))
-      setSecondsLeft(left)
-      if (left === 0) clearInterval(tick)
-    }, 1000)
-
-    return () => {
-      clearInterval(poll)
-      clearInterval(tick)
-    }
+    return () => clearInterval(poll)
   }, [aipReady])
 
   const devices = useMemo<AipDeviceJson[]>(

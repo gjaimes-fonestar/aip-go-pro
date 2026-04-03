@@ -17,6 +17,8 @@ interface DevicesState {
   selectedMac:  string | null
   /** True once initialize() has been called via IPC. */
   aipReady:     boolean
+  /** Epoch ms when AIP was last successfully initialized. Null if never. */
+  discoveryStartedAt: number | null
 
   // ── Setters ──
   setAipReady:    (ready: boolean) => void
@@ -54,11 +56,16 @@ function parseEvent(json: string): AipDeviceEvent | null {
 // ─── Store ───────────────────────────────────────────────────────────────────
 
 export const useDevicesStore = create<DevicesState>((set) => ({
-  entries:     new Map(),
-  selectedMac: null,
-  aipReady:    false,
+  entries:            new Map(),
+  selectedMac:        null,
+  aipReady:           false,
+  discoveryStartedAt: null,
 
-  setAipReady: (ready) => set({ aipReady: ready }),
+  setAipReady: (ready) => set((state) => ({
+    aipReady: ready,
+    // Record the start time only on the first transition to true (or on re-init)
+    discoveryStartedAt: ready && !state.aipReady ? Date.now() : state.discoveryStartedAt,
+  })),
 
   selectDevice: (mac) => set({ selectedMac: mac }),
 
