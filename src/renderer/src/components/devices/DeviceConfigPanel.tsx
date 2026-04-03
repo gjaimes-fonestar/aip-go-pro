@@ -576,22 +576,24 @@ function TabSIP({
           />
           Activated
         </label>
-        {sipConfig ? (
-          <span className={`text-xs font-medium ${
-            sipConfig.state === 3
-              ? 'text-green-600 dark:text-green-400'
-              : 'text-gray-400'
-          }`}>
-            Present state: {sipStateLabel(sipConfig.state)}
-          </span>
-        ) : (
+        <div className="flex items-center gap-2">
+          {sipConfig && (
+            <span className={`text-xs font-medium ${
+              sipConfig.state === 3
+                ? 'text-green-600 dark:text-green-400'
+                : 'text-gray-400'
+            }`}>
+              {sipStateLabel(sipConfig.state)}
+            </span>
+          )}
           <button
             onClick={handleRequest}
+            title="Read current config from device"
             className="rounded border border-gray-200 px-3 py-1 text-xs text-gray-500 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800"
           >
-            Read from device
+            {sipConfig ? 'Refresh' : 'Read from device'}
           </button>
-        )}
+        </div>
       </div>
 
       {/* Server */}
@@ -774,6 +776,13 @@ export function DeviceConfigPanel({
     if (!caps.tabs.includes(activeTab)) setActiveTab(caps.tabs[0])
   }, [caps.tabs, activeTab])
 
+  // Auto-request SIP config from device when SIP tab is opened and no data yet
+  useEffect(() => {
+    if (activeTab === 'sip' && !sipConfig) {
+      window.electronAPI.aip.requestSIPConfig(device.mac).catch(console.error)
+    }
+  }, [activeTab, device.mac])
+
   return (
     <div
       className={`flex h-full flex-col border-l border-gray-200 bg-white transition-all duration-300 dark:border-gray-700 dark:bg-gray-900 ${
@@ -783,12 +792,12 @@ export function DeviceConfigPanel({
       {open && (
         <>
           {/* Panel header */}
-          <div className="flex shrink-0 items-start justify-between border-b border-gray-200 px-5 py-4 dark:border-gray-700">
+          <div className="flex shrink-0 items-start justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-700">
             <div>
               <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
-                {device.name} setup
+                {device.name}
               </h2>
-              <p className="mt-0.5 font-mono text-xs text-gray-400">{device.mac}</p>
+              <p className="font-mono text-[10px] text-gray-400">{device.mac}</p>
             </div>
             <button
               onClick={onClose}
@@ -800,33 +809,36 @@ export function DeviceConfigPanel({
             </button>
           </div>
 
-          {/* Tab bar */}
-          <div className="flex shrink-0 gap-0 border-b border-gray-200 dark:border-gray-700">
-            {caps.tabs.map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`px-4 py-2.5 text-xs font-medium transition-colors whitespace-nowrap ${
-                  activeTab === tab
-                    ? 'border-b-2 border-primary bg-primary/5 text-primary dark:bg-primary/10'
-                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200'
-                }`}
-              >
-                {TAB_LABELS[tab]}
-              </button>
-            ))}
-          </div>
+          {/* Body: left tab rail + content */}
+          <div className="flex flex-1 overflow-hidden">
+            {/* Vertical tab rail */}
+            <div className="flex w-28 shrink-0 flex-col gap-0.5 border-r border-gray-200 bg-gray-50 p-2 dark:border-gray-700 dark:bg-gray-900/60">
+              {caps.tabs.map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`w-full rounded-md px-2 py-2 text-left text-xs font-medium transition-colors ${
+                    activeTab === tab
+                      ? 'bg-primary text-white shadow-sm'
+                      : 'text-gray-500 hover:bg-gray-200 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200'
+                  }`}
+                >
+                  {TAB_LABELS[tab]}
+                </button>
+              ))}
+            </div>
 
-          {/* Tab content */}
-          <div className="flex-1 overflow-y-auto px-5 py-5">
-            {activeTab === 'main'      && <TabMain     device={device} isGate={isGate} />}
-            {activeTab === 'audio'     && <TabAudio    device={device} />}
-            {activeTab === 'network'   && <TabNetwork  device={device} />}
-            {activeTab === 'io'        && <TabIO       device={device} />}
-            {activeTab === 'sip'       && <TabSIP      device={device} sipConfig={sipConfig} />}
-            {activeTab === 'datetime'  && <TabDateTime />}
-            {activeTab === 'webserver' && <TabWebserver device={device} />}
-            {activeTab === 'options'   && <TabOptions  device={device} />}
+            {/* Tab content */}
+            <div className="flex-1 overflow-y-auto px-5 py-5">
+              {activeTab === 'main'      && <TabMain     device={device} isGate={isGate} />}
+              {activeTab === 'audio'     && <TabAudio    device={device} />}
+              {activeTab === 'network'   && <TabNetwork  device={device} />}
+              {activeTab === 'io'        && <TabIO       device={device} />}
+              {activeTab === 'sip'       && <TabSIP      device={device} sipConfig={sipConfig} />}
+              {activeTab === 'datetime'  && <TabDateTime />}
+              {activeTab === 'webserver' && <TabWebserver device={device} />}
+              {activeTab === 'options'   && <TabOptions  device={device} />}
+            </div>
           </div>
         </>
       )}
