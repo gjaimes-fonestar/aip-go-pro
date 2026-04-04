@@ -69,6 +69,41 @@ export const IPC = {
     SET_CHANNEL_VOLUME:     'aip:setChannelVolume',
     LINK_CHANNEL_TO_DEVICE:         'aip:linkChannelToDevice',
     LINK_NETWORK_CHANNEL_TO_DEVICE: 'aip:linkNetworkChannelToDevice',
+
+    // SIP extension repository
+    GET_SIP_EXTENSIONS:       'aip:getSipExtensions',
+    SAVE_SIP_EXTENSION:       'aip:saveSipExtension',
+    REMOVE_SIP_EXTENSION:     'aip:removeSipExtension',
+
+    // SIP conference repository
+    GET_SIP_CONFERENCES:             'aip:getSipConferences',
+    GET_SIP_CONFERENCES_FOR_DEVICE:  'aip:getSipConferencesForDevice',
+    SAVE_SIP_CONFERENCE:             'aip:saveSipConference',
+    REMOVE_SIP_CONFERENCE:           'aip:removeSipConference',
+    REMOVE_SIP_CONFERENCES_FOR_DEVICE: 'aip:removeSipConferencesForDevice',
+
+    // SIP device commands
+    ADD_SIP_EXTENSION:        'aip:addSipExtension',
+    DELETE_SIP_EXTENSION:     'aip:deleteSipExtension',
+    CREATE_SIP_CONFERENCE:    'aip:createSipConference',
+    ADD_SIP_CONFERENCE_USER:  'aip:addSipConferenceUser',
+
+    // Gate web config repository
+    GET_GATE_WEB_CONFIGS:     'aip:getGateWebConfigs',
+    SAVE_GATE_WEB_CONFIG:     'aip:saveGateWebConfig',
+    REMOVE_GATE_WEB_CONFIG:   'aip:removeGateWebConfig',
+
+    // Audio file repository
+    GET_AUDIO_FILES:              'aip:getAudioFiles',
+    GET_AUDIO_FILES_FOR_DEVICE:   'aip:getAudioFilesForDevice',
+    REMOVE_AUDIO_FILE:            'aip:removeAudioFile',
+    REMOVE_AUDIO_FILES_FOR_DEVICE:'aip:removeAudioFilesForDevice',
+
+    // File transfer
+    ENQUEUE_FILE_TRANSFER:    'aip:enqueueFileTransfer',
+    CANCEL_FILE_TRANSFER:     'aip:cancelFileTransfer',
+    FILE_TRANSFER_PROGRESS:   'aip:fileTransferProgress',   // push: main → renderer
+    FILE_TRANSFER_COMPLETED:  'aip:fileTransferCompleted',  // push: main → renderer
   },
 } as const
 
@@ -312,6 +347,86 @@ export interface AipForeignChannelInfo {
   bitrateKbps:    number
   encrypted:      boolean
   repeat:         boolean
+}
+
+// ─── AIP — SIP repository ────────────────────────────────────────────────────
+
+export interface AipSipExtension {
+  mac:             string
+  extensionNumber: number
+  username:        string
+}
+
+export interface AipSipConferenceParticipant {
+  extensionNumber: number
+  username:        string
+}
+
+export interface AipSipConference {
+  mac:              string
+  conferenceNumber: number
+  name:             string
+  participants:     AipSipConferenceParticipant[]
+}
+
+export interface AipSipExtensionCredentials {
+  extensionNumber: number
+  username:        string
+  password?:       string
+}
+
+// ─── AIP — Gate web configuration ────────────────────────────────────────────
+
+export interface AipGateWebConfig {
+  mac:         string
+  authEnabled: boolean
+  sslEnabled:  boolean
+  maxUsers:    number
+  users:       { username: string }[]
+}
+
+// ─── AIP — Audio file repository ─────────────────────────────────────────────
+
+/**
+ * Audio type values:
+ *   0 = Messages, 1 = Alarms/Events, 2 = Background Music,
+ *   3 = Professional, 4 = Firmware
+ */
+export type AipAudioFileType = 0 | 1 | 2 | 3 | 4
+
+export interface AipAudioFile {
+  mac:           string
+  id:            number
+  audioType:     AipAudioFileType
+  name:          string
+  directoryName: string
+  directoryId:   number
+}
+
+// ─── AIP — File transfer ─────────────────────────────────────────────────────
+
+export type AipTransferDirection = 'upload' | 'download'
+export type AipTransferResult    = 'success' | 'timeout' | 'error' | 'cancelled'
+
+export interface AipFileTransferRequest {
+  localPath:  string
+  remotePath: string
+  deviceIp:   string
+  direction?: AipTransferDirection
+}
+
+export interface AipFileTransferProgressEvent {
+  percent:    number
+  localPath:  string
+  remotePath: string
+  deviceIp:   string
+}
+
+export interface AipFileTransferCompletedEvent {
+  result:     AipTransferResult
+  localPath:  string
+  remotePath: string
+  deviceIp:   string
 }
 
 // ─── Dialogs ─────────────────────────────────────────────────────────────────

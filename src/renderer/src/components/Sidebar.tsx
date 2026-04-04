@@ -1,5 +1,7 @@
+import { useMemo, useCallback } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useAppStore } from '../store/app.store'
+import { useDevicesStore } from '../store/devices.store'
 import type { BackendStatus } from '@shared/ipc'
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
@@ -70,51 +72,39 @@ const Icons = {
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
     </svg>
   ),
-  Multicast: () => (
+  Webserver: () => (
     <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+        d="M5 12H3m18 0h-2M12 5V3m0 18v-2m4.95-13.95l-1.414 1.414M6.464 17.536L5.05 18.95M18.95 18.95l-1.414-1.414M6.464 6.464L5.05 5.05M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
     </svg>
   ),
 }
 
-// ─── Navigation groups ────────────────────────────────────────────────────────
+// ─── Static nav groups ────────────────────────────────────────────────────────
 
-const NAV_GROUPS = [
-  {
-    label: 'Network',
-    items: [
-      { to: '/devices',     label: 'Devices',        Icon: Icons.Devices      },
-      { to: '/channels',    label: 'Channels',       Icon: Icons.Channels     },
-      { to: '/groups',      label: 'Groups',         Icon: Icons.Groups       },
-      { to: '/areas',       label: 'Areas',          Icon: Icons.Areas        },
-      { to: '/sip-devices', label: 'SIP Devices',    Icon: Icons.SipDevices   },
-    ],
-  },
-  {
-    label: 'Audio',
-    items: [
-      { to: '/voice',     label: 'Voice',        Icon: Icons.Voice      },
-      { to: '/messages',  label: 'Messages',     Icon: Icons.Messages   },
-      { to: '/multicast', label: 'Multicast',    Icon: Icons.Multicast  },
-      { to: '/sonometers',label: 'Sonometers',   Icon: Icons.Sonometers },
-    ],
-  },
-  {
-    label: 'Automation',
-    items: [
-      { to: '/action-control', label: 'Action Control', Icon: Icons.ActionControl },
-      { to: '/events',         label: 'Events',         Icon: Icons.Events        },
-      { to: '/scenes',         label: 'Scenes',         Icon: Icons.Scenes        },
-      { to: '/transfers',      label: 'Transfers',      Icon: Icons.Transfers     },
-    ],
-  },
-  {
-    label: 'System',
-    items: [
-      { to: '/log', label: 'Log', Icon: Icons.Log },
-    ],
-  },
-]
+const AUDIO_GROUP = {
+  label: 'Audio',
+  items: [
+    { to: '/voice',      label: 'Voice',      Icon: Icons.Voice      },
+    { to: '/messages',   label: 'Messages',   Icon: Icons.Messages   },
+    { to: '/sonometers', label: 'Sonometers', Icon: Icons.Sonometers },
+  ],
+}
+
+const AUTOMATION_GROUP = {
+  label: 'Automation',
+  items: [
+    { to: '/action-control', label: 'Action Control', Icon: Icons.ActionControl },
+    { to: '/events',         label: 'Events',         Icon: Icons.Events        },
+    { to: '/scenes',         label: 'Scenes',         Icon: Icons.Scenes        },
+    { to: '/transfers',      label: 'Transfers',      Icon: Icons.Transfers     },
+  ],
+}
+
+const SYSTEM_GROUP = {
+  label: 'System',
+  items: [{ to: '/log', label: 'Log', Icon: Icons.Log }],
+}
 
 // ─── Status dot ───────────────────────────────────────────────────────────────
 
@@ -129,6 +119,44 @@ const STATUS_DOT: Record<BackendStatus, string> = {
 
 export default function Sidebar() {
   const { sidebarOpen, backend } = useAppStore()
+  const entries = useDevicesStore((s) => s.entries)
+
+  const selectedMac        = useDevicesStore((s) => s.selectedMac)
+  const selectedEntry      = selectedMac ? entries.get(selectedMac) : undefined
+  const selectedIsWebserver = selectedEntry
+    ? selectedEntry.device.device_type === 7 || selectedEntry.device.device_type === 9
+    : false
+
+  const WebserverIconAnimated = useCallback(() => (
+    <span className="relative flex h-5 w-5 items-center justify-center">
+      <span className="absolute inset-0 animate-ping rounded-full bg-primary/30" />
+      <Icons.Webserver />
+    </span>
+  ), [])
+
+  const networkItems = useMemo(() => {
+    const base = [
+      { to: '/devices',     label: 'Devices',     Icon: Icons.Devices     },
+      { to: '/channels',    label: 'Channels',     Icon: Icons.Channels    },
+      { to: '/groups',      label: 'Groups',       Icon: Icons.Groups      },
+      { to: '/areas',       label: 'Areas',        Icon: Icons.Areas       },
+      { to: '/sip-devices', label: 'SIP Devices',  Icon: Icons.SipDevices  },
+    ]
+    if (selectedIsWebserver) {
+      base.push({ to: '/webserver', label: 'Webserver', Icon: WebserverIconAnimated })
+    }
+    return base
+  }, [selectedIsWebserver, WebserverIconAnimated])
+
+  const allGroups = useMemo(
+    () => [
+      { label: 'Network', items: networkItems },
+      AUDIO_GROUP,
+      AUTOMATION_GROUP,
+      SYSTEM_GROUP,
+    ],
+    [networkItems],
+  )
 
   if (!sidebarOpen) return null
 
@@ -147,7 +175,7 @@ export default function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
-        {NAV_GROUPS.map(({ label, items }) => (
+        {allGroups.map(({ label, items }) => (
           <div key={label}>
             <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
               {label}

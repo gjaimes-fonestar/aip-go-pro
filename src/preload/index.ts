@@ -16,6 +16,15 @@ import type {
   AipDeviceNetworkConfig,
   AipSensorRelayConfig,
   AipNetworkChannel,
+  AipSipExtension,
+  AipSipConference,
+  AipSipExtensionCredentials,
+  AipSipConferenceParticipant,
+  AipGateWebConfig,
+  AipFileTransferRequest,
+  AipFileTransferProgressEvent,
+  AipFileTransferCompletedEvent,
+  AipAudioFile,
 } from '../shared/ipc'
 
 /**
@@ -190,6 +199,91 @@ const electronAPI = {
 
     requestAllStreams: (): Promise<void> =>
       ipcRenderer.invoke(IPC.AIP.REQUEST_ALL_STREAMS),
+
+    // ── SIP extension repository ───────────────────────────────────────────
+    getSipExtensions: (): Promise<AipSipExtension[]> =>
+      ipcRenderer.invoke(IPC.AIP.GET_SIP_EXTENSIONS),
+
+    saveSipExtension: (ext: AipSipExtension): Promise<void> =>
+      ipcRenderer.invoke(IPC.AIP.SAVE_SIP_EXTENSION, ext),
+
+    removeSipExtension: (mac: string): Promise<{ removed: boolean }> =>
+      ipcRenderer.invoke(IPC.AIP.REMOVE_SIP_EXTENSION, mac),
+
+    // ── SIP conference repository ──────────────────────────────────────────
+    getSipConferences: (): Promise<AipSipConference[]> =>
+      ipcRenderer.invoke(IPC.AIP.GET_SIP_CONFERENCES),
+
+    getSipConferencesForDevice: (mac: string): Promise<AipSipConference[]> =>
+      ipcRenderer.invoke(IPC.AIP.GET_SIP_CONFERENCES_FOR_DEVICE, mac),
+
+    saveSipConference: (conf: AipSipConference): Promise<void> =>
+      ipcRenderer.invoke(IPC.AIP.SAVE_SIP_CONFERENCE, conf),
+
+    removeSipConference: (mac: string, conferenceId: number): Promise<{ removed: boolean }> =>
+      ipcRenderer.invoke(IPC.AIP.REMOVE_SIP_CONFERENCE, mac, conferenceId),
+
+    removeSipConferencesForDevice: (mac: string): Promise<{ removed: number }> =>
+      ipcRenderer.invoke(IPC.AIP.REMOVE_SIP_CONFERENCES_FOR_DEVICE, mac),
+
+    // ── SIP device commands ────────────────────────────────────────────────
+    addSipExtension: (mac: string, creds: AipSipExtensionCredentials): Promise<void> =>
+      ipcRenderer.invoke(IPC.AIP.ADD_SIP_EXTENSION, mac, creds),
+
+    deleteSipExtension: (mac: string, creds: AipSipExtensionCredentials): Promise<void> =>
+      ipcRenderer.invoke(IPC.AIP.DELETE_SIP_EXTENSION, mac, creds),
+
+    createSipConference: (mac: string, conf: AipSipConference): Promise<void> =>
+      ipcRenderer.invoke(IPC.AIP.CREATE_SIP_CONFERENCE, mac, conf),
+
+    addSipConferenceUser: (mac: string, p: AipSipConferenceParticipant): Promise<void> =>
+      ipcRenderer.invoke(IPC.AIP.ADD_SIP_CONFERENCE_USER, mac, p),
+
+    // ── Gate web config repository ─────────────────────────────────────────
+    getGateWebConfigs: (): Promise<AipGateWebConfig[]> =>
+      ipcRenderer.invoke(IPC.AIP.GET_GATE_WEB_CONFIGS),
+
+    saveGateWebConfig: (config: AipGateWebConfig): Promise<void> =>
+      ipcRenderer.invoke(IPC.AIP.SAVE_GATE_WEB_CONFIG, config),
+
+    removeGateWebConfig: (mac: string): Promise<{ removed: boolean }> =>
+      ipcRenderer.invoke(IPC.AIP.REMOVE_GATE_WEB_CONFIG, mac),
+
+    // ── Audio file repository ──────────────────────────────────────────────
+    getAudioFiles: (): Promise<AipAudioFile[]> =>
+      ipcRenderer.invoke(IPC.AIP.GET_AUDIO_FILES),
+
+    getAudioFilesForDevice: (mac: string, audioType?: number): Promise<AipAudioFile[]> =>
+      ipcRenderer.invoke(IPC.AIP.GET_AUDIO_FILES_FOR_DEVICE, mac, audioType),
+
+    removeAudioFile: (mac: string, fileId: number): Promise<{ removed: boolean }> =>
+      ipcRenderer.invoke(IPC.AIP.REMOVE_AUDIO_FILE, mac, fileId),
+
+    removeAudioFilesForDevice: (mac: string): Promise<{ removed: number }> =>
+      ipcRenderer.invoke(IPC.AIP.REMOVE_AUDIO_FILES_FOR_DEVICE, mac),
+
+    // ── File transfer ──────────────────────────────────────────────────────
+    enqueueFileTransfer: (req: AipFileTransferRequest): Promise<void> =>
+      ipcRenderer.invoke(IPC.AIP.ENQUEUE_FILE_TRANSFER, req),
+
+    cancelFileTransfer: (): Promise<void> =>
+      ipcRenderer.invoke(IPC.AIP.CANCEL_FILE_TRANSFER),
+
+    onFileTransferProgress: (cb: (event: AipFileTransferProgressEvent) => void): (() => void) => {
+      const listener = (_e: Electron.IpcRendererEvent, json: string): void => {
+        try { cb(JSON.parse(json) as AipFileTransferProgressEvent) } catch { /* ignore */ }
+      }
+      ipcRenderer.on(IPC.AIP.FILE_TRANSFER_PROGRESS, listener)
+      return () => ipcRenderer.removeListener(IPC.AIP.FILE_TRANSFER_PROGRESS, listener)
+    },
+
+    onFileTransferCompleted: (cb: (event: AipFileTransferCompletedEvent) => void): (() => void) => {
+      const listener = (_e: Electron.IpcRendererEvent, json: string): void => {
+        try { cb(JSON.parse(json) as AipFileTransferCompletedEvent) } catch { /* ignore */ }
+      }
+      ipcRenderer.on(IPC.AIP.FILE_TRANSFER_COMPLETED, listener)
+      return () => ipcRenderer.removeListener(IPC.AIP.FILE_TRANSFER_COMPLETED, listener)
+    },
   },
 }
 

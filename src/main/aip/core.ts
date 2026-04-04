@@ -51,6 +51,20 @@ export class AipCore {
       }
     })
 
+    this.client.setOnFileTransferProgress((json: string) => {
+      for (const win of BrowserWindow.getAllWindows()) {
+        if (!win.isDestroyed())
+          win.webContents.send(IPC.AIP.FILE_TRANSFER_PROGRESS, json)
+      }
+    })
+
+    this.client.setOnFileTransferCompleted((json: string) => {
+      for (const win of BrowserWindow.getAllWindows()) {
+        if (!win.isDestroyed())
+          win.webContents.send(IPC.AIP.FILE_TRANSFER_COMPLETED, json)
+      }
+    })
+
     this.client.connect()
   }
 

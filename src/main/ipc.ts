@@ -7,10 +7,16 @@ import type {
   AipDeviceNetworkConfig,
   AipSensorRelayConfig,
   AipNetworkChannel,
+  AipSipExtension,
+  AipSipConference,
+  AipSipExtensionCredentials,
+  AipSipConferenceParticipant,
+  AipGateWebConfig,
+  AipFileTransferRequest,
 } from '../shared/ipc'
 import { backendManager } from './backend'
 import { daemonManager } from './daemon'
-import { aipCore, aipDevices, aipChannels } from './aip'
+import { aipCore, aipDevices, aipChannels, aipWebserver } from './aip'
 
 export function registerIpcHandlers(): void {
   // ── Backend ──────────────────────────────────────────────────────────────
@@ -159,4 +165,86 @@ export function registerIpcHandlers(): void {
   )
 
   ipcMain.handle(IPC.AIP.REQUEST_ALL_STREAMS, () => aipChannels.requestAllStreams())
+
+  // ── AIP — SIP extension repository ──────────────────────────────────────────
+  ipcMain.handle(IPC.AIP.GET_SIP_EXTENSIONS, () => aipWebserver.getSipExtensions())
+
+  ipcMain.handle(IPC.AIP.SAVE_SIP_EXTENSION, (_e, ext: AipSipExtension) =>
+    aipWebserver.saveSipExtension(ext)
+  )
+
+  ipcMain.handle(IPC.AIP.REMOVE_SIP_EXTENSION, (_e, mac: string) =>
+    aipWebserver.removeSipExtension(mac)
+  )
+
+  // ── AIP — SIP conference repository ─────────────────────────────────────────
+  ipcMain.handle(IPC.AIP.GET_SIP_CONFERENCES, () => aipWebserver.getSipConferences())
+
+  ipcMain.handle(IPC.AIP.GET_SIP_CONFERENCES_FOR_DEVICE, (_e, mac: string) =>
+    aipWebserver.getSipConferencesForDevice(mac)
+  )
+
+  ipcMain.handle(IPC.AIP.SAVE_SIP_CONFERENCE, (_e, conf: AipSipConference) =>
+    aipWebserver.saveSipConference(conf)
+  )
+
+  ipcMain.handle(IPC.AIP.REMOVE_SIP_CONFERENCE, (_e, mac: string, conferenceId: number) =>
+    aipWebserver.removeSipConference(mac, conferenceId)
+  )
+
+  ipcMain.handle(IPC.AIP.REMOVE_SIP_CONFERENCES_FOR_DEVICE, (_e, mac: string) =>
+    aipWebserver.removeSipConferencesForDevice(mac)
+  )
+
+  // ── AIP — SIP device commands ────────────────────────────────────────────────
+  ipcMain.handle(IPC.AIP.ADD_SIP_EXTENSION, (_e, mac: string, creds: AipSipExtensionCredentials) =>
+    aipWebserver.addSipExtension(mac, creds)
+  )
+
+  ipcMain.handle(IPC.AIP.DELETE_SIP_EXTENSION, (_e, mac: string, creds: AipSipExtensionCredentials) =>
+    aipWebserver.deleteSipExtension(mac, creds)
+  )
+
+  ipcMain.handle(IPC.AIP.CREATE_SIP_CONFERENCE, (_e, mac: string, conf: AipSipConference) =>
+    aipWebserver.createSipConference(mac, conf)
+  )
+
+  ipcMain.handle(
+    IPC.AIP.ADD_SIP_CONFERENCE_USER,
+    (_e, mac: string, participant: AipSipConferenceParticipant) =>
+      aipWebserver.addSipConferenceUser(mac, participant)
+  )
+
+  // ── AIP — Gate web config repository ────────────────────────────────────────
+  ipcMain.handle(IPC.AIP.GET_GATE_WEB_CONFIGS, () => aipWebserver.getGateWebConfigs())
+
+  ipcMain.handle(IPC.AIP.SAVE_GATE_WEB_CONFIG, (_e, config: AipGateWebConfig) =>
+    aipWebserver.saveGateWebConfig(config)
+  )
+
+  ipcMain.handle(IPC.AIP.REMOVE_GATE_WEB_CONFIG, (_e, mac: string) =>
+    aipWebserver.removeGateWebConfig(mac)
+  )
+
+  // ── AIP — Audio file repository ──────────────────────────────────────────────
+  ipcMain.handle(IPC.AIP.GET_AUDIO_FILES, () => aipWebserver.getAudioFiles())
+
+  ipcMain.handle(IPC.AIP.GET_AUDIO_FILES_FOR_DEVICE, (_e, mac: string, audioType?: number) =>
+    aipWebserver.getAudioFilesForDevice(mac, audioType)
+  )
+
+  ipcMain.handle(IPC.AIP.REMOVE_AUDIO_FILE, (_e, mac: string, fileId: number) =>
+    aipWebserver.removeAudioFile(mac, fileId)
+  )
+
+  ipcMain.handle(IPC.AIP.REMOVE_AUDIO_FILES_FOR_DEVICE, (_e, mac: string) =>
+    aipWebserver.removeAudioFilesForDevice(mac)
+  )
+
+  // ── AIP — File transfer ──────────────────────────────────────────────────────
+  ipcMain.handle(IPC.AIP.ENQUEUE_FILE_TRANSFER, (_e, request: AipFileTransferRequest) =>
+    aipWebserver.enqueueFileTransfer(request)
+  )
+
+  ipcMain.handle(IPC.AIP.CANCEL_FILE_TRANSFER, () => aipWebserver.cancelFileTransfer())
 }

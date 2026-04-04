@@ -66,11 +66,19 @@ export class AipChannels {
   // Network channel repository
 
   async getNetworkChannels(): Promise<AipNetworkChannel[]> {
-    return this.core.client.getNetworkChannels() as Promise<AipNetworkChannel[]>
+    try {
+      return (await this.core.client.getNetworkChannels()) as AipNetworkChannel[]
+    } catch {
+      return []
+    }
   }
 
   async getLocalNetworkChannels(): Promise<AipNetworkChannel[]> {
-    return this.core.client.getLocalNetworkChannels() as Promise<AipNetworkChannel[]>
+    try {
+      return (await this.core.client.getLocalNetworkChannels()) as AipNetworkChannel[]
+    } catch {
+      return []
+    }
   }
 
   async saveNetworkChannel(channel: AipNetworkChannel): Promise<void> {
