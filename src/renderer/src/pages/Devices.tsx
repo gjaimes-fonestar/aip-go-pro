@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useMemo, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Badge } from '../components/ui/Badge'
 import { VolumeBar } from '../components/ui/VolumeBar'
 import { InterfaceSelectModal } from '../components/ui/InterfaceSelectModal'
@@ -322,6 +323,7 @@ const COLUMNS = [
 ] as const
 
 export default function Devices() {
+  const navigate = useNavigate()
   const { entries, selectedMac, aipReady, setAipReady, selectDevice, loadAll, applyEvent } =
     useDevicesStore()
   const { applySipConfigEvent, applySoundMeterConfigEvent, getSipConfig, getSoundMeterConfig } =
@@ -403,7 +405,18 @@ export default function Devices() {
   const sipCfgEntry    = selectedMac ? getSipConfig(selectedMac)        : undefined
   const smCfgEntry     = selectedMac ? getSoundMeterConfig(selectedMac) : undefined
 
-  const openConfig = useCallback(() => setConfigOpen(true), [])
+  const isWebserverDevice = useCallback(
+    (deviceType: number) => deviceType === 7 || deviceType === 9,
+    [],
+  )
+
+  const openConfig = useCallback(() => {
+    if (selectedDevice && isWebserverDevice(selectedDevice.device_type)) {
+      navigate('/webserver')
+    } else {
+      setConfigOpen(true)
+    }
+  }, [selectedDevice, isWebserverDevice, navigate])
 
   return (
     <>
@@ -503,7 +516,11 @@ export default function Devices() {
                       onClick={() => selectDevice(isSelected ? null : device.mac)}
                       onDoubleClick={() => {
                         selectDevice(device.mac)
-                        setConfigOpen(true)
+                        if (isWebserverDevice(device.device_type)) {
+                          navigate('/webserver')
+                        } else {
+                          setConfigOpen(true)
+                        }
                       }}
                       onContextMenu={(e) => {
                         e.preventDefault()
@@ -660,7 +677,12 @@ export default function Devices() {
           onClose={() => setCtxMenu(null)}
           onConfigure={() => {
             selectDevice(ctxMenu.mac)
-            setConfigOpen(true)
+            const ctxDev = entries.get(ctxMenu.mac)?.device
+            if (ctxDev && isWebserverDevice(ctxDev.device_type)) {
+              navigate('/webserver')
+            } else {
+              setConfigOpen(true)
+            }
             setCtxMenu(null)
           }}
           onAssign={(id) => {
