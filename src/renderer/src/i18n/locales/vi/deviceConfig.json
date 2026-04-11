@@ -1,0 +1,63 @@
+{
+  "tabs": {
+    "main": "Chính",
+    "audio": "Âm thanh",
+    "network": "Mạng",
+    "io": "I/O",
+    "sip": "SIP",
+    "datetime": "Ngày & Giờ",
+    "webserver": "Máy chủ Web",
+    "options": "Tùy chọn"
+  },
+  "actions": {
+    "readConfig": "Đọc cấu hình hiện tại từ thiết bị"
+  },
+  "sip": {
+    "states": {
+      "notConfigured": "Chưa cấu hình",
+      "notRegistered": "Chưa đăng ký",
+      "registering": "Đang đăng ký…",
+      "registered": "Đã đăng ký với máy chủ SIP",
+      "failed": "Đăng ký thất bại",
+      "state": "Trạng thái {{n}}"
+    }
+  },
+  "fields": {
+    "bootMode": "Chế độ khởi động",
+    "directBoot": "Khởi động trực tiếp",
+    "lastState": "Trạng thái cuối",
+    "lastStateFull": "Trạng thái cuối. Trực tiếp hoặc chờ",
+    "powerColor": "Màu nút nguồn",
+    "colors": {
+      "off": "Tắt",
+      "red": "Đỏ",
+      "green": "Xanh lá",
+      "blue": "Xanh dương",
+      "yellow": "Vàng",
+      "white": "Trắng",
+      "custom": "Tùy chỉnh"
+    },
+    "volumeMode": "Chế độ âm lượng",
+    "generalVolume": "Âm lượng chung",
+    "perAction": "Âm lượng theo hành động",
+    "volume": "Âm lượng chung",
+    "latency": "Độ trễ",
+    "latencyOptions": {
+      "high": "Cao",
+      "medium": "Trung bình",
+      "low": "Thấp"
+    },
+    "ip": "IP",
+    "netmask": "Mặt nạ mạng",
+    "gateway": "Cổng mặc định",
+    "port": "Cổng",
+    "user": "Người dùng",
+    "passwordPlaceholder": "Để trống để giữ nguyên",
+    "audioPortRange": "Dải cổng âm thanh",
+    "sipVolume": "Âm lượng SIP",
+    "circuitOpen": "Mở",
+    "circuitClosed": "Đóng",
+    "relayOpen": "Mạch hở",
+    "relayClosed": "Mạch kín"
+  }
+}

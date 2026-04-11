@@ -1,0 +1,11 @@
+{
+  "title": "Bảng điều khiển",
+  "subtitle": "Tổng quan về backend AIP Go và trạng thái hệ thống.",
+  "stats": {
+    "backend": "Backend",
+    "pid": "PID",
+    "ping": "Ping",
+    "platform": "Nền tảng"
+  },
+  "backendError": "Lỗi backend"
+}

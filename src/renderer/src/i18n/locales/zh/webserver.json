@@ -1,0 +1,56 @@
+{
+  "tabs": {
+    "extensions": "SIP 分机",
+    "conferences": "SIP 会议",
+    "files": "文件"
+  },
+  "empty": {
+    "title": "未选择网关或 Web 服务器",
+    "help": "请在设备页面选择 AIP-GATE 或 AIP-WEB 设备，然后双击或点击配置以在此处管理。"
+  },
+  "warnings": {
+    "dhcp": "该设备使用动态 IP 配置（DHCP）。如果路由器分配了不同的 IP，SIP 分机将无法连接。建议分配固定 IP 以避免此问题。"
+  },
+  "extensions": {
+    "create": "创建 SIP 分机",
+    "delete": "删除分机",
+    "form": {
+      "number": "分机号码",
+      "numberPlaceholder": "例：113",
+      "username": "分机名称 / 用户名",
+      "usernamePlaceholder": "例：player113",
+      "password": "SIP 密码",
+      "mac": "分配的设备 MAC（可选）",
+      "macPlaceholder": "AA:BB:CC:DD:EE:FF"
+    }
+  },
+  "conferences": {
+    "create": "创建会议",
+    "addExtension": "添加分机到会议",
+    "empty": "暂无会议",
+    "noExtensions": "尚未添加分机",
+    "selectConference": "选择一个会议以查看其分机",
+    "title": "会议 {{number}}",
+    "participants_one": "{{count}} 位参与者",
+    "participants_other": "{{count}} 位参与者",
+    "form": {
+      "number": "会议号码",
+      "numberPlaceholder": "例：100",
+      "name": "会议名称",
+      "namePlaceholder": "例：主会议室"
+    }
+  },
+  "files": {
+    "categories": {
+      "messages": "消息",
+      "events": "事件",
+      "bgm": "背景音乐"
+    },
+    "empty": "设备上没有文件",
+    "noTransfers": "无活跃传输",
+    "transferHelp": "使用下方控件上传或下载",
+    "remotePath": "远程路径（可选）",
+    "save": "保存文件",
+    "saveDownloaded": "保存下载的文件"
+  }
+}

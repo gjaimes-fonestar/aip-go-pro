@@ -1,0 +1,54 @@
+{
+  "title": "Devices",
+  "pageHeading": "Network Devices",
+  "pageSubtitle": "{{count}} registered · double-click to configure",
+  "selectDevice": "Select a device",
+  "doubleClickConfigure": "Double-click to configure",
+  "lastSeen": "Last seen",
+  "deviceActions": "Device actions",
+  "selectChannel": "Select channel…",
+  "playChannel": "Play Channel",
+  "stopPlayback": "Stop Playback",
+  "noDevicesFilter": "No devices match the filter.",
+  "waitingAip": "Waiting for AIP initialization…",
+  "columns": {
+    "type": "Type",
+    "model": "Model",
+    "name": "Name",
+    "status": "Status",
+    "channel": "Channel",
+    "volume": "Volume",
+    "ip": "IP",
+    "mac": "MAC",
+    "lastSeen": "Last seen"
+  },
+  "search": "Search…",
+  "badges": {
+    "online": "Online",
+    "sip": "SIP",
+    "volLocked": "Vol Locked",
+    "chLocked": "Ch Locked"
+  },
+  "types": {
+    "player": "Player",
+    "amplifier": "Amplifier",
+    "pcServer": "PC Server",
+    "microphone": "Microphone",
+    "proMicrophone": "Pro Microphone",
+    "intercom": "Intercom",
+    "gateway": "Gateway",
+    "transmitter": "Transmitter",
+    "webserver": "Webserver",
+    "soundMeter": "Sound Meter",
+    "sensorIO": "Sensor I/O",
+    "device": "Device"
+  },
+  "contextMenu": {
+    "configureDevice": "Configure device",
+    "linkChannel": "Link channel",
+    "localChannels": "Local channels",
+    "remoteChannels": "Remote — {{mac}}",
+    "stopPlayback": "Stop playback",
+    "noChannels": "No channels available"
+  }
+}

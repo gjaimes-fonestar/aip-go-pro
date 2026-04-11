@@ -1,0 +1,63 @@
+{
+  "tabs": {
+    "main": "Principal",
+    "audio": "Áudio",
+    "network": "Rede",
+    "io": "E/S",
+    "sip": "SIP",
+    "datetime": "Data e Hora",
+    "webserver": "Servidor Web",
+    "options": "Opções"
+  },
+  "actions": {
+    "readConfig": "Ler configuração atual do dispositivo"
+  },
+  "sip": {
+    "states": {
+      "notConfigured": "Não configurado",
+      "notRegistered": "Não registrado",
+      "registering": "Registrando…",
+      "registered": "Registrado no servidor SIP",
+      "failed": "Falha no registro",
+      "state": "Estado {{n}}"
+    }
+  },
+  "fields": {
+    "bootMode": "Modo de inicialização",
+    "directBoot": "Inicialização direta",
+    "lastState": "Último estado",
+    "lastStateFull": "Último estado. Direto ou em espera",
+    "powerColor": "Cor do botão de energia",
+    "colors": {
+      "off": "Desligado",
+      "red": "Vermelho",
+      "green": "Verde",
+      "blue": "Azul",
+      "yellow": "Amarelo",
+      "white": "Branco",
+      "custom": "Personalizado"
+    },
+    "volumeMode": "Modo de volume",
+    "generalVolume": "Volume geral",
+    "perAction": "Volume por ação",
+    "volume": "Volume geral",
+    "latency": "Latência",
+    "latencyOptions": {
+      "high": "Alta",
+      "medium": "Média",
+      "low": "Baixa"
+    },
+    "ip": "IP",
+    "netmask": "Máscara de rede",
+    "gateway": "Gateway",
+    "port": "Porta",
+    "user": "Usuário",
+    "passwordPlaceholder": "Deixe em branco para manter",
+    "audioPortRange": "Faixa de portas de áudio",
+    "sipVolume": "Volume SIP",
+    "circuitOpen": "Aberto",
+    "circuitClosed": "Fechado",
+    "relayOpen": "Circuito aberto",
+    "relayClosed": "Circuito fechado"
+  }
+}

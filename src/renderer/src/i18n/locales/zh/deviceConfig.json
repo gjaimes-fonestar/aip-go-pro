@@ -1,0 +1,63 @@
+{
+  "tabs": {
+    "main": "主要",
+    "audio": "音频",
+    "network": "网络",
+    "io": "I/O",
+    "sip": "SIP",
+    "datetime": "日期和时间",
+    "webserver": "Web 服务器",
+    "options": "选项"
+  },
+  "actions": {
+    "readConfig": "从设备读取当前配置"
+  },
+  "sip": {
+    "states": {
+      "notConfigured": "未配置",
+      "notRegistered": "未注册",
+      "registering": "注册中…",
+      "registered": "已注册至 SIP 服务器",
+      "failed": "注册失败",
+      "state": "状态 {{n}}"
+    }
+  },
+  "fields": {
+    "bootMode": "启动模式",
+    "directBoot": "直接启动",
+    "lastState": "上次状态",
+    "lastStateFull": "上次状态。直接或待机",
+    "powerColor": "电源按钮颜色",
+    "colors": {
+      "off": "关闭",
+      "red": "红色",
+      "green": "绿色",
+      "blue": "蓝色",
+      "yellow": "黄色",
+      "white": "白色",
+      "custom": "自定义"
+    },
+    "volumeMode": "音量模式",
+    "generalVolume": "总音量",
+    "perAction": "按动作音量",
+    "volume": "总音量",
+    "latency": "延迟",
+    "latencyOptions": {
+      "high": "高",
+      "medium": "中",
+      "low": "低"
+    },
+    "ip": "IP",
+    "netmask": "子网掩码",
+    "gateway": "网关",
+    "port": "端口",
+    "user": "用户",
+    "passwordPlaceholder": "留空以保持不变",
+    "audioPortRange": "音频端口范围",
+    "sipVolume": "SIP 音量",
+    "circuitOpen": "断开",
+    "circuitClosed": "闭合",
+    "relayOpen": "断路",
+    "relayClosed": "通路"
+  }
+}

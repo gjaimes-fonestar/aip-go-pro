@@ -1,0 +1,11 @@
+{
+  "title": "Dashboard",
+  "subtitle": "Overview of the AIP Go backend and system status.",
+  "stats": {
+    "backend": "Backend",
+    "pid": "PID",
+    "ping": "Ping",
+    "platform": "Platform"
+  },
+  "backendError": "Backend error"
+}

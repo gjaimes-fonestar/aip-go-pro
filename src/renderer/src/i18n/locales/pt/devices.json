@@ -1,0 +1,54 @@
+{
+  "title": "Dispositivos",
+  "pageHeading": "Dispositivos de rede",
+  "pageSubtitle": "{{count}} registrados · clique duplo para configurar",
+  "selectDevice": "Selecione um dispositivo",
+  "doubleClickConfigure": "Clique duplo para configurar",
+  "lastSeen": "Última vez visto",
+  "deviceActions": "Ações do dispositivo",
+  "selectChannel": "Selecionar canal…",
+  "playChannel": "Reproduzir canal",
+  "stopPlayback": "Parar reprodução",
+  "noDevicesFilter": "Nenhum dispositivo corresponde ao filtro.",
+  "waitingAip": "Aguardando inicialização do AIP…",
+  "columns": {
+    "type": "Tipo",
+    "model": "Modelo",
+    "name": "Nome",
+    "status": "Status",
+    "channel": "Canal",
+    "volume": "Volume",
+    "ip": "IP",
+    "mac": "MAC",
+    "lastSeen": "Última vez visto"
+  },
+  "search": "Pesquisar…",
+  "badges": {
+    "online": "Online",
+    "sip": "SIP",
+    "volLocked": "Vol bloqueado",
+    "chLocked": "Canal bloqueado"
+  },
+  "types": {
+    "player": "Reprodutor",
+    "amplifier": "Amplificador",
+    "pcServer": "Servidor PC",
+    "microphone": "Microfone",
+    "proMicrophone": "Microfone Pro",
+    "intercom": "Interfone",
+    "gateway": "Gateway",
+    "transmitter": "Transmissor",
+    "webserver": "Servidor Web",
+    "soundMeter": "Sonômetro",
+    "sensorIO": "Sensor E/S",
+    "device": "Dispositivo"
+  },
+  "contextMenu": {
+    "configureDevice": "Configurar dispositivo",
+    "linkChannel": "Vincular canal",
+    "localChannels": "Canais locais",
+    "remoteChannels": "Remoto — {{mac}}",
+    "stopPlayback": "Parar reprodução",
+    "noChannels": "Nenhum canal disponível"
+  }
+}

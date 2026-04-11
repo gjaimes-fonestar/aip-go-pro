@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Badge } from '../components/ui/Badge'
 import CreateChannelModal, { type NewChannelForm } from '../components/channels/CreateChannelModal'
 import { useDevicesStore } from '../store/devices.store'
@@ -153,6 +154,7 @@ function TransportBtn({
 function DeleteConfirm({ name, onConfirm, onCancel }: {
   name: string; onConfirm: () => void; onCancel: () => void
 }) {
+  const { t } = useTranslation('channels')
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onCancel} />
@@ -163,23 +165,22 @@ function DeleteConfirm({ name, onConfirm, onCancel }: {
               d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
         </div>
-        <h3 className="text-base font-bold text-gray-900 dark:text-white">Delete channel</h3>
+        <h3 className="text-base font-bold text-gray-900 dark:text-white">{t('deleteChannel')}</h3>
         <p className="mt-1.5 text-sm text-gray-500 dark:text-gray-400">
-          Are you sure you want to delete <span className="font-semibold text-gray-700 dark:text-gray-300">"{name}"</span>?
-          This action cannot be undone.
+          {t('deleteChannelConfirm', { name })}
         </p>
         <div className="mt-5 flex gap-3 justify-end">
           <button
             onClick={onCancel}
             className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
           >
-            Cancel
+            {t('cancel')}
           </button>
           <button
             onClick={onConfirm}
             className="rounded-lg bg-red-500 px-4 py-2 text-sm font-semibold text-white hover:bg-red-600"
           >
-            Delete
+            {t('delete')}
           </button>
         </div>
       </div>
@@ -210,6 +211,7 @@ function ChannelRow({
   onDelete:      (id: number) => void
   onDismissError:(id: number) => void
 }) {
+  const { t } = useTranslation('channels')
   const [expanded, setExpanded]           = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
 
@@ -273,9 +275,9 @@ function ChannelRow({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="font-semibold text-gray-900 dark:text-white text-sm">{channel.name}</span>
-              <Badge label={SOURCE_LABEL[sourceType]} variant={SOURCE_VARIANT[sourceType]} />
-              {channel.loop    && <Badge label="Loop"    variant="default" />}
-              {channel.shuffle && <Badge label="Shuffle" variant="default" />}
+              <Badge label={t(`badges.${sourceType === 'windows' ? 'capture' : sourceType}` as 'badges.local' | 'badges.online' | 'badges.capture')} variant={SOURCE_VARIANT[sourceType]} />
+              {channel.loop    && <Badge label={t('badges.loop')}    variant="default" />}
+              {channel.shuffle && <Badge label={t('badges.shuffle')} variant="default" />}
             </div>
             <p className="mt-0.5 truncate text-xs text-gray-400 dark:text-gray-500">
               {isPlaying || isPaused
@@ -342,10 +344,10 @@ function ChannelRow({
               {/* Tracks */}
               <div className="p-4">
                 <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-                  <Ico.Music /> Tracks
+                  <Ico.Music /> {t('labels.tracks')}
                 </p>
                 {channel.urls.length === 0 ? (
-                  <p className="text-xs text-gray-400">No tracks.</p>
+                  <p className="text-xs text-gray-400">{t('labels.noTracks')}</p>
                 ) : (
                   <ul className="space-y-1">
                     {channel.urls.map((url, i) => (
@@ -376,10 +378,10 @@ function ChannelRow({
               {/* Devices */}
               <div className="border-t border-gray-100 p-4 sm:border-l sm:border-t-0 dark:border-gray-700">
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-                  Devices
+                  {t('labels.linkedDevices')}
                 </p>
                 {devices.length === 0 ? (
-                  <p className="text-xs text-gray-400 dark:text-gray-500">No devices online.</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">{t('labels.noDevices')}</p>
                 ) : (
                   <ul className="space-y-1">
                     {devices.map((d) => (
@@ -393,13 +395,13 @@ function ChannelRow({
                             onClick={() => window.electronAPI.aip.linkChannelToDevice(channel.id, d.mac).catch(console.error)}
                             className="rounded-md bg-primary px-2 py-1 text-xs font-medium text-white hover:bg-primary/90"
                           >
-                            Assign
+                            {t('assign')}
                           </button>
                           <button
                             onClick={() => window.electronAPI.aip.stopAudio(d.mac).catch(console.error)}
                             className="rounded-md border border-gray-200 px-2 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
                           >
-                            Stop
+                            {t('stop')}
                           </button>
                         </div>
                       </li>
@@ -428,6 +430,7 @@ function NetworkChannelRow({
   channel: AipNetworkChannel
   onRemove: (mac: string, channelNumber: number) => void
 }) {
+  const { t } = useTranslation('channels')
   const [confirmDelete, setConfirmDelete] = useState(false)
 
   return (
@@ -448,9 +451,9 @@ function NetworkChannelRow({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-semibold text-gray-900 dark:text-white text-sm">{channel.name}</span>
-            <Badge label={channel.local ? 'Local' : 'Remote'} variant={channel.local ? 'info' : 'default'} />
-            {channel.encrypted && <Badge label="Encrypted" variant="warning" />}
-            {channel.repeat    && <Badge label="Repeat"    variant="default" />}
+            <Badge label={channel.local ? t('badges.local') : t('badges.online')} variant={channel.local ? 'info' : 'default'} />
+            {channel.encrypted && <Badge label={t('badges.encrypted')} variant="warning" />}
+            {channel.repeat    && <Badge label={t('badges.repeat')}    variant="default" />}
           </div>
           <p className="mt-0.5 font-mono text-xs text-gray-400 dark:text-gray-500">
             {channel.multicastAddress}:{channel.port}
@@ -461,7 +464,7 @@ function NetworkChannelRow({
 
         {/* Source MAC */}
         <div className="hidden lg:block shrink-0 text-right">
-          <p className="text-xs text-gray-400 dark:text-gray-500">Source</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500">{t('labels.source')}</p>
           <p className="font-mono text-xs text-gray-600 dark:text-gray-300">{channel.sourceMac}</p>
         </div>
 
@@ -491,6 +494,7 @@ function formatCountdown(seconds: number): string {
 }
 
 export default function Channels() {
+  const { t } = useTranslation('channels')
   const { aipReady, entries, discoveryStartedAt } = useDevicesStore()
 
   const [activeTab, setActiveTab] = useState<'playback' | 'network'>('playback')
@@ -667,7 +671,7 @@ export default function Channels() {
         {/* Header */}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white">Channels</h1>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t('title')}</h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">
               {activeTab === 'playback'
                 ? <>{channels.length} channel{channels.length !== 1 ? 's' : ''}{playingCount > 0 && <> · <span className="text-green-600 dark:text-green-400 font-medium">{playingCount} playing</span></>}</>
@@ -687,7 +691,7 @@ export default function Channels() {
                     : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
                 }`}
               >
-                Playback
+                {t('tabs.playback')}
               </button>
               <button
                 onClick={() => { setActiveTab('network'); refreshNetworkChannels().catch(console.error) }}
@@ -697,7 +701,7 @@ export default function Channels() {
                     : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
                 }`}
               >
-                Network
+                {t('tabs.network')}
               </button>
             </div>
 
@@ -721,7 +725,7 @@ export default function Channels() {
                     <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                     </svg>
-                    Create channel
+                    {t('actions.createChannel')}
                   </>
                 )}
               </button>
@@ -731,14 +735,14 @@ export default function Channels() {
               <button
                 onClick={() => refreshNetworkChannels().catch(console.error)}
                 disabled={!aipReady}
-                title="Refresh"
+                title={t('actions.refresh')}
                 className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors shadow-sm disabled:opacity-40 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
               >
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                     d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
-                Refresh
+                {t('actions.refresh')}
               </button>
             )}
           </div>
@@ -748,8 +752,8 @@ export default function Channels() {
         {activeTab === 'playback' && (
           !aipReady ? (
             <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 bg-white py-16 dark:border-gray-700 dark:bg-gray-800">
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">AIP not initialized</p>
-              <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">Go to Devices to initialize AIP first.</p>
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{t('empty.notInitialized')}</p>
+              <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">{t('empty.goToDevices')}</p>
             </div>
           ) : discovering ? (
             <div className="flex flex-col items-center justify-center gap-4 rounded-xl border border-blue-200 bg-blue-50 py-16 dark:border-blue-800 dark:bg-blue-900/20">
@@ -759,13 +763,13 @@ export default function Channels() {
               </svg>
               <div className="text-center">
                 <p className="text-sm font-semibold text-blue-700 dark:text-blue-300">
-                  Discovering network channels…
+                  {t('status.discovering')}
                 </p>
                 <p className="mt-1 text-xs text-blue-500 dark:text-blue-400">
-                  Channel creation available in {formatCountdown(secondsLeft)}
+                  {t('status.available', { countdown: formatCountdown(secondsLeft) })}
                 </p>
                 <p className="mt-0.5 text-xs text-blue-400 dark:text-blue-500">
-                  Requesting all streams every 30 seconds
+                  {t('status.requestingStreams')}
                 </p>
               </div>
               {channels.length > 0 && (
@@ -780,8 +784,8 @@ export default function Channels() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
                   d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.14 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
               </svg>
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">No channels yet</p>
-              <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">Click "Create channel" to add the first one.</p>
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{t('empty.noChannels')}</p>
+              <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">{t('empty.clickCreate')}</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -809,8 +813,8 @@ export default function Channels() {
         {activeTab === 'network' && (
           !aipReady ? (
             <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 bg-white py-16 dark:border-gray-700 dark:bg-gray-800">
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">AIP not initialized</p>
-              <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">Go to Devices to initialize AIP first.</p>
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{t('empty.notInitialized')}</p>
+              <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">{t('empty.goToDevices')}</p>
             </div>
           ) : networkChannels.length === 0 ? (
             <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 bg-white py-16 dark:border-gray-700 dark:bg-gray-800">

@@ -1,0 +1,24 @@
+{
+  "buttons": {
+    "create": "创建",
+    "cancel": "取消",
+    "apply": "应用",
+    "delete": "删除",
+    "save": "保存",
+    "download": "下载",
+    "refresh": "刷新",
+    "configure": "配置",
+    "stop": "停止",
+    "dismiss": "关闭",
+    "upload": "上传"
+  },
+  "status": {
+    "online": "在线",
+    "offline": "离线",
+    "ready": "就绪",
+    "starting": "启动中",
+    "error": "错误",
+    "stopped": "已停止",
+    "playing": "播放中"
+  }
+}

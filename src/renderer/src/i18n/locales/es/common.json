@@ -1,0 +1,24 @@
+{
+  "buttons": {
+    "create": "Crear",
+    "cancel": "Cancelar",
+    "apply": "Aplicar",
+    "delete": "Eliminar",
+    "save": "Guardar",
+    "download": "Descargar",
+    "refresh": "Actualizar",
+    "configure": "Configurar",
+    "stop": "Detener",
+    "dismiss": "Cerrar",
+    "upload": "Subir"
+  },
+  "status": {
+    "online": "En línea",
+    "offline": "Desconectado",
+    "ready": "Listo",
+    "starting": "Iniciando",
+    "error": "Error",
+    "stopped": "Detenido",
+    "playing": "reproduciendo"
+  }
+}

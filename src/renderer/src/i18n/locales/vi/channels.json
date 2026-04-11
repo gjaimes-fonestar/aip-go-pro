@@ -1,0 +1,75 @@
+{
+  "title": "Kênh",
+  "tabs": {
+    "playback": "Phát lại",
+    "network": "Mạng"
+  },
+  "actions": {
+    "createChannel": "Tạo kênh",
+    "refresh": "Làm mới"
+  },
+  "status": {
+    "discovering": "Đang tìm kênh mạng…",
+    "available": "Tạo kênh khả dụng sau {{countdown}}",
+    "requestingStreams": "Yêu cầu tất cả stream mỗi 30 giây"
+  },
+  "empty": {
+    "notInitialized": "AIP chưa được khởi tạo",
+    "goToDevices": "Vào Thiết bị để khởi tạo AIP trước.",
+    "noChannels": "Chưa có kênh nào",
+    "clickCreate": "Nhấn \"Tạo kênh\" để thêm kênh đầu tiên."
+  },
+  "badges": {
+    "local": "Cục bộ",
+    "online": "Trực tuyến",
+    "capture": "Ghi âm",
+    "loop": "Lặp",
+    "shuffle": "Ngẫu nhiên",
+    "encrypted": "Đã mã hóa",
+    "repeat": "Lặp lại"
+  },
+  "labels": {
+    "source": "Nguồn",
+    "tracks": "Bản nhạc",
+    "linkedDevices": "Thiết bị liên kết",
+    "noTracks": "Không có bản nhạc.",
+    "noDevices": "Không có thiết bị trực tuyến."
+  },
+  "quality": {
+    "low": "Thấp",
+    "normal": "Bình thường",
+    "high": "Cao"
+  },
+  "audio": {
+    "mono": "Mono",
+    "stereo": "Stereo"
+  },
+  "deleteChannel": "Xóa kênh",
+  "deleteChannelConfirm": "Bạn có chắc muốn xóa \"{{name}}\"? Hành động này không thể hoàn tác.",
+  "cancel": "Hủy",
+  "delete": "Xóa",
+  "assign": "Gán",
+  "stop": "Dừng",
+  "modal": {
+    "title": "Kênh âm thanh mới",
+    "name": "Tên",
+    "namePlaceholder": "vd: Kênh 1",
+    "audioSources": "Nguồn âm thanh",
+    "local": "Cục bộ",
+    "startWith": "Bắt đầu với",
+    "files": "Tệp",
+    "playlist": "Danh sách phát",
+    "online": "Trực tuyến",
+    "streamPlaceholder": "URL stream http:// hoặc rtsp://",
+    "windowsCapture": "Ghi âm Windows",
+    "audioStreaming": "Phát trực tuyến âm thanh",
+    "quality": "Chất lượng",
+    "options": "Tùy chọn",
+    "startOnCreate": "Bắt đầu khi tạo kênh",
+    "permanent": "Tạo làm kênh vĩnh viễn",
+    "restoreDevices": "Khôi phục danh sách thiết bị",
+    "restoreState": "Khôi phục trạng thái phát",
+    "loopAll": "Lặp tất cả",
+    "shuffle": "Ngẫu nhiên"
+  }
+}

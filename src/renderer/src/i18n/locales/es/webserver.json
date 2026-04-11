@@ -1,0 +1,56 @@
+{
+  "tabs": {
+    "extensions": "Extensiones SIP",
+    "conferences": "Conferencias SIP",
+    "files": "Archivos"
+  },
+  "empty": {
+    "title": "No hay Pasarela ni Servidor web seleccionado",
+    "help": "Selecciona un dispositivo AIP-GATE o AIP-WEB en la página de Dispositivos, luego haz doble clic o clic en Configurar para gestionarlo aquí."
+  },
+  "warnings": {
+    "dhcp": "Este dispositivo tiene configuración IP dinámica (DHCP). Si el router asigna una IP diferente, las extensiones SIP no podrán conectarse. Se recomienda asignar una IP fija para evitar esto."
+  },
+  "extensions": {
+    "create": "Crear extensión SIP",
+    "delete": "Eliminar extensión",
+    "form": {
+      "number": "Número de extensión",
+      "numberPlaceholder": "ej. 113",
+      "username": "Nombre / usuario de extensión",
+      "usernamePlaceholder": "ej. player113",
+      "password": "Contraseña SIP",
+      "mac": "MAC del dispositivo asignado (opcional)",
+      "macPlaceholder": "AA:BB:CC:DD:EE:FF"
+    }
+  },
+  "conferences": {
+    "create": "Crear conferencia",
+    "addExtension": "Añadir extensión a conferencia",
+    "empty": "Sin conferencias",
+    "noExtensions": "No hay extensiones añadidas aún",
+    "selectConference": "Selecciona una conferencia para ver sus extensiones",
+    "title": "Conferencia {{number}}",
+    "participants_one": "{{count}} participante",
+    "participants_other": "{{count}} participantes",
+    "form": {
+      "number": "Número de conferencia",
+      "numberPlaceholder": "ej. 100",
+      "name": "Nombre de conferencia",
+      "namePlaceholder": "ej. Sala principal"
+    }
+  },
+  "files": {
+    "categories": {
+      "messages": "Mensajes",
+      "events": "Eventos",
+      "bgm": "Música de fondo"
+    },
+    "empty": "No hay archivos en el dispositivo",
+    "noTransfers": "Sin transferencias activas",
+    "transferHelp": "Usa los controles de abajo para subir o descargar",
+    "remotePath": "Ruta remota (opcional)",
+    "save": "Guardar archivo",
+    "saveDownloaded": "Guardar archivo descargado"
+  }
+}

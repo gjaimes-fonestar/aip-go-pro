@@ -1,0 +1,24 @@
+{
+  "groups": {
+    "network": "Mạng",
+    "audio": "Âm thanh",
+    "automation": "Tự động hóa",
+    "system": "Hệ thống"
+  },
+  "items": {
+    "devices": "Thiết bị",
+    "channels": "Kênh",
+    "sipDevices": "Thiết bị SIP",
+    "webserver": "Máy chủ Web",
+    "messages": "Tin nhắn",
+    "sonometers": "Máy đo âm",
+    "actionControl": "Điều khiển hành động",
+    "events": "Sự kiện",
+    "scenes": "Cảnh",
+    "transfers": "Truyền tệp",
+    "log": "Nhật ký"
+  },
+  "footer": {
+    "backend": "Backend"
+  }
+}

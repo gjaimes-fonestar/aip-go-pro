@@ -1,0 +1,56 @@
+{
+  "tabs": {
+    "extensions": "SIP Extensions",
+    "conferences": "SIP Conferences",
+    "files": "Files"
+  },
+  "empty": {
+    "title": "No Gateway or Webserver selected",
+    "help": "Select an AIP-GATE or AIP-WEB device in the Devices page, then double-click or click Configure to manage it here."
+  },
+  "warnings": {
+    "dhcp": "This device has a dynamic IP configuration (DHCP). If the router assigns a different IP, SIP extensions will be unable to connect. It is recommended to assign a fixed IP to avoid this."
+  },
+  "extensions": {
+    "create": "Create SIP extension",
+    "delete": "Delete extension",
+    "form": {
+      "number": "Extension number",
+      "numberPlaceholder": "e.g. 113",
+      "username": "Extension name / username",
+      "usernamePlaceholder": "e.g. player113",
+      "password": "SIP password",
+      "mac": "Assigned device MAC (optional)",
+      "macPlaceholder": "AA:BB:CC:DD:EE:FF"
+    }
+  },
+  "conferences": {
+    "create": "Create conference",
+    "addExtension": "Add extension to conference",
+    "empty": "No conferences",
+    "noExtensions": "No extensions added yet",
+    "selectConference": "Select a conference to see its extensions",
+    "title": "Conference {{number}}",
+    "participants_one": "{{count}} participant",
+    "participants_other": "{{count}} participants",
+    "form": {
+      "number": "Conference number",
+      "numberPlaceholder": "e.g. 100",
+      "name": "Conference name",
+      "namePlaceholder": "e.g. Main Room"
+    }
+  },
+  "files": {
+    "categories": {
+      "messages": "Messages",
+      "events": "Events",
+      "bgm": "Background Music"
+    },
+    "empty": "No files on device",
+    "noTransfers": "No active transfers",
+    "transferHelp": "Use the controls below to upload or download",
+    "remotePath": "Remote path (optional)",
+    "save": "Save file",
+    "saveDownloaded": "Save downloaded file"
+  }
+}

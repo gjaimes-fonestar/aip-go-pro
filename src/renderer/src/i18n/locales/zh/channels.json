@@ -1,0 +1,75 @@
+{
+  "title": "频道",
+  "tabs": {
+    "playback": "播放",
+    "network": "网络"
+  },
+  "actions": {
+    "createChannel": "创建频道",
+    "refresh": "刷新"
+  },
+  "status": {
+    "discovering": "正在发现网络频道…",
+    "available": "频道创建将在 {{countdown}} 后可用",
+    "requestingStreams": "每 30 秒请求所有流"
+  },
+  "empty": {
+    "notInitialized": "AIP 未初始化",
+    "goToDevices": "请先前往设备页面初始化 AIP。",
+    "noChannels": "暂无频道",
+    "clickCreate": "点击\"创建频道\"添加第一个频道。"
+  },
+  "badges": {
+    "local": "本地",
+    "online": "在线",
+    "capture": "采集",
+    "loop": "循环",
+    "shuffle": "随机",
+    "encrypted": "已加密",
+    "repeat": "重复"
+  },
+  "labels": {
+    "source": "来源",
+    "tracks": "曲目",
+    "linkedDevices": "关联设备",
+    "noTracks": "无曲目。",
+    "noDevices": "无在线设备。"
+  },
+  "quality": {
+    "low": "低",
+    "normal": "正常",
+    "high": "高"
+  },
+  "audio": {
+    "mono": "单声道",
+    "stereo": "立体声"
+  },
+  "deleteChannel": "删除频道",
+  "deleteChannelConfirm": "确定要删除\"{{name}}\"吗？此操作无法撤销。",
+  "cancel": "取消",
+  "delete": "删除",
+  "assign": "分配",
+  "stop": "停止",
+  "modal": {
+    "title": "新建音频频道",
+    "name": "名称",
+    "namePlaceholder": "例：频道 1",
+    "audioSources": "音频来源",
+    "local": "本地",
+    "startWith": "开始方式",
+    "files": "文件",
+    "playlist": "播放列表",
+    "online": "在线",
+    "streamPlaceholder": "http:// 或 rtsp:// 流地址",
+    "windowsCapture": "Windows 音频采集",
+    "audioStreaming": "音频流",
+    "quality": "质量",
+    "options": "选项",
+    "startOnCreate": "创建后立即启动",
+    "permanent": "创建为永久频道",
+    "restoreDevices": "恢复设备列表",
+    "restoreState": "恢复播放状态",
+    "loopAll": "全部循环",
+    "shuffle": "随机播放"
+  }
+}

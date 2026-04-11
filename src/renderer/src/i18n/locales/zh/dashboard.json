@@ -1,0 +1,11 @@
+{
+  "title": "仪表板",
+  "subtitle": "AIP Go 后端和系统状态概览。",
+  "stats": {
+    "backend": "后端",
+    "pid": "PID",
+    "ping": "Ping",
+    "platform": "平台"
+  },
+  "backendError": "后端错误"
+}

@@ -1,0 +1,56 @@
+{
+  "tabs": {
+    "extensions": "Ramais SIP",
+    "conferences": "Conferências SIP",
+    "files": "Arquivos"
+  },
+  "empty": {
+    "title": "Nenhum Gateway ou Servidor Web selecionado",
+    "help": "Selecione um dispositivo AIP-GATE ou AIP-WEB na página de Dispositivos, depois clique duas vezes ou clique em Configurar para gerenciá-lo aqui."
+  },
+  "warnings": {
+    "dhcp": "Este dispositivo tem configuração IP dinâmica (DHCP). Se o roteador atribuir um IP diferente, os ramais SIP não conseguirão se conectar. Recomenda-se atribuir um IP fixo para evitar isso."
+  },
+  "extensions": {
+    "create": "Criar ramal SIP",
+    "delete": "Excluir ramal",
+    "form": {
+      "number": "Número do ramal",
+      "numberPlaceholder": "ex: 113",
+      "username": "Nome / usuário do ramal",
+      "usernamePlaceholder": "ex: player113",
+      "password": "Senha SIP",
+      "mac": "MAC do dispositivo atribuído (opcional)",
+      "macPlaceholder": "AA:BB:CC:DD:EE:FF"
+    }
+  },
+  "conferences": {
+    "create": "Criar conferência",
+    "addExtension": "Adicionar ramal à conferência",
+    "empty": "Nenhuma conferência",
+    "noExtensions": "Nenhum ramal adicionado ainda",
+    "selectConference": "Selecione uma conferência para ver seus ramais",
+    "title": "Conferência {{number}}",
+    "participants_one": "{{count}} participante",
+    "participants_other": "{{count}} participantes",
+    "form": {
+      "number": "Número da conferência",
+      "numberPlaceholder": "ex: 100",
+      "name": "Nome da conferência",
+      "namePlaceholder": "ex: Sala principal"
+    }
+  },
+  "files": {
+    "categories": {
+      "messages": "Mensagens",
+      "events": "Eventos",
+      "bgm": "Música de Fundo"
+    },
+    "empty": "Nenhum arquivo no dispositivo",
+    "noTransfers": "Nenhuma transferência ativa",
+    "transferHelp": "Use os controles abaixo para enviar ou baixar",
+    "remotePath": "Caminho remoto (opcional)",
+    "save": "Salvar arquivo",
+    "saveDownloaded": "Salvar arquivo baixado"
+  }
+}

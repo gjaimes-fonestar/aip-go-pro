@@ -1,0 +1,75 @@
+{
+  "title": "Channels",
+  "tabs": {
+    "playback": "Playback",
+    "network": "Network"
+  },
+  "actions": {
+    "createChannel": "Create channel",
+    "refresh": "Refresh"
+  },
+  "status": {
+    "discovering": "Discovering network channels…",
+    "available": "Channel creation available in {{countdown}}",
+    "requestingStreams": "Requesting all streams every 30 seconds"
+  },
+  "empty": {
+    "notInitialized": "AIP not initialized",
+    "goToDevices": "Go to Devices to initialize AIP first.",
+    "noChannels": "No channels yet",
+    "clickCreate": "Click \"Create channel\" to add the first one."
+  },
+  "badges": {
+    "local": "Local",
+    "online": "Online",
+    "capture": "Capture",
+    "loop": "Loop",
+    "shuffle": "Shuffle",
+    "encrypted": "Encrypted",
+    "repeat": "Repeat"
+  },
+  "labels": {
+    "source": "Source",
+    "tracks": "Tracks",
+    "linkedDevices": "Linked devices",
+    "noTracks": "No tracks.",
+    "noDevices": "No devices online."
+  },
+  "quality": {
+    "low": "Low",
+    "normal": "Normal",
+    "high": "High"
+  },
+  "audio": {
+    "mono": "Mono",
+    "stereo": "Stereo"
+  },
+  "deleteChannel": "Delete channel",
+  "deleteChannelConfirm": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
+  "cancel": "Cancel",
+  "delete": "Delete",
+  "assign": "Assign",
+  "stop": "Stop",
+  "modal": {
+    "title": "New audio channel",
+    "name": "Name",
+    "namePlaceholder": "e.g. Channel 1",
+    "audioSources": "Audio sources",
+    "local": "Local",
+    "startWith": "Start with",
+    "files": "Files",
+    "playlist": "Playlist",
+    "online": "Online",
+    "streamPlaceholder": "http:// or rtsp:// stream URL",
+    "windowsCapture": "Windows audio capture",
+    "audioStreaming": "Audio streaming",
+    "quality": "Quality",
+    "options": "Options",
+    "startOnCreate": "Start when channel is created",
+    "permanent": "Create as permanent channel",
+    "restoreDevices": "Restore device list",
+    "restoreState": "Restore playback state",
+    "loopAll": "Loop all",
+    "shuffle": "Shuffle"
+  }
+}

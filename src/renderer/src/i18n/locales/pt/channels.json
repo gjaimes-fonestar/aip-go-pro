@@ -1,0 +1,75 @@
+{
+  "title": "Canais",
+  "tabs": {
+    "playback": "Reprodução",
+    "network": "Rede"
+  },
+  "actions": {
+    "createChannel": "Criar canal",
+    "refresh": "Atualizar"
+  },
+  "status": {
+    "discovering": "Descobrindo canais de rede…",
+    "available": "Criação de canal disponível em {{countdown}}",
+    "requestingStreams": "Solicitando todos os streams a cada 30 segundos"
+  },
+  "empty": {
+    "notInitialized": "AIP não inicializado",
+    "goToDevices": "Vá para Dispositivos para inicializar o AIP primeiro.",
+    "noChannels": "Nenhum canal ainda",
+    "clickCreate": "Clique em \"Criar canal\" para adicionar o primeiro."
+  },
+  "badges": {
+    "local": "Local",
+    "online": "Online",
+    "capture": "Captura",
+    "loop": "Loop",
+    "shuffle": "Aleatório",
+    "encrypted": "Criptografado",
+    "repeat": "Repetir"
+  },
+  "labels": {
+    "source": "Fonte",
+    "tracks": "Faixas",
+    "linkedDevices": "Dispositivos vinculados",
+    "noTracks": "Sem faixas.",
+    "noDevices": "Nenhum dispositivo online."
+  },
+  "quality": {
+    "low": "Baixa",
+    "normal": "Normal",
+    "high": "Alta"
+  },
+  "audio": {
+    "mono": "Mono",
+    "stereo": "Estéreo"
+  },
+  "deleteChannel": "Excluir canal",
+  "deleteChannelConfirm": "Tem certeza que deseja excluir \"{{name}}\"? Esta ação não pode ser desfeita.",
+  "cancel": "Cancelar",
+  "delete": "Excluir",
+  "assign": "Atribuir",
+  "stop": "Parar",
+  "modal": {
+    "title": "Novo canal de áudio",
+    "name": "Nome",
+    "namePlaceholder": "ex: Canal 1",
+    "audioSources": "Fontes de áudio",
+    "local": "Local",
+    "startWith": "Iniciar com",
+    "files": "Arquivos",
+    "playlist": "Lista de reprodução",
+    "online": "Online",
+    "streamPlaceholder": "URL do stream http:// ou rtsp://",
+    "windowsCapture": "Captura de áudio do Windows",
+    "audioStreaming": "Streaming de áudio",
+    "quality": "Qualidade",
+    "options": "Opções",
+    "startOnCreate": "Iniciar ao criar o canal",
+    "permanent": "Criar como canal permanente",
+    "restoreDevices": "Restaurar lista de dispositivos",
+    "restoreState": "Restaurar estado de reprodução",
+    "loopAll": "Repetir tudo",
+    "shuffle": "Aleatório"
+  }
+}

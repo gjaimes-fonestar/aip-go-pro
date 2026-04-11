@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -96,6 +97,7 @@ function CheckOption({
 // ─── Modal ────────────────────────────────────────────────────────────────────
 
 export default function CreateChannelModal({ open, onClose, onCreate }: Props) {
+  const { t } = useTranslation('channels')
   const [form, setForm] = useState<NewChannelForm>(DEFAULTS)
   const nameRef = useRef<HTMLInputElement>(null)
 
@@ -130,7 +132,7 @@ export default function CreateChannelModal({ open, onClose, onCreate }: Props) {
       <div className="relative z-10 w-full max-w-md rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900 flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4 dark:border-gray-700">
-          <h2 className="text-base font-bold text-gray-900 dark:text-white">New audio channel</h2>
+          <h2 className="text-base font-bold text-gray-900 dark:text-white">{t('modal.title')}</h2>
           <button
             onClick={onClose}
             className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800"
@@ -147,7 +149,7 @@ export default function CreateChannelModal({ open, onClose, onCreate }: Props) {
           {/* Name */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-              Name
+              {t('modal.name')}
             </label>
             <input
               ref={nameRef}
@@ -155,36 +157,36 @@ export default function CreateChannelModal({ open, onClose, onCreate }: Props) {
               value={form.name}
               onChange={(e) => set('name', e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
-              placeholder="e.g. Channel 1"
+              placeholder={t('modal.namePlaceholder')}
               className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-gray-600 dark:bg-gray-800 dark:text-white"
             />
           </div>
 
           {/* Audio sources */}
           <div>
-            <SectionLabel>Audio sources</SectionLabel>
+            <SectionLabel>{t('modal.audioSources')}</SectionLabel>
             <div className="space-y-2.5">
               <RadioOption
-                label="Local"
+                label={t('modal.local')}
                 checked={form.sourceType === 'local'}
                 onChange={() => set('sourceType', 'local')}
               />
               {form.sourceType === 'local' && (
                 <div className="ml-6 flex items-center gap-3">
-                  <span className="text-xs text-gray-500 dark:text-gray-400">Start with</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">{t('modal.startWith')}</span>
                   <select
                     value={form.startWith}
                     onChange={(e) => set('startWith', e.target.value as StartWith)}
                     className="h-8 rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 focus:border-primary focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
                   >
-                    <option value="files">Files</option>
-                    <option value="playlist">Playlist</option>
+                    <option value="files">{t('modal.files')}</option>
+                    <option value="playlist">{t('modal.playlist')}</option>
                   </select>
                 </div>
               )}
 
               <RadioOption
-                label="Online"
+                label={t('modal.online')}
                 checked={form.sourceType === 'online'}
                 onChange={() => set('sourceType', 'online')}
               />
@@ -194,14 +196,14 @@ export default function CreateChannelModal({ open, onClose, onCreate }: Props) {
                     type="text"
                     value={form.streamUrl}
                     onChange={(e) => set('streamUrl', e.target.value)}
-                    placeholder="http:// or rtsp:// stream URL"
+                    placeholder={t('modal.streamPlaceholder')}
                     className="w-full rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs text-gray-900 placeholder-gray-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                   />
                 </div>
               )}
 
               <RadioOption
-                label="Windows audio capture"
+                label={t('modal.windowsCapture')}
                 checked={form.sourceType === 'windows'}
                 onChange={() => set('sourceType', 'windows')}
               />
@@ -222,62 +224,62 @@ export default function CreateChannelModal({ open, onClose, onCreate }: Props) {
 
           {/* Audio streaming */}
           <div>
-            <SectionLabel>Audio streaming</SectionLabel>
+            <SectionLabel>{t('modal.audioStreaming')}</SectionLabel>
             <div className="space-y-3">
               <div className="flex items-center gap-3">
-                <span className="text-xs text-gray-500 dark:text-gray-400 w-12">Quality</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400 w-12">{t('modal.quality')}</span>
                 <select
                   value={form.quality}
                   onChange={(e) => set('quality', e.target.value as Quality)}
                   className="h-8 rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 focus:border-primary focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
                 >
-                  <option value="low">Low</option>
-                  <option value="normal">Normal</option>
-                  <option value="high">High</option>
+                  <option value="low">{t('quality.low')}</option>
+                  <option value="normal">{t('quality.normal')}</option>
+                  <option value="high">{t('quality.high')}</option>
                 </select>
               </div>
 
               <div className="flex items-center gap-5">
                 <RadioOption
-                  label="Mono"
+                  label={t('audio.mono')}
                   checked={form.audioChannels === 'mono'}
                   onChange={() => set('audioChannels', 'mono')}
                 />
                 <RadioOption
-                  label="Stereo"
+                  label={t('audio.stereo')}
                   checked={form.audioChannels === 'stereo'}
                   onChange={() => set('audioChannels', 'stereo')}
                 />
               </div>
 
-              <CheckOption label="Loop all"  checked={form.loopAll}  onChange={(v) => set('loopAll', v)} />
-              <CheckOption label="Shuffle"   checked={form.shuffle}  onChange={(v) => set('shuffle', v)} />
+              <CheckOption label={t('modal.loopAll')} checked={form.loopAll}  onChange={(v) => set('loopAll', v)} />
+              <CheckOption label={t('modal.shuffle')} checked={form.shuffle}  onChange={(v) => set('shuffle', v)} />
             </div>
           </div>
 
           {/* Options */}
           <div>
-            <SectionLabel>Options</SectionLabel>
+            <SectionLabel>{t('modal.options')}</SectionLabel>
             <div className="space-y-2.5">
               <CheckOption
-                label="Start when channel is created"
+                label={t('modal.startOnCreate')}
                 checked={form.startOnCreate}
                 onChange={(v) => set('startOnCreate', v)}
               />
               <CheckOption
-                label="Create as permanent channel"
+                label={t('modal.permanent')}
                 checked={form.permanent}
                 onChange={(v) => set('permanent', v)}
               />
               <div className="ml-6 space-y-2">
                 <CheckOption
-                  label="Restore device list"
+                  label={t('modal.restoreDevices')}
                   checked={form.restoreDevices}
                   onChange={(v) => set('restoreDevices', v)}
                   disabled={!form.permanent}
                 />
                 <CheckOption
-                  label="Restore playback state"
+                  label={t('modal.restoreState')}
                   checked={form.restoreState}
                   onChange={(v) => set('restoreState', v)}
                   disabled={!form.permanent}
@@ -293,14 +295,14 @@ export default function CreateChannelModal({ open, onClose, onCreate }: Props) {
             onClick={onClose}
             className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
           >
-            Cancel
+            {t('cancel')}
           </button>
           <button
             onClick={handleCreate}
             disabled={!form.name.trim()}
             className="rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-white hover:bg-primary-600 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
           >
-            Create
+            {t('buttons.create', { ns: 'common' })}
           </button>
         </div>
       </div>

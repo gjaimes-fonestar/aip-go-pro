@@ -1,0 +1,56 @@
+{
+  "tabs": {
+    "extensions": "Số nội bộ SIP",
+    "conferences": "Hội nghị SIP",
+    "files": "Tệp"
+  },
+  "empty": {
+    "title": "Chưa chọn Gateway hoặc Máy chủ Web",
+    "help": "Chọn thiết bị AIP-GATE hoặc AIP-WEB trong trang Thiết bị, sau đó nhấp đúp hoặc nhấp Cấu hình để quản lý ở đây."
+  },
+  "warnings": {
+    "dhcp": "Thiết bị này có cấu hình IP động (DHCP). Nếu router cấp IP khác, các số nội bộ SIP sẽ không thể kết nối. Khuyến nghị cấp IP tĩnh để tránh sự cố này."
+  },
+  "extensions": {
+    "create": "Tạo số nội bộ SIP",
+    "delete": "Xóa số nội bộ",
+    "form": {
+      "number": "Số nội bộ",
+      "numberPlaceholder": "vd: 113",
+      "username": "Tên / tên đăng nhập số nội bộ",
+      "usernamePlaceholder": "vd: player113",
+      "password": "Mật khẩu SIP",
+      "mac": "MAC thiết bị được gán (tùy chọn)",
+      "macPlaceholder": "AA:BB:CC:DD:EE:FF"
+    }
+  },
+  "conferences": {
+    "create": "Tạo hội nghị",
+    "addExtension": "Thêm số nội bộ vào hội nghị",
+    "empty": "Chưa có hội nghị",
+    "noExtensions": "Chưa có số nội bộ nào được thêm",
+    "selectConference": "Chọn một hội nghị để xem số nội bộ",
+    "title": "Hội nghị {{number}}",
+    "participants_one": "{{count}} người tham gia",
+    "participants_other": "{{count}} người tham gia",
+    "form": {
+      "number": "Số hội nghị",
+      "numberPlaceholder": "vd: 100",
+      "name": "Tên hội nghị",
+      "namePlaceholder": "vd: Phòng họp chính"
+    }
+  },
+  "files": {
+    "categories": {
+      "messages": "Tin nhắn",
+      "events": "Sự kiện",
+      "bgm": "Nhạc nền"
+    },
+    "empty": "Không có tệp trên thiết bị",
+    "noTransfers": "Không có truyền tệp đang hoạt động",
+    "transferHelp": "Dùng các nút bên dưới để tải lên hoặc tải xuống",
+    "remotePath": "Đường dẫn từ xa (tùy chọn)",
+    "save": "Lưu tệp",
+    "saveDownloaded": "Lưu tệp đã tải xuống"
+  }
+}

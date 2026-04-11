@@ -1,0 +1,54 @@
+{
+  "title": "Thiết bị",
+  "pageHeading": "Thiết bị mạng",
+  "pageSubtitle": "{{count}} đã đăng ký · nhấp đúp để cấu hình",
+  "selectDevice": "Chọn một thiết bị",
+  "doubleClickConfigure": "Nhấp đúp để cấu hình",
+  "lastSeen": "Lần cuối thấy",
+  "deviceActions": "Thao tác thiết bị",
+  "selectChannel": "Chọn kênh…",
+  "playChannel": "Phát kênh",
+  "stopPlayback": "Dừng phát",
+  "noDevicesFilter": "Không có thiết bị nào khớp bộ lọc.",
+  "waitingAip": "Đang chờ khởi tạo AIP…",
+  "columns": {
+    "type": "Loại",
+    "model": "Model",
+    "name": "Tên",
+    "status": "Trạng thái",
+    "channel": "Kênh",
+    "volume": "Âm lượng",
+    "ip": "IP",
+    "mac": "MAC",
+    "lastSeen": "Lần cuối thấy"
+  },
+  "search": "Tìm kiếm…",
+  "badges": {
+    "online": "Trực tuyến",
+    "sip": "SIP",
+    "volLocked": "Khóa âm lượng",
+    "chLocked": "Khóa kênh"
+  },
+  "types": {
+    "player": "Máy phát",
+    "amplifier": "Bộ khuếch đại",
+    "pcServer": "Máy chủ PC",
+    "microphone": "Micrô",
+    "proMicrophone": "Micrô Pro",
+    "intercom": "Intercom",
+    "gateway": "Cổng kết nối",
+    "transmitter": "Máy phát sóng",
+    "webserver": "Máy chủ Web",
+    "soundMeter": "Máy đo âm",
+    "sensorIO": "Cảm biến I/O",
+    "device": "Thiết bị"
+  },
+  "contextMenu": {
+    "configureDevice": "Cấu hình thiết bị",
+    "linkChannel": "Liên kết kênh",
+    "localChannels": "Kênh cục bộ",
+    "remoteChannels": "Từ xa — {{mac}}",
+    "stopPlayback": "Dừng phát",
+    "noChannels": "Không có kênh nào"
+  }
+}

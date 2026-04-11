@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAppStore } from '../store/app.store'
 import { api } from '../api/client'
 
 interface PingResponse {
   message: string
 }
-
-// ─── Stat card ────────────────────────────────────────────────────────────────
 
 type CardColor = 'blue' | 'green' | 'purple' | 'amber' | 'gray'
 
@@ -38,9 +37,8 @@ function StatCard({
   )
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
-
 export default function Dashboard() {
+  const { t } = useTranslation('dashboard')
   const backend = useAppStore((s) => s.backend)
   const [ping, setPing] = useState<string>('—')
 
@@ -58,35 +56,32 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Overview of the AIP Go backend and system status.
-        </p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('title')}</h1>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t('subtitle')}</p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
-          title="Backend"
+          title={t('stats.backend')}
           value={backend.status}
           color={
             backend.status === 'ready'    ? 'green'  :
-            backend.status === 'starting' ? 'amber'  :
-            backend.status === 'error'    ? 'gray'   : 'gray'
+            backend.status === 'starting' ? 'amber'  : 'gray'
           }
           subtitle={backend.url ?? undefined}
         />
         <StatCard
-          title="PID"
+          title={t('stats.pid')}
           value={backend.pid ? String(backend.pid) : '—'}
           color="blue"
         />
         <StatCard
-          title="Ping"
+          title={t('stats.ping')}
           value={ping}
           color="purple"
         />
         <StatCard
-          title="Platform"
+          title={t('stats.platform')}
           value={window.navigator.platform}
           color="amber"
         />
@@ -94,7 +89,7 @@ export default function Dashboard() {
 
       {backend.error && (
         <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
-          <strong>Backend error:</strong> {backend.error}
+          <strong>{t('backendError')}:</strong> {backend.error}
         </div>
       )}
     </div>

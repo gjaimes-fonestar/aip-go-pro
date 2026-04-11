@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Badge } from '../components/ui/Badge'
 import { VolumeBar } from '../components/ui/VolumeBar'
 import { InterfaceSelectModal } from '../components/ui/InterfaceSelectModal'
@@ -46,6 +47,24 @@ function devTypeCaps(type: number): DevTypeCaps {
   }
 }
 
+/** Returns the i18n key for the human-readable device type label. */
+function devTypeLabelKey(type: number): string {
+  switch (type) {
+    case 0x00: return 'types.player'
+    case 0x01: return 'types.amplifier'
+    case 0x02: return 'types.pcServer'
+    case 0x03: return 'types.microphone'
+    case 0x04: return 'types.proMicrophone'
+    case 0x05: return 'types.intercom'
+    case 0x07: return 'types.gateway'
+    case 0x08: return 'types.transmitter'
+    case 0x09: return 'types.webserver'
+    case 0x0A: return 'types.soundMeter'
+    case 0x0B: return 'types.sensorIO'
+    default:   return 'types.device'
+  }
+}
+
 function formatLastSeen(epoch: number): string {
   return new Date(epoch).toLocaleTimeString([], {
     hour: '2-digit', minute: '2-digit', second: '2-digit',
@@ -66,6 +85,7 @@ function DeviceContextMenu({
   onStop:           () => void
   onConfigure:      () => void
 }) {
+  const { t } = useTranslation('devices')
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -117,7 +137,7 @@ function DeviceContextMenu({
             d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
         </svg>
-        Configure device
+        {t('contextMenu.configureDevice')}
       </button>
 
       {isPlayer && hasAnyChannels && (
@@ -127,7 +147,7 @@ function DeviceContextMenu({
           {hasLocalChannels && (
             <>
               <p className="px-3 pb-0.5 pt-2 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-                Local channels
+                {t('contextMenu.localChannels')}
               </p>
               {channels.map((ch) => (
                 <button
@@ -146,7 +166,7 @@ function DeviceContextMenu({
             <div key={srcMac}>
               {hasLocalChannels && <div className="border-t border-gray-100/60 dark:border-gray-700/60" />}
               <p className="px-3 pb-0.5 pt-2 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-                Remote — <span className="font-mono normal-case">{srcMac}</span>
+                {t('contextMenu.remoteChannels', { mac: srcMac })}
               </p>
               {chs.map((ch) => (
                 <button
@@ -171,13 +191,11 @@ function DeviceContextMenu({
         <svg className="h-3.5 w-3.5 shrink-0" fill="currentColor" viewBox="0 0 24 24">
           <path d="M6 6h12v12H6z" />
         </svg>
-        Stop playback
+        {t('contextMenu.stopPlayback')}
       </button>
     </div>
   )
 }
-
-// ─── Actions panel (left side) ────────────────────────────────────────────────
 
 function ActionsPanel({
   device, lastSeen, sipConfigured, onConfigure,
@@ -187,6 +205,7 @@ function ActionsPanel({
   sipConfigured: boolean
   onConfigure:   () => void
 }) {
+  const { t } = useTranslation('devices')
   const optimisticVolume = useDevicesStore((s) => s.optimisticVolume)
   const caps = device ? devTypeCaps(device.device_type) : null
   const [sliderVolume,      setSliderVolume]      = useState(50)
@@ -216,7 +235,7 @@ function ActionsPanel({
             d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" />
         </svg>
         <p className="text-center text-xs text-gray-400">
-          Select a device<br />Double-click to configure
+          {t('selectDevice')}<br />{t('doubleClickConfigure')}
         </p>
       </div>
     )
@@ -227,18 +246,18 @@ function ActionsPanel({
       {/* Identity */}
       <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800">
         <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-          {devTypeCaps(device.device_type).label}
+          {t(devTypeLabelKey(device.device_type))}
         </p>
         <p className="mt-0.5 font-semibold text-gray-900 dark:text-white">{device.name}</p>
         <p className="text-xs text-gray-500">{device.network.ip}</p>
         <p className="font-mono text-[10px] text-gray-400">{device.mac}</p>
         {lastSeen && (
-          <p className="mt-1 text-[10px] text-gray-400">Last seen {formatLastSeen(lastSeen)}</p>
+          <p className="mt-1 text-[10px] text-gray-400">{t('lastSeen')} {formatLastSeen(lastSeen)}</p>
         )}
         <div className="mt-2 flex flex-wrap gap-1">
-          {device.volume_locked   && <Badge label="Vol Locked"  variant="warning" />}
-          {device.channels_locked && <Badge label="Ch Locked"   variant="warning" />}
-          {sipConfigured          && <Badge label="SIP"         variant="success" />}
+          {device.volume_locked   && <Badge label={t('badges.volLocked')} variant="warning" />}
+          {device.channels_locked && <Badge label={t('badges.chLocked')}  variant="warning" />}
+          {sipConfigured          && <Badge label={t('badges.sip')}        variant="success" />}
         </div>
       </div>
 
@@ -246,7 +265,7 @@ function ActionsPanel({
       {caps?.hasVolume && (
         <div>
           <div className="mb-1.5 flex items-center justify-between">
-            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">Volume</span>
+            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">{t('columns.volume')}</span>
             <span className="text-xs font-medium tabular-nums text-gray-700 dark:text-gray-300">
               {sliderVolume}%
             </span>
@@ -269,7 +288,7 @@ function ActionsPanel({
           onChange={(e) => setSelectedChannelId(e.target.value === '' ? '' : Number(e.target.value))}
           className="h-8 w-full rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 focus:border-primary focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
         >
-          <option value="">Select channel…</option>
+          <option value="">{t('selectChannel')}</option>
           {availableChannels.map((ch) => (
             <option key={ch.id} value={ch.id}>{ch.name}</option>
           ))}
@@ -282,13 +301,13 @@ function ActionsPanel({
           }}
           className="w-full rounded-lg bg-primary py-2 text-sm font-semibold text-white hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          Play Channel
+          {t('playChannel')}
         </button>
         <button
           onClick={() => window.electronAPI.aip.stopAudio(device.mac).catch(console.error)}
           className="w-full rounded-lg border border-gray-200 bg-white py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
         >
-          Stop Playback
+          {t('stopPlayback')}
         </button>
         <button
           onClick={onConfigure}
@@ -299,30 +318,20 @@ function ActionsPanel({
               d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
-          Configure
+          {t('contextMenu.configureDevice')}
         </button>
       </div>
     </div>
   )
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
-
 type GroupBy = 'none' | 'areas' | 'groups'
 
-const COLUMNS = [
-  { key: 'type',    label: 'Type'      },
-  { key: 'model',   label: 'Model'     },
-  { key: 'name',    label: 'Name'      },
-  { key: 'status',  label: 'Status'    },
-  { key: 'channel', label: 'Channel'   },
-  { key: 'volume',  label: 'Volume'    },
-  { key: 'ip',      label: 'IP'        },
-  { key: 'mac',     label: 'MAC'       },
-  { key: 'time',    label: 'Last seen' },
-] as const
+const COLUMN_KEYS = ['type', 'model', 'name', 'status', 'channel', 'volume', 'ip', 'mac', 'lastSeen'] as const
+type ColumnKey = (typeof COLUMN_KEYS)[number]
 
 export default function Devices() {
+  const { t } = useTranslation('devices')
   const navigate = useNavigate()
   const { entries, selectedMac, aipReady, setAipReady, selectDevice, loadAll, applyEvent } =
     useDevicesStore()
@@ -429,7 +438,7 @@ export default function Devices() {
         <div className="w-56 shrink-0 border-r border-gray-200 dark:border-gray-700">
           <div className="border-b border-gray-200 px-4 py-3 dark:border-gray-700">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-              Device actions
+              {t('deviceActions')}
             </h2>
           </div>
           <div className="overflow-y-auto" style={{ height: 'calc(100% - 41px)' }}>
@@ -447,9 +456,9 @@ export default function Devices() {
           {/* Header */}
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 px-5 py-3 dark:border-gray-700">
             <div>
-              <h1 className="text-base font-bold text-gray-900 dark:text-white">Network Devices</h1>
+              <h1 className="text-base font-bold text-gray-900 dark:text-white">{t('pageHeading')}</h1>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                {allEntries.length} registered · double-click to configure
+                {t('pageSubtitle', { count: allEntries.length })}
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -461,7 +470,7 @@ export default function Devices() {
                 </svg>
                 <input
                   type="text"
-                  placeholder="Search…"
+                  placeholder={t('search')}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="h-8 rounded-lg border border-gray-200 bg-white pl-8 pr-3 text-sm placeholder-gray-400 focus:border-primary focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white"
@@ -489,10 +498,10 @@ export default function Devices() {
             <table className="min-w-full divide-y divide-gray-100 dark:divide-gray-700/50">
               <thead className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-900/60">
                 <tr>
-                  {COLUMNS.map((col) => (
-                    <th key={col.key}
+                  {COLUMN_KEYS.map((key) => (
+                    <th key={key}
                       className="whitespace-nowrap px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                      {col.label}
+                      {t(`columns.${key}` as `columns.${ColumnKey}`)}
                     </th>
                   ))}
                 </tr>
@@ -500,8 +509,8 @@ export default function Devices() {
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700/40">
                 {visible.length === 0 && (
                   <tr>
-                    <td colSpan={COLUMNS.length} className="py-16 text-center text-sm text-gray-400">
-                      {aipReady ? 'No devices match the filter.' : 'Waiting for AIP initialization…'}
+                    <td colSpan={COLUMN_KEYS.length} className="py-16 text-center text-sm text-gray-400">
+                      {aipReady ? t('noDevicesFilter') : t('waitingAip')}
                     </td>
                   </tr>
                 )}
@@ -544,7 +553,7 @@ export default function Devices() {
                             }
                           />
                           <span className="text-sm font-medium text-gray-900 dark:text-white">
-                            {caps.label}
+                            {t(devTypeLabelKey(device.device_type))}
                           </span>
                         </div>
                       </td>
@@ -558,8 +567,8 @@ export default function Devices() {
                       </td>
                       <td className="whitespace-nowrap px-4 py-2.5">
                         <div className="flex items-center gap-1">
-                          <Badge label="Online" variant="success" />
-                          {hasSip && <Badge label="SIP" variant="info" />}
+                          <Badge label={t('badges.online')} variant="success" />
+                          {hasSip && <Badge label={t('badges.sip')} variant="info" />}
                         </div>
                       </td>
                       <td className="whitespace-nowrap px-4 py-2.5">

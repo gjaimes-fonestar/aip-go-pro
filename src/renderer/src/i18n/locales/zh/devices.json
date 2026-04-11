@@ -1,0 +1,54 @@
+{
+  "title": "设备",
+  "pageHeading": "网络设备",
+  "pageSubtitle": "已注册 {{count}} 个 · 双击以配置",
+  "selectDevice": "选择设备",
+  "doubleClickConfigure": "双击进行配置",
+  "lastSeen": "最后在线",
+  "deviceActions": "设备操作",
+  "selectChannel": "选择频道…",
+  "playChannel": "播放频道",
+  "stopPlayback": "停止播放",
+  "noDevicesFilter": "没有设备符合筛选条件。",
+  "waitingAip": "等待 AIP 初始化…",
+  "columns": {
+    "type": "类型",
+    "model": "型号",
+    "name": "名称",
+    "status": "状态",
+    "channel": "频道",
+    "volume": "音量",
+    "ip": "IP",
+    "mac": "MAC",
+    "lastSeen": "最后在线"
+  },
+  "search": "搜索…",
+  "badges": {
+    "online": "在线",
+    "sip": "SIP",
+    "volLocked": "音量锁定",
+    "chLocked": "频道锁定"
+  },
+  "types": {
+    "player": "播放器",
+    "amplifier": "放大器",
+    "pcServer": "PC 服务器",
+    "microphone": "麦克风",
+    "proMicrophone": "专业麦克风",
+    "intercom": "对讲机",
+    "gateway": "网关",
+    "transmitter": "发射器",
+    "webserver": "Web 服务器",
+    "soundMeter": "声级计",
+    "sensorIO": "传感器 I/O",
+    "device": "设备"
+  },
+  "contextMenu": {
+    "configureDevice": "配置设备",
+    "linkChannel": "关联频道",
+    "localChannels": "本地频道",
+    "remoteChannels": "远程 — {{mac}}",
+    "stopPlayback": "停止播放",
+    "noChannels": "无可用频道"
+  }
+}

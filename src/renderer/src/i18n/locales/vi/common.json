@@ -1,0 +1,24 @@
+{
+  "buttons": {
+    "create": "Tạo mới",
+    "cancel": "Hủy",
+    "apply": "Áp dụng",
+    "delete": "Xóa",
+    "save": "Lưu",
+    "download": "Tải xuống",
+    "refresh": "Làm mới",
+    "configure": "Cấu hình",
+    "stop": "Dừng",
+    "dismiss": "Đóng",
+    "upload": "Tải lên"
+  },
+  "status": {
+    "online": "Trực tuyến",
+    "offline": "Ngoại tuyến",
+    "ready": "Sẵn sàng",
+    "starting": "Đang khởi động",
+    "error": "Lỗi",
+    "stopped": "Đã dừng",
+    "playing": "đang phát"
+  }
+}

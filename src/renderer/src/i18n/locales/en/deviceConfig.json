@@ -1,0 +1,63 @@
+{
+  "tabs": {
+    "main": "Main",
+    "audio": "Audio",
+    "network": "Network",
+    "io": "I/O",
+    "sip": "SIP",
+    "datetime": "Date & Time",
+    "webserver": "Webserver",
+    "options": "Options"
+  },
+  "actions": {
+    "readConfig": "Read current config from device"
+  },
+  "sip": {
+    "states": {
+      "notConfigured": "Not configured",
+      "notRegistered": "Not registered",
+      "registering": "Registering…",
+      "registered": "Registered in SIP server",
+      "failed": "Registration failed",
+      "state": "State {{n}}"
+    }
+  },
+  "fields": {
+    "bootMode": "Boot mode",
+    "directBoot": "Direct boot",
+    "lastState": "Last state",
+    "lastStateFull": "Last state. Direct or standby",
+    "powerColor": "Power button color",
+    "colors": {
+      "off": "Off",
+      "red": "Red",
+      "green": "Green",
+      "blue": "Blue",
+      "yellow": "Yellow",
+      "white": "White",
+      "custom": "Custom"
+    },
+    "volumeMode": "Volume mode",
+    "generalVolume": "General volume",
+    "perAction": "Per-action volume",
+    "volume": "General volume",
+    "latency": "Latency",
+    "latencyOptions": {
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
+    },
+    "ip": "IP",
+    "netmask": "Netmask",
+    "gateway": "Gateway",
+    "port": "Port",
+    "user": "User",
+    "passwordPlaceholder": "Leave blank to keep",
+    "audioPortRange": "Audio port range",
+    "sipVolume": "SIP Volume",
+    "circuitOpen": "Open",
+    "circuitClosed": "Closed",
+    "relayOpen": "Open circuit",
+    "relayClosed": "Closed circuit"
+  }
+}

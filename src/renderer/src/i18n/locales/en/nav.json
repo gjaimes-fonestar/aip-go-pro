@@ -1,0 +1,24 @@
+{
+  "groups": {
+    "network": "Network",
+    "audio": "Audio",
+    "automation": "Automation",
+    "system": "System"
+  },
+  "items": {
+    "devices": "Devices",
+    "channels": "Channels",
+    "sipDevices": "SIP Devices",
+    "webserver": "Webserver",
+    "messages": "Messages",
+    "sonometers": "Sonometers",
+    "actionControl": "Action Control",
+    "events": "Events",
+    "scenes": "Scenes",
+    "transfers": "Transfers",
+    "log": "Log"
+  },
+  "footer": {
+    "backend": "Backend"
+  }
+}

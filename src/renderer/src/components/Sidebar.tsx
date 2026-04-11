@@ -1,10 +1,11 @@
 import { useMemo, useCallback } from 'react'
 import { NavLink } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAppStore } from '../store/app.store'
 import { useDevicesStore } from '../store/devices.store'
 import type { BackendStatus } from '@shared/ipc'
 
-// ─── Icons ────────────────────────────────────────────────────────────────────
+// Icons
 
 const Icons = {
   Devices: () => (
@@ -17,24 +18,9 @@ const Icons = {
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.14 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
     </svg>
   ),
-  Groups: () => (
-    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-    </svg>
-  ),
-  Areas: () => (
-    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-    </svg>
-  ),
   ActionControl: () => (
     <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
-    </svg>
-  ),
-  Voice: () => (
-    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
     </svg>
   ),
   Messages: () => (
@@ -80,34 +66,6 @@ const Icons = {
   ),
 }
 
-// ─── Static nav groups ────────────────────────────────────────────────────────
-
-const AUDIO_GROUP = {
-  label: 'Audio',
-  items: [
-    { to: '/voice',      label: 'Voice',      Icon: Icons.Voice      },
-    { to: '/messages',   label: 'Messages',   Icon: Icons.Messages   },
-    { to: '/sonometers', label: 'Sonometers', Icon: Icons.Sonometers },
-  ],
-}
-
-const AUTOMATION_GROUP = {
-  label: 'Automation',
-  items: [
-    { to: '/action-control', label: 'Action Control', Icon: Icons.ActionControl },
-    { to: '/events',         label: 'Events',         Icon: Icons.Events        },
-    { to: '/scenes',         label: 'Scenes',         Icon: Icons.Scenes        },
-    { to: '/transfers',      label: 'Transfers',      Icon: Icons.Transfers     },
-  ],
-}
-
-const SYSTEM_GROUP = {
-  label: 'System',
-  items: [{ to: '/log', label: 'Log', Icon: Icons.Log }],
-}
-
-// ─── Status dot ───────────────────────────────────────────────────────────────
-
 const STATUS_DOT: Record<BackendStatus, string> = {
   ready:    'bg-green-400',
   starting: 'bg-yellow-400 animate-pulse',
@@ -115,14 +73,13 @@ const STATUS_DOT: Record<BackendStatus, string> = {
   stopped:  'bg-gray-500',
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
-
 export default function Sidebar() {
+  const { t } = useTranslation('nav')
   const { sidebarOpen, backend } = useAppStore()
   const entries = useDevicesStore((s) => s.entries)
 
-  const selectedMac        = useDevicesStore((s) => s.selectedMac)
-  const selectedEntry      = selectedMac ? entries.get(selectedMac) : undefined
+  const selectedMac         = useDevicesStore((s) => s.selectedMac)
+  const selectedEntry       = selectedMac ? entries.get(selectedMac) : undefined
   const selectedIsWebserver = selectedEntry
     ? selectedEntry.device.device_type === 7 || selectedEntry.device.device_type === 9
     : false
@@ -136,27 +93,44 @@ export default function Sidebar() {
 
   const networkItems = useMemo(() => {
     const base = [
-      { to: '/devices',     label: 'Devices',     Icon: Icons.Devices     },
-      { to: '/channels',    label: 'Channels',     Icon: Icons.Channels    },
-      { to: '/groups',      label: 'Groups',       Icon: Icons.Groups      },
-      { to: '/areas',       label: 'Areas',        Icon: Icons.Areas       },
-      { to: '/sip-devices', label: 'SIP Devices',  Icon: Icons.SipDevices  },
+      { to: '/devices',     label: t('items.devices'),    Icon: Icons.Devices    },
+      { to: '/channels',    label: t('items.channels'),   Icon: Icons.Channels   },
+      { to: '/sip-devices', label: t('items.sipDevices'), Icon: Icons.SipDevices },
     ]
     if (selectedIsWebserver) {
-      base.push({ to: '/webserver', label: 'Webserver', Icon: WebserverIconAnimated })
+      base.push({ to: '/webserver', label: t('items.webserver'), Icon: WebserverIconAnimated })
     }
     return base
-  }, [selectedIsWebserver, WebserverIconAnimated])
+  }, [selectedIsWebserver, WebserverIconAnimated, t])
 
-  const allGroups = useMemo(
-    () => [
-      { label: 'Network', items: networkItems },
-      AUDIO_GROUP,
-      AUTOMATION_GROUP,
-      SYSTEM_GROUP,
-    ],
-    [networkItems],
-  )
+  const allGroups = useMemo(() => [
+    {
+      label: t('groups.network'),
+      items: networkItems,
+    },
+    {
+      label: t('groups.audio'),
+      items: [
+        { to: '/messages',   label: t('items.messages'),   Icon: Icons.Messages   },
+        { to: '/sonometers', label: t('items.sonometers'), Icon: Icons.Sonometers },
+      ],
+    },
+    {
+      label: t('groups.automation'),
+      items: [
+        { to: '/action-control', label: t('items.actionControl'), Icon: Icons.ActionControl },
+        { to: '/events',         label: t('items.events'),        Icon: Icons.Events        },
+        { to: '/scenes',         label: t('items.scenes'),        Icon: Icons.Scenes        },
+        { to: '/transfers',      label: t('items.transfers'),     Icon: Icons.Transfers     },
+      ],
+    },
+    {
+      label: t('groups.system'),
+      items: [
+        { to: '/log', label: t('items.log'), Icon: Icons.Log },
+      ],
+    },
+  ], [networkItems, t])
 
   if (!sidebarOpen) return null
 
@@ -207,7 +181,7 @@ export default function Sidebar() {
         <div className="flex items-center gap-2">
           <span className={`h-2 w-2 rounded-full ${STATUS_DOT[backend.status]}`} />
           <span className="text-xs text-gray-500 dark:text-gray-400">
-            Backend:{' '}
+            {t('footer.backend')}:{' '}
             <span className="font-medium text-gray-700 dark:text-gray-300 capitalize">
               {backend.status}
             </span>

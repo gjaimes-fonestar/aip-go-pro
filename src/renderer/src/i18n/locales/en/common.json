@@ -1,0 +1,24 @@
+{
+  "buttons": {
+    "create": "Create",
+    "cancel": "Cancel",
+    "apply": "Apply",
+    "delete": "Delete",
+    "save": "Save",
+    "download": "Download",
+    "refresh": "Refresh",
+    "configure": "Configure",
+    "stop": "Stop",
+    "dismiss": "Dismiss",
+    "upload": "Upload"
+  },
+  "status": {
+    "online": "Online",
+    "offline": "Offline",
+    "ready": "Ready",
+    "starting": "Starting",
+    "error": "Error",
+    "stopped": "Stopped",
+    "playing": "playing"
+  }
+}
