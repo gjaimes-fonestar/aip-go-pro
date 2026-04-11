@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from '../store/app.store'
 import LanguageSelector from './LanguageSelector'
+import ThemeToggle from './ThemeToggle'
 
 export default function Header() {
   const { t } = useTranslation('header')
@@ -32,6 +33,7 @@ export default function Header() {
             {t('restartBackend')}
           </button>
         )}
+        <ThemeToggle />
         <LanguageSelector />
       </div>
     </header>

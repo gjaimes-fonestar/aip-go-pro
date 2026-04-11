@@ -7,6 +7,11 @@ import './index.css'
 
 installBrowserPolyfill()
 
+// Apply saved theme before first render to avoid a flash
+if (localStorage.getItem('aip_theme') === 'dark') {
+  document.documentElement.classList.add('dark')
+}
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <App />
