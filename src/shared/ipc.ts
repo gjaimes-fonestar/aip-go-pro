@@ -5,6 +5,11 @@
  */
 
 export const IPC = {
+  WINDOW: {
+    MINIMIZE: 'window:minimize',
+    MAXIMIZE: 'window:maximize',
+    CLOSE:    'window:close',
+  },
   BACKEND: {
     GET_INFO: 'backend:getInfo',
     GET_URL:  'backend:getUrl',

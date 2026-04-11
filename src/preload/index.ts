@@ -32,6 +32,12 @@ import type {
  * Only the explicitly listed methods are available — no raw ipcRenderer access.
  */
 const electronAPI = {
+  appWindow: {
+    minimize: (): Promise<void> => ipcRenderer.invoke(IPC.WINDOW.MINIMIZE),
+    maximize: (): Promise<void> => ipcRenderer.invoke(IPC.WINDOW.MAXIMIZE),
+    close:    (): Promise<void> => ipcRenderer.invoke(IPC.WINDOW.CLOSE),
+  },
+
   backend: {
     getInfo:  (): Promise<BackendInfo>    => ipcRenderer.invoke(IPC.BACKEND.GET_INFO),
     getUrl:   (): Promise<string | null>  => ipcRenderer.invoke(IPC.BACKEND.GET_URL),

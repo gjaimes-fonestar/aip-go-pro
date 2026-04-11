@@ -1,4 +1,4 @@
-import { ipcMain, dialog, app } from 'electron'
+import { ipcMain, dialog, app, BrowserWindow } from 'electron'
 import { IPC } from '../shared/ipc'
 import type {
   AipChannelConfig,
@@ -19,6 +19,15 @@ import { daemonManager } from './daemon'
 import { aipCore, aipDevices, aipChannels, aipWebserver } from './aip'
 
 export function registerIpcHandlers(): void {
+  // ── Window controls ───────────────────────────────────────────────────────
+  ipcMain.handle(IPC.WINDOW.MINIMIZE, (e) => BrowserWindow.fromWebContents(e.sender)?.minimize())
+  ipcMain.handle(IPC.WINDOW.MAXIMIZE, (e) => {
+    const win = BrowserWindow.fromWebContents(e.sender)
+    if (win?.isMaximized()) win.unmaximize()
+    else win?.maximize()
+  })
+  ipcMain.handle(IPC.WINDOW.CLOSE, (e) => BrowserWindow.fromWebContents(e.sender)?.close())
+
   // ── Backend ──────────────────────────────────────────────────────────────
   ipcMain.handle(IPC.BACKEND.GET_INFO, () => backendManager.getInfo())
   ipcMain.handle(IPC.BACKEND.GET_URL,  () => backendManager.getInfo().url)

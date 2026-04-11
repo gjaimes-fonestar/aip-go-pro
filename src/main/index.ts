@@ -16,6 +16,7 @@ function createWindow(): BrowserWindow {
     minWidth:        900,
     minHeight:       600,
     show:            false,
+    frame:           false,
     autoHideMenuBar: true,
     webPreferences: {
       preload:          join(__dirname, '../preload/index.js'),
