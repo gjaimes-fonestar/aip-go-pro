@@ -8,6 +8,7 @@
  */
 
 import { useState, useEffect, useCallback, useId } from 'react'
+import { useTranslation } from 'react-i18next'
 import type {
   AipSipExtension,
   AipSipConference,
@@ -218,6 +219,7 @@ function Modal({
 // ─── SIP Extensions tab ───────────────────────────────────────────────────────
 
 function SipExtensionsTab({ gateMac }: { gateMac: string }) {
+  const { t } = useTranslation('webserver')
   const { sipExtensions, setSipExtensions, upsertSipExtension, removeSipExtensionLocal } =
     useWebserverStore()
   const [loading, setLoading] = useState(false)
@@ -265,22 +267,19 @@ function SipExtensionsTab({ gateMac }: { gateMac: string }) {
       {/* Info banner */}
       <div className="flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-300">
         <InfoIcon />
-        <p>
-          SIP extensions are the identifiers with which devices register with the SIP server.
-          They can contain numbers, letters and characters such as asterisk (*) and hash (#).
-        </p>
+        <p>{t('extensions.info')}</p>
       </div>
 
       {/* Toolbar */}
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-          {sipExtensions.length} extension{sipExtensions.length !== 1 ? 's' : ''}
+          {t('extensions.count', { count: sipExtensions.length })}
         </span>
         <div className="flex gap-2">
           {loading && <SpinnerIcon />}
-          <Btn onClick={reload} variant="default" size="sm">Refresh</Btn>
+          <Btn onClick={reload} variant="default" size="sm">{t('buttons.refresh', { ns: 'common' })}</Btn>
           <Btn onClick={() => setShowCreate(true)} variant="primary" size="sm">
-            <PlusIcon /> Create extension
+            <PlusIcon /> {t('extensions.create')}
           </Btn>
         </div>
       </div>
@@ -290,9 +289,9 @@ function SipExtensionsTab({ gateMac }: { gateMac: string }) {
         <table className="min-w-full">
           <thead className="sticky top-0 bg-gray-50 dark:bg-gray-800/80">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">#</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Extension</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Assigned device</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">{t('extensions.columns.number')}</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">{t('extensions.columns.extension')}</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">{t('extensions.columns.device')}</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
@@ -300,7 +299,7 @@ function SipExtensionsTab({ gateMac }: { gateMac: string }) {
             {sipExtensions.length === 0 && (
               <tr>
                 <td colSpan={4} className="px-4 py-10 text-center text-sm text-gray-400">
-                  No extensions configured. Click <strong>Create extension</strong> to add one.
+                  {t('extensions.empty')}
                 </td>
               </tr>
             )}
@@ -315,8 +314,8 @@ function SipExtensionsTab({ gateMac }: { gateMac: string }) {
                 </td>
                 <td className="px-4 py-3 font-mono text-xs text-gray-500">{ext.mac || '—'}</td>
                 <td className="px-4 py-3 text-right">
-                  <Btn onClick={() => handleDelete(ext)} variant="danger" size="xs" title="Delete extension">
-                    <TrashIcon /> Delete
+                  <Btn onClick={() => handleDelete(ext)} variant="danger" size="xs" title={t('extensions.delete')}>
+                    <TrashIcon /> {t('buttons.delete', { ns: 'common' })}
                   </Btn>
                 </td>
               </tr>
@@ -328,37 +327,37 @@ function SipExtensionsTab({ gateMac }: { gateMac: string }) {
       {/* Create modal */}
       {showCreate && (
         <Modal
-          title="Create SIP extension"
+          title={t('extensions.create')}
           onClose={() => setShowCreate(false)}
           footer={
             <>
-              <Btn onClick={() => setShowCreate(false)} variant="default">Cancel</Btn>
+              <Btn onClick={() => setShowCreate(false)} variant="default">{t('buttons.cancel', { ns: 'common' })}</Btn>
               <Btn
                 onClick={handleCreate}
                 variant="primary"
                 disabled={!newExt.username || !newExt.extensionNumber}
               >
-                Create
+                {t('buttons.create', { ns: 'common' })}
               </Btn>
             </>
           }
         >
           <div className="space-y-4">
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-gray-600 dark:text-gray-400">Extension number</label>
-              <NumInput value={newExt.extensionNumber} onChange={(v) => setNewExt((p) => ({ ...p, extensionNumber: v }))} min={1} placeholder="e.g. 113" />
+              <label className="mb-1.5 block text-xs font-medium text-gray-600 dark:text-gray-400">{t('extensions.form.number')}</label>
+              <NumInput value={newExt.extensionNumber} onChange={(v) => setNewExt((p) => ({ ...p, extensionNumber: v }))} min={1} placeholder={t('extensions.form.numberPlaceholder')} />
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-gray-600 dark:text-gray-400">Extension name / username</label>
-              <TextInput value={newExt.username} onChange={(v) => setNewExt((p) => ({ ...p, username: v }))} placeholder="e.g. player113" />
+              <label className="mb-1.5 block text-xs font-medium text-gray-600 dark:text-gray-400">{t('extensions.form.username')}</label>
+              <TextInput value={newExt.username} onChange={(v) => setNewExt((p) => ({ ...p, username: v }))} placeholder={t('extensions.form.usernamePlaceholder')} />
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-gray-600 dark:text-gray-400">Password</label>
-              <TextInput value={newExt.password} onChange={(v) => setNewExt((p) => ({ ...p, password: v }))} type="password" placeholder="SIP password" />
+              <label className="mb-1.5 block text-xs font-medium text-gray-600 dark:text-gray-400">{t('extensions.form.password')}</label>
+              <TextInput value={newExt.password} onChange={(v) => setNewExt((p) => ({ ...p, password: v }))} type="password" placeholder={t('extensions.form.password')} />
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-gray-600 dark:text-gray-400">Assigned device MAC (optional)</label>
-              <TextInput value={newExt.mac} onChange={(v) => setNewExt((p) => ({ ...p, mac: v }))} placeholder="AA:BB:CC:DD:EE:FF" />
+              <label className="mb-1.5 block text-xs font-medium text-gray-600 dark:text-gray-400">{t('extensions.form.mac')}</label>
+              <TextInput value={newExt.mac} onChange={(v) => setNewExt((p) => ({ ...p, mac: v }))} placeholder={t('extensions.form.macPlaceholder')} />
             </div>
           </div>
         </Modal>
@@ -370,27 +369,30 @@ function SipExtensionsTab({ gateMac }: { gateMac: string }) {
 // ─── SIP Conferences tab ──────────────────────────────────────────────────────
 
 function SipConferencesTab({ gateMac }: { gateMac: string }) {
-  const { sipConferences, setSipConferences, upsertSipConference, removeSipConferenceLocal,
-          selectedConfKey, setSelectedConfKey } = useWebserverStore()
+  const { t } = useTranslation('webserver')
+  const { sipConferences, setSipConferences, upsertSipConference, removeSipConferenceLocal } = useWebserverStore()
   const [loading, setLoading]           = useState(false)
   const [showCreate, setShowCreate]     = useState(false)
   const [showAddUser, setShowAddUser]   = useState(false)
   const [newConf, setNewConf]           = useState({ conferenceNumber: 0, name: '' })
   const [newParticipant, setNewParticipant] = useState({ extensionNumber: 0, username: '' })
+  const [selectedIdx, setSelectedIdx]   = useState<number | null>(null)
+
+  // Reset selection when the device changes
+  useEffect(() => { setSelectedIdx(null) }, [gateMac])
 
   const reload = useCallback(async () => {
     setLoading(true)
     try {
       const list = await window.electronAPI.aip.getSipConferencesForDevice(gateMac)
       setSipConferences(list)
+      setSelectedIdx(null)
     } finally {
       setLoading(false)
     }
   }, [gateMac, setSipConferences])
 
-  const selected = selectedConfKey
-    ? (sipConferences.find((c) => confKey(c.mac, c.conferenceNumber) === selectedConfKey) ?? null)
-    : null
+  const selected = selectedIdx !== null ? (sipConferences[selectedIdx] ?? null) : null
 
   const handleCreate = async () => {
     const conf: AipSipConference = {
@@ -409,7 +411,7 @@ function SipConferencesTab({ gateMac }: { gateMac: string }) {
   const handleDeleteConf = async (conf: AipSipConference) => {
     await window.electronAPI.aip.removeSipConference(conf.mac, conf.conferenceNumber)
     removeSipConferenceLocal(conf.mac, conf.conferenceNumber)
-    if (selectedConfKey === confKey(conf.mac, conf.conferenceNumber)) setSelectedConfKey(null)
+    setSelectedIdx(null)
   }
 
   const handleAddParticipant = async () => {
@@ -446,9 +448,7 @@ function SipConferencesTab({ gateMac }: { gateMac: string }) {
       {/* Info banner */}
       <div className="flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-300">
         <InfoIcon />
-        <p>
-          Conferences are special extensions that group other simple ones and allow making a call to many destinations simultaneously.
-        </p>
+        <p>{t('conferences.info')}</p>
       </div>
 
       {/* Split panel */}
@@ -457,36 +457,36 @@ function SipConferencesTab({ gateMac }: { gateMac: string }) {
         {/* Left: conference list */}
         <div className="flex w-56 shrink-0 flex-col gap-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">Conferences</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">{t('conferences.header')}</span>
             {loading && <SpinnerIcon />}
           </div>
           <div className="flex-1 overflow-auto rounded-xl border border-gray-200 dark:border-gray-700">
             <div className="divide-y divide-gray-100 dark:divide-gray-700/50">
               {sipConferences.length === 0 && (
-                <p className="px-4 py-8 text-center text-xs text-gray-400">No conferences</p>
+                <p className="px-4 py-8 text-center text-xs text-gray-400">{t('conferences.empty')}</p>
               )}
-              {sipConferences.map((c) => (
+              {sipConferences.map((c, i) => (
                 <button
                   key={confKey(c.mac, c.conferenceNumber)}
-                  onClick={() => setSelectedConfKey(confKey(c.mac, c.conferenceNumber))}
+                  onClick={() => setSelectedIdx(i)}
                   className={`group flex w-full items-start justify-between px-4 py-3 text-left transition-colors ${
-                    selectedConfKey === confKey(c.mac, c.conferenceNumber)
+                    selectedIdx === i
                       ? 'bg-primary/10 text-primary dark:bg-primary/20'
                       : 'bg-white hover:bg-gray-50 dark:bg-gray-900 dark:hover:bg-gray-800/60'
                   }`}
                 >
                   <div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">{c.name || `Conference ${c.conferenceNumber}`}</p>
-                    <p className="text-xs text-gray-400">{c.participants.length} participant{c.participants.length !== 1 ? 's' : ''}</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">{c.name || t('conferences.title', { number: c.conferenceNumber })}</p>
+                    <p className="text-xs text-gray-400">{t('conferences.participants', { count: c.participants.length })}</p>
                   </div>
                 </button>
               ))}
             </div>
           </div>
           <div className="flex gap-2">
-            <Btn onClick={reload} variant="default" size="xs">Refresh</Btn>
+            <Btn onClick={reload} variant="default" size="xs">{t('buttons.refresh', { ns: 'common' })}</Btn>
             <Btn onClick={() => setShowCreate(true)} variant="primary" size="xs">
-              <PlusIcon /> Create
+              <PlusIcon /> {t('buttons.create', { ns: 'common' })}
             </Btn>
             {selected && (
               <Btn onClick={() => handleDeleteConf(selected)} variant="danger" size="xs">
@@ -500,18 +500,18 @@ function SipConferencesTab({ gateMac }: { gateMac: string }) {
         <div className="flex flex-1 flex-col gap-2">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-              {selected ? `Extensions — ${selected.name || `Conference ${selected.conferenceNumber}`}` : 'Extensions'}
+              {selected ? t('conferences.extensionsFor', { name: selected.name || t('conferences.title', { number: selected.conferenceNumber }) }) : t('conferences.extensionsHeader')}
             </span>
           </div>
           <div className="flex-1 overflow-auto rounded-xl border border-gray-200 dark:border-gray-700">
             {!selected ? (
               <div className="flex h-full items-center justify-center">
-                <p className="text-sm text-gray-400">Select a conference to see its extensions</p>
+                <p className="text-sm text-gray-400">{t('conferences.selectConference')}</p>
               </div>
             ) : (
               <div className="divide-y divide-gray-100 dark:divide-gray-700/50">
                 {selected.participants.length === 0 && (
-                  <p className="px-4 py-8 text-center text-xs text-gray-400">No extensions added yet</p>
+                  <p className="px-4 py-8 text-center text-xs text-gray-400">{t('conferences.noExtensions')}</p>
                 )}
                 {selected.participants.map((p) => (
                   <div key={p.extensionNumber}
@@ -532,7 +532,7 @@ function SipConferencesTab({ gateMac }: { gateMac: string }) {
           {selected && (
             <div className="flex gap-2">
               <Btn onClick={() => setShowAddUser(true)} variant="primary" size="xs">
-                <PlusIcon /> Add extension
+                <PlusIcon /> {t('conferences.addExt')}
               </Btn>
             </div>
           )}
@@ -542,29 +542,29 @@ function SipConferencesTab({ gateMac }: { gateMac: string }) {
       {/* Create conference modal */}
       {showCreate && (
         <Modal
-          title="Create conference"
+          title={t('conferences.create')}
           onClose={() => setShowCreate(false)}
           footer={
             <>
-              <Btn onClick={() => setShowCreate(false)} variant="default">Cancel</Btn>
+              <Btn onClick={() => setShowCreate(false)} variant="default">{t('buttons.cancel', { ns: 'common' })}</Btn>
               <Btn
                 onClick={handleCreate}
                 variant="primary"
                 disabled={!newConf.name || !newConf.conferenceNumber}
               >
-                Create
+                {t('buttons.create', { ns: 'common' })}
               </Btn>
             </>
           }
         >
           <div className="space-y-4">
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-gray-600 dark:text-gray-400">Conference number</label>
-              <NumInput value={newConf.conferenceNumber} onChange={(v) => setNewConf((p) => ({ ...p, conferenceNumber: v }))} min={1} placeholder="e.g. 100" />
+              <label className="mb-1.5 block text-xs font-medium text-gray-600 dark:text-gray-400">{t('conferences.form.number')}</label>
+              <NumInput value={newConf.conferenceNumber} onChange={(v) => setNewConf((p) => ({ ...p, conferenceNumber: v }))} min={1} placeholder={t('conferences.form.numberPlaceholder')} />
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-gray-600 dark:text-gray-400">Name</label>
-              <TextInput value={newConf.name} onChange={(v) => setNewConf((p) => ({ ...p, name: v }))} placeholder="e.g. Main Room" />
+              <label className="mb-1.5 block text-xs font-medium text-gray-600 dark:text-gray-400">{t('conferences.form.name')}</label>
+              <TextInput value={newConf.name} onChange={(v) => setNewConf((p) => ({ ...p, name: v }))} placeholder={t('conferences.form.namePlaceholder')} />
             </div>
           </div>
         </Modal>
@@ -573,29 +573,29 @@ function SipConferencesTab({ gateMac }: { gateMac: string }) {
       {/* Add participant modal */}
       {showAddUser && (
         <Modal
-          title="Add extension to conference"
+          title={t('conferences.addExtension')}
           onClose={() => setShowAddUser(false)}
           footer={
             <>
-              <Btn onClick={() => setShowAddUser(false)} variant="default">Cancel</Btn>
+              <Btn onClick={() => setShowAddUser(false)} variant="default">{t('buttons.cancel', { ns: 'common' })}</Btn>
               <Btn
                 onClick={handleAddParticipant}
                 variant="primary"
                 disabled={!newParticipant.username || !newParticipant.extensionNumber}
               >
-                Add
+                {t('buttons.add', { ns: 'common' })}
               </Btn>
             </>
           }
         >
           <div className="space-y-4">
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-gray-600 dark:text-gray-400">Extension number</label>
-              <NumInput value={newParticipant.extensionNumber} onChange={(v) => setNewParticipant((p) => ({ ...p, extensionNumber: v }))} min={1} placeholder="e.g. 113" />
+              <label className="mb-1.5 block text-xs font-medium text-gray-600 dark:text-gray-400">{t('conferences.form.extNumber')}</label>
+              <NumInput value={newParticipant.extensionNumber} onChange={(v) => setNewParticipant((p) => ({ ...p, extensionNumber: v }))} min={1} placeholder={t('extensions.form.numberPlaceholder')} />
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-gray-600 dark:text-gray-400">Extension username</label>
-              <TextInput value={newParticipant.username} onChange={(v) => setNewParticipant((p) => ({ ...p, username: v }))} placeholder="e.g. player113" />
+              <label className="mb-1.5 block text-xs font-medium text-gray-600 dark:text-gray-400">{t('conferences.form.extUsername')}</label>
+              <TextInput value={newParticipant.username} onChange={(v) => setNewParticipant((p) => ({ ...p, username: v }))} placeholder={t('conferences.form.extUsernamePlaceholder')} />
             </div>
           </div>
         </Modal>
@@ -607,12 +607,13 @@ function SipConferencesTab({ gateMac }: { gateMac: string }) {
 // ─── File row ─────────────────────────────────────────────────────────────────
 
 function FileRow({ file, onRemove }: { file: TrackedFile; onRemove: (id: string) => void }) {
+  const { t } = useTranslation('webserver')
   const statusBadge = {
-    idle:        <Badge color="gray">Queued</Badge>,
-    transferring:<Badge color="blue">Transferring</Badge>,
-    done:        <Badge color="green"><CheckIcon /> Done</Badge>,
-    error:       <Badge color="red">Error</Badge>,
-    cancelled:   <Badge color="yellow">Cancelled</Badge>,
+    idle:        <Badge color="gray">{t('files.status.queued')}</Badge>,
+    transferring:<Badge color="blue">{t('files.status.transferring')}</Badge>,
+    done:        <Badge color="green"><CheckIcon /> {t('files.status.done')}</Badge>,
+    error:       <Badge color="red">{t('files.status.error')}</Badge>,
+    cancelled:   <Badge color="yellow">{t('files.status.cancelled')}</Badge>,
   }[file.status]
 
   return (
@@ -638,7 +639,7 @@ function FileRow({ file, onRemove }: { file: TrackedFile; onRemove: (id: string)
       <button
         onClick={() => onRemove(file.id)}
         className="shrink-0 rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700"
-        title="Remove from list"
+        title={t('files.removeFromList')}
       >
         <XIcon />
       </button>
@@ -649,12 +650,13 @@ function FileRow({ file, onRemove }: { file: TrackedFile; onRemove: (id: string)
 // ─── Catalog file row ─────────────────────────────────────────────────────────
 
 function CatalogFileRow({ file, deviceIp }: { file: AipAudioFile; deviceIp: string }) {
+  const { t } = useTranslation('webserver')
   const { addFile } = useWebserverStore()
   const uid = useId()
 
   const handleDownload = async () => {
     const savePath = await window.electronAPI.dialog.saveFile({
-      title:       'Save file',
+      title:       t('files.save'),
       defaultPath: file.name,
     })
     if (!savePath) return
@@ -696,11 +698,7 @@ function CatalogFileRow({ file, deviceIp }: { file: AipAudioFile; deviceIp: stri
 
 // ─── Files tab ────────────────────────────────────────────────────────────────
 
-const FILE_SECTIONS: { key: FilesSubTab; label: string }[] = [
-  { key: 'messages', label: 'Messages' },
-  { key: 'events',   label: 'Events'   },
-  { key: 'bgm',      label: 'Background Music' },
-]
+const FILE_SECTION_KEYS: FilesSubTab[] = ['messages', 'events', 'bgm']
 
 const REMOTE_PREFIXES: Record<FilesSubTab, string> = {
   messages: '/messages/',
@@ -715,6 +713,7 @@ const AUDIO_TYPE_FOR_TAB: Record<FilesSubTab, number> = {
 }
 
 function FilesTab({ deviceMac, deviceIp }: { deviceMac: string; deviceIp: string }) {
+  const { t } = useTranslation('webserver')
   const {
     files, filesSubTab, setFilesSubTab, addFile, removeFile,
     deviceAudioFiles, setDeviceAudioFiles,
@@ -746,10 +745,10 @@ function FilesTab({ deviceMac, deviceIp }: { deviceMac: string; deviceIp: string
 
   const handleUpload = async () => {
     const paths = await window.electronAPI.dialog.openFile({
-      title: 'Select file to upload',
+      title: t('files.selectFile'),
       filters: [
-        { name: 'Audio files', extensions: ['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a'] },
-        { name: 'All files',   extensions: ['*'] },
+        { name: t('files.categories.messages'), extensions: ['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a'] },
+        { name: t('buttons.upload', { ns: 'common' }), extensions: ['*'] },
       ],
     })
     if (!paths || paths.length === 0) return
@@ -766,7 +765,7 @@ function FilesTab({ deviceMac, deviceIp }: { deviceMac: string; deviceIp: string
   const handleDownload = async () => {
     if (!remotePath) return
     const savePath = await window.electronAPI.dialog.saveFile({
-      title: 'Save downloaded file',
+      title: t('files.saveDownloaded'),
       defaultPath: basename(remotePath),
     })
     if (!savePath) return
@@ -788,7 +787,7 @@ function FilesTab({ deviceMac, deviceIp }: { deviceMac: string; deviceIp: string
     <div className="flex h-full flex-col gap-4 p-5">
       {/* Section tabs */}
       <div className="flex gap-1 rounded-lg border border-gray-200 bg-gray-50 p-1 dark:border-gray-700 dark:bg-gray-800/50">
-        {FILE_SECTIONS.map(({ key, label }) => (
+        {FILE_SECTION_KEYS.map((key) => (
           <button
             key={key}
             onClick={() => setFilesSubTab(key)}
@@ -798,7 +797,7 @@ function FilesTab({ deviceMac, deviceIp }: { deviceMac: string; deviceIp: string
                 : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
             }`}
           >
-            {label}
+            {t(`files.categories.${key}`)}
           </button>
         ))}
       </div>
@@ -808,18 +807,18 @@ function FilesTab({ deviceMac, deviceIp }: { deviceMac: string; deviceIp: string
         <div className="flex w-64 shrink-0 flex-col gap-2">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-              On device
+              {t('files.onDevice')}
             </span>
             <div className="flex items-center gap-1">
               {loadingCatalog && <SpinnerIcon />}
-              <Btn onClick={reloadCatalog} variant="ghost" size="xs">Refresh</Btn>
+              <Btn onClick={reloadCatalog} variant="ghost" size="xs">{t('buttons.refresh', { ns: 'common' })}</Btn>
             </div>
           </div>
           <div className="flex-1 overflow-auto rounded-xl border border-gray-200 dark:border-gray-700">
             {catalogFiles.length === 0 ? (
               <div className="flex h-full flex-col items-center justify-center py-10 text-center">
                 <FolderIcon />
-                <p className="mt-2 text-xs text-gray-400">No files on device</p>
+                <p className="mt-2 text-xs text-gray-400">{t('files.empty')}</p>
               </div>
             ) : (
               <div className="divide-y divide-gray-100 dark:divide-gray-700/50">
@@ -834,14 +833,14 @@ function FilesTab({ deviceMac, deviceIp }: { deviceMac: string; deviceIp: string
         {/* Right: transfer queue */}
         <div className="flex flex-1 flex-col gap-2">
           <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-            Transfers
+            {t('files.transfers')}
           </span>
           <div className="flex-1 space-y-2 overflow-auto">
             {sectionFiles.length === 0 && (
               <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 py-12 dark:border-gray-700">
                 <FolderIcon />
-                <p className="mt-2 text-sm text-gray-400">No active transfers</p>
-                <p className="text-xs text-gray-400">Use the controls below to upload or download</p>
+                <p className="mt-2 text-sm text-gray-400">{t('files.noTransfers')}</p>
+                <p className="text-xs text-gray-400">{t('files.transferHelp')}</p>
               </div>
             )}
             {sectionFiles.map((f) => (
@@ -851,7 +850,7 @@ function FilesTab({ deviceMac, deviceIp }: { deviceMac: string; deviceIp: string
 
           {/* Add-file row */}
           <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/40">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">Remote path (optional)</p>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">{t('files.remotePath')}</p>
             <div className="flex gap-2">
               <TextInput
                 value={remotePath}
@@ -861,14 +860,14 @@ function FilesTab({ deviceMac, deviceIp }: { deviceMac: string; deviceIp: string
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
               <Btn onClick={handleUpload} variant="primary" size="sm">
-                <UploadIcon /> Upload file…
+                <UploadIcon /> {t('files.uploadFile')}
               </Btn>
               <Btn onClick={handleDownload} variant="default" size="sm" disabled={!remotePath}>
-                <DownloadIcon /> Download
+                <DownloadIcon /> {t('buttons.download', { ns: 'common' })}
               </Btn>
               {hasActive && (
                 <Btn onClick={handleCancel} variant="danger" size="sm">
-                  <XIcon /> Cancel transfer
+                  <XIcon /> {t('files.cancelTransfer')}
                 </Btn>
               )}
             </div>
@@ -886,13 +885,14 @@ const DEVICE_TYPE_LABEL: Record<number, string> = {
   9: 'AIP-WEB',
 }
 
-const TABS: { key: WebserverTab; label: string; Icon: React.FC }[] = [
-  { key: 'sip-extensions',  label: 'SIP Extensions',  Icon: PhoneIcon  },
-  { key: 'sip-conferences', label: 'SIP Conferences', Icon: UsersIcon  },
-  { key: 'files',           label: 'Files',            Icon: FolderIcon },
+const TABS: { key: WebserverTab; tKey: string; Icon: React.FC }[] = [
+  { key: 'sip-extensions',  tKey: 'tabs.extensions',  Icon: PhoneIcon  },
+  { key: 'sip-conferences', tKey: 'tabs.conferences',  Icon: UsersIcon  },
+  { key: 'files',           tKey: 'tabs.files',        Icon: FolderIcon },
 ]
 
 export default function Webserver() {
+  const { t } = useTranslation('webserver')
   // Driven by the device selected in the Devices page
   const selectedMac   = useDevicesStore((s) => s.selectedMac)
   const entries       = useDevicesStore((s) => s.entries)
@@ -933,10 +933,8 @@ export default function Webserver() {
             d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
         </svg>
         <div>
-          <p className="text-base font-semibold text-gray-700 dark:text-gray-300">No Gateway or Webserver selected</p>
-          <p className="mt-1 text-sm text-gray-400">
-            Select an AIP-GATE or AIP-WEB device in the Devices page, then double-click or click Configure to manage it here.
-          </p>
+          <p className="text-base font-semibold text-gray-700 dark:text-gray-300">{t('empty.title')}</p>
+          <p className="mt-1 text-sm text-gray-400">{t('empty.help')}</p>
         </div>
       </div>
     )
@@ -967,17 +965,14 @@ export default function Webserver() {
         {selectedDevice.network.dhcp && (
           <div className="mt-3 flex items-start gap-2 rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-800 dark:border-yellow-700/50 dark:bg-yellow-900/20 dark:text-yellow-300">
             <WarningIcon />
-            <p>
-              This device has a dynamic IP configuration (DHCP). If the router assigns a different IP,
-              SIP extensions will be unable to connect. It is recommended to assign a fixed IP to avoid this.
-            </p>
+            <p>{t('warnings.dhcp')}</p>
           </div>
         )}
       </div>
 
       {/* Tab bar */}
       <div className="flex shrink-0 gap-1 border-b border-gray-200 px-6 dark:border-gray-700">
-        {TABS.map(({ key, label, Icon }) => (
+        {TABS.map(({ key, tKey, Icon }) => (
           <button
             key={key}
             onClick={() => setActiveTab(key)}
@@ -988,7 +983,7 @@ export default function Webserver() {
             }`}
           >
             <Icon />
-            {label}
+            {t(tKey)}
           </button>
         ))}
       </div>

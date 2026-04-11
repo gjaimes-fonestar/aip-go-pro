@@ -10,7 +10,8 @@
     "configure": "Configurar",
     "stop": "Detener",
     "dismiss": "Cerrar",
-    "upload": "Subir"
+    "upload": "Subir",
+    "add": "Añadir"
   },
   "status": {
     "online": "En línea",

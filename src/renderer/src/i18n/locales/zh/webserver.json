@@ -12,8 +12,17 @@
     "dhcp": "该设备使用动态 IP 配置（DHCP）。如果路由器分配了不同的 IP，SIP 分机将无法连接。建议分配固定 IP 以避免此问题。"
   },
   "extensions": {
+    "info": "SIP 分机是设备在 SIP 服务器上注册所用的标识符，可包含数字、字母及星号 (*) 和井号 (#) 等字符。",
     "create": "创建 SIP 分机",
     "delete": "删除分机",
+    "count_one": "{{count}} 个分机",
+    "count_other": "{{count}} 个分机",
+    "empty": "未配置任何分机。点击创建分机以添加。",
+    "columns": {
+      "number": "#",
+      "extension": "分机",
+      "device": "分配设备"
+    },
     "form": {
       "number": "分机号码",
       "numberPlaceholder": "例：113",
@@ -25,8 +34,13 @@
     }
   },
   "conferences": {
+    "info": "会议是特殊分机，可将多个普通分机分组，实现同时向多个目标拨打电话。",
     "create": "创建会议",
     "addExtension": "添加分机到会议",
+    "header": "会议",
+    "extensionsHeader": "分机",
+    "extensionsFor": "分机 — {{name}}",
+    "addExt": "添加分机",
     "empty": "暂无会议",
     "noExtensions": "尚未添加分机",
     "selectConference": "选择一个会议以查看其分机",
@@ -37,7 +51,10 @@
       "number": "会议号码",
       "numberPlaceholder": "例：100",
       "name": "会议名称",
-      "namePlaceholder": "例：主会议室"
+      "namePlaceholder": "例：主会议室",
+      "extNumber": "分机号码",
+      "extUsername": "分机用户名",
+      "extUsernamePlaceholder": "例：player113"
     }
   },
   "files": {
@@ -46,11 +63,24 @@
       "events": "事件",
       "bgm": "背景音乐"
     },
+    "onDevice": "设备上的文件",
+    "transfers": "传输",
     "empty": "设备上没有文件",
     "noTransfers": "无活跃传输",
     "transferHelp": "使用下方控件上传或下载",
     "remotePath": "远程路径（可选）",
+    "uploadFile": "上传文件…",
+    "cancelTransfer": "取消传输",
+    "removeFromList": "从列表移除",
+    "selectFile": "选择要上传的文件",
     "save": "保存文件",
-    "saveDownloaded": "保存下载的文件"
+    "saveDownloaded": "保存下载的文件",
+    "status": {
+      "queued": "排队中",
+      "transferring": "传输中",
+      "done": "完成",
+      "error": "错误",
+      "cancelled": "已取消"
+    }
   }
 }

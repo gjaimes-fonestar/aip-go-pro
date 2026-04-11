@@ -10,7 +10,8 @@
     "configure": "Cấu hình",
     "stop": "Dừng",
     "dismiss": "Đóng",
-    "upload": "Tải lên"
+    "upload": "Tải lên",
+    "add": "Thêm"
   },
   "status": {
     "online": "Trực tuyến",

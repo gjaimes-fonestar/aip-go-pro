@@ -12,8 +12,17 @@
     "dhcp": "This device has a dynamic IP configuration (DHCP). If the router assigns a different IP, SIP extensions will be unable to connect. It is recommended to assign a fixed IP to avoid this."
   },
   "extensions": {
+    "info": "SIP extensions are the identifiers with which devices register with the SIP server. They can contain numbers, letters and characters such as asterisk (*) and hash (#).",
     "create": "Create SIP extension",
     "delete": "Delete extension",
+    "count_one": "{{count}} extension",
+    "count_other": "{{count}} extensions",
+    "empty": "No extensions configured. Click Create extension to add one.",
+    "columns": {
+      "number": "#",
+      "extension": "Extension",
+      "device": "Assigned device"
+    },
     "form": {
       "number": "Extension number",
       "numberPlaceholder": "e.g. 113",
@@ -25,8 +34,13 @@
     }
   },
   "conferences": {
+    "info": "Conferences are special extensions that group other simple ones and allow making a call to many destinations simultaneously.",
     "create": "Create conference",
     "addExtension": "Add extension to conference",
+    "header": "Conferences",
+    "extensionsHeader": "Extensions",
+    "extensionsFor": "Extensions — {{name}}",
+    "addExt": "Add extension",
     "empty": "No conferences",
     "noExtensions": "No extensions added yet",
     "selectConference": "Select a conference to see its extensions",
@@ -37,7 +51,10 @@
       "number": "Conference number",
       "numberPlaceholder": "e.g. 100",
       "name": "Conference name",
-      "namePlaceholder": "e.g. Main Room"
+      "namePlaceholder": "e.g. Main Room",
+      "extNumber": "Extension number",
+      "extUsername": "Extension username",
+      "extUsernamePlaceholder": "e.g. player113"
     }
   },
   "files": {
@@ -46,11 +63,24 @@
       "events": "Events",
       "bgm": "Background Music"
     },
+    "onDevice": "On device",
+    "transfers": "Transfers",
     "empty": "No files on device",
     "noTransfers": "No active transfers",
     "transferHelp": "Use the controls below to upload or download",
     "remotePath": "Remote path (optional)",
+    "uploadFile": "Upload file…",
+    "cancelTransfer": "Cancel transfer",
+    "removeFromList": "Remove from list",
+    "selectFile": "Select file to upload",
     "save": "Save file",
-    "saveDownloaded": "Save downloaded file"
+    "saveDownloaded": "Save downloaded file",
+    "status": {
+      "queued": "Queued",
+      "transferring": "Transferring",
+      "done": "Done",
+      "error": "Error",
+      "cancelled": "Cancelled"
+    }
   }
 }

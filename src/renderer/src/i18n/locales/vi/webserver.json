@@ -12,8 +12,17 @@
     "dhcp": "Thiết bị này có cấu hình IP động (DHCP). Nếu router cấp IP khác, các số nội bộ SIP sẽ không thể kết nối. Khuyến nghị cấp IP tĩnh để tránh sự cố này."
   },
   "extensions": {
+    "info": "Số nội bộ SIP là mã định danh mà thiết bị dùng để đăng ký với máy chủ SIP. Có thể chứa số, chữ cái và ký tự như dấu hoa thị (*) và dấu thăng (#).",
     "create": "Tạo số nội bộ SIP",
     "delete": "Xóa số nội bộ",
+    "count_one": "{{count}} số nội bộ",
+    "count_other": "{{count}} số nội bộ",
+    "empty": "Chưa có số nội bộ nào. Nhấp Tạo số nội bộ để thêm.",
+    "columns": {
+      "number": "#",
+      "extension": "Số nội bộ",
+      "device": "Thiết bị được gán"
+    },
     "form": {
       "number": "Số nội bộ",
       "numberPlaceholder": "vd: 113",
@@ -25,8 +34,13 @@
     }
   },
   "conferences": {
+    "info": "Hội nghị là số nội bộ đặc biệt nhóm nhiều số nội bộ thông thường lại và cho phép gọi đồng thời đến nhiều đích.",
     "create": "Tạo hội nghị",
     "addExtension": "Thêm số nội bộ vào hội nghị",
+    "header": "Hội nghị",
+    "extensionsHeader": "Số nội bộ",
+    "extensionsFor": "Số nội bộ — {{name}}",
+    "addExt": "Thêm số nội bộ",
     "empty": "Chưa có hội nghị",
     "noExtensions": "Chưa có số nội bộ nào được thêm",
     "selectConference": "Chọn một hội nghị để xem số nội bộ",
@@ -37,7 +51,10 @@
       "number": "Số hội nghị",
       "numberPlaceholder": "vd: 100",
       "name": "Tên hội nghị",
-      "namePlaceholder": "vd: Phòng họp chính"
+      "namePlaceholder": "vd: Phòng họp chính",
+      "extNumber": "Số nội bộ",
+      "extUsername": "Tên đăng nhập số nội bộ",
+      "extUsernamePlaceholder": "vd: player113"
     }
   },
   "files": {
@@ -46,11 +63,24 @@
       "events": "Sự kiện",
       "bgm": "Nhạc nền"
     },
+    "onDevice": "Trên thiết bị",
+    "transfers": "Truyền tệp",
     "empty": "Không có tệp trên thiết bị",
     "noTransfers": "Không có truyền tệp đang hoạt động",
     "transferHelp": "Dùng các nút bên dưới để tải lên hoặc tải xuống",
     "remotePath": "Đường dẫn từ xa (tùy chọn)",
+    "uploadFile": "Tải lên tệp…",
+    "cancelTransfer": "Hủy truyền tệp",
+    "removeFromList": "Xóa khỏi danh sách",
+    "selectFile": "Chọn tệp để tải lên",
     "save": "Lưu tệp",
-    "saveDownloaded": "Lưu tệp đã tải xuống"
+    "saveDownloaded": "Lưu tệp đã tải xuống",
+    "status": {
+      "queued": "Đang chờ",
+      "transferring": "Đang truyền",
+      "done": "Hoàn thành",
+      "error": "Lỗi",
+      "cancelled": "Đã hủy"
+    }
   }
 }

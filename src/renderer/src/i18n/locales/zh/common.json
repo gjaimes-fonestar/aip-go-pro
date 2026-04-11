@@ -10,7 +10,8 @@
     "configure": "配置",
     "stop": "停止",
     "dismiss": "关闭",
-    "upload": "上传"
+    "upload": "上传",
+    "add": "添加"
   },
   "status": {
     "online": "在线",

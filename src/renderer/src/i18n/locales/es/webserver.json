@@ -12,8 +12,17 @@
     "dhcp": "Este dispositivo tiene configuración IP dinámica (DHCP). Si el router asigna una IP diferente, las extensiones SIP no podrán conectarse. Se recomienda asignar una IP fija para evitar esto."
   },
   "extensions": {
+    "info": "Las extensiones SIP son los identificadores con los que los dispositivos se registran en el servidor SIP. Pueden contener números, letras y caracteres como asterisco (*) y almohadilla (#).",
     "create": "Crear extensión SIP",
     "delete": "Eliminar extensión",
+    "count_one": "{{count}} extensión",
+    "count_other": "{{count}} extensiones",
+    "empty": "No hay extensiones configuradas. Haz clic en Crear extensión para añadir una.",
+    "columns": {
+      "number": "#",
+      "extension": "Extensión",
+      "device": "Dispositivo asignado"
+    },
     "form": {
       "number": "Número de extensión",
       "numberPlaceholder": "ej. 113",
@@ -25,8 +34,13 @@
     }
   },
   "conferences": {
+    "info": "Las conferencias son extensiones especiales que agrupan otras simples y permiten realizar una llamada a múltiples destinos simultáneamente.",
     "create": "Crear conferencia",
     "addExtension": "Añadir extensión a conferencia",
+    "header": "Conferencias",
+    "extensionsHeader": "Extensiones",
+    "extensionsFor": "Extensiones — {{name}}",
+    "addExt": "Añadir extensión",
     "empty": "Sin conferencias",
     "noExtensions": "No hay extensiones añadidas aún",
     "selectConference": "Selecciona una conferencia para ver sus extensiones",
@@ -37,7 +51,10 @@
       "number": "Número de conferencia",
       "numberPlaceholder": "ej. 100",
       "name": "Nombre de conferencia",
-      "namePlaceholder": "ej. Sala principal"
+      "namePlaceholder": "ej. Sala principal",
+      "extNumber": "Número de extensión",
+      "extUsername": "Usuario de extensión",
+      "extUsernamePlaceholder": "ej. player113"
     }
   },
   "files": {
@@ -46,11 +63,24 @@
       "events": "Eventos",
       "bgm": "Música de fondo"
     },
+    "onDevice": "En dispositivo",
+    "transfers": "Transferencias",
     "empty": "No hay archivos en el dispositivo",
     "noTransfers": "Sin transferencias activas",
     "transferHelp": "Usa los controles de abajo para subir o descargar",
     "remotePath": "Ruta remota (opcional)",
+    "uploadFile": "Subir archivo…",
+    "cancelTransfer": "Cancelar transferencia",
+    "removeFromList": "Eliminar de la lista",
+    "selectFile": "Seleccionar archivo para subir",
     "save": "Guardar archivo",
-    "saveDownloaded": "Guardar archivo descargado"
+    "saveDownloaded": "Guardar archivo descargado",
+    "status": {
+      "queued": "En cola",
+      "transferring": "Transfiriendo",
+      "done": "Completado",
+      "error": "Error",
+      "cancelled": "Cancelado"
+    }
   }
 }

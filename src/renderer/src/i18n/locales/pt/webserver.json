@@ -12,8 +12,17 @@
     "dhcp": "Este dispositivo tem configuração IP dinâmica (DHCP). Se o roteador atribuir um IP diferente, os ramais SIP não conseguirão se conectar. Recomenda-se atribuir um IP fixo para evitar isso."
   },
   "extensions": {
+    "info": "Os ramais SIP são os identificadores com os quais os dispositivos se registram no servidor SIP. Podem conter números, letras e caracteres como asterisco (*) e cerquilha (#).",
     "create": "Criar ramal SIP",
     "delete": "Excluir ramal",
+    "count_one": "{{count}} ramal",
+    "count_other": "{{count}} ramais",
+    "empty": "Nenhum ramal configurado. Clique em Criar ramal para adicionar um.",
+    "columns": {
+      "number": "#",
+      "extension": "Ramal",
+      "device": "Dispositivo atribuído"
+    },
     "form": {
       "number": "Número do ramal",
       "numberPlaceholder": "ex: 113",
@@ -25,8 +34,13 @@
     }
   },
   "conferences": {
+    "info": "As conferências são ramais especiais que agrupam outros simples e permitem realizar uma chamada para vários destinos simultaneamente.",
     "create": "Criar conferência",
     "addExtension": "Adicionar ramal à conferência",
+    "header": "Conferências",
+    "extensionsHeader": "Ramais",
+    "extensionsFor": "Ramais — {{name}}",
+    "addExt": "Adicionar ramal",
     "empty": "Nenhuma conferência",
     "noExtensions": "Nenhum ramal adicionado ainda",
     "selectConference": "Selecione uma conferência para ver seus ramais",
@@ -37,7 +51,10 @@
       "number": "Número da conferência",
       "numberPlaceholder": "ex: 100",
       "name": "Nome da conferência",
-      "namePlaceholder": "ex: Sala principal"
+      "namePlaceholder": "ex: Sala principal",
+      "extNumber": "Número do ramal",
+      "extUsername": "Usuário do ramal",
+      "extUsernamePlaceholder": "ex: player113"
     }
   },
   "files": {
@@ -46,11 +63,24 @@
       "events": "Eventos",
       "bgm": "Música de Fundo"
     },
+    "onDevice": "No dispositivo",
+    "transfers": "Transferências",
     "empty": "Nenhum arquivo no dispositivo",
     "noTransfers": "Nenhuma transferência ativa",
     "transferHelp": "Use os controles abaixo para enviar ou baixar",
     "remotePath": "Caminho remoto (opcional)",
+    "uploadFile": "Enviar arquivo…",
+    "cancelTransfer": "Cancelar transferência",
+    "removeFromList": "Remover da lista",
+    "selectFile": "Selecionar arquivo para enviar",
     "save": "Salvar arquivo",
-    "saveDownloaded": "Salvar arquivo baixado"
+    "saveDownloaded": "Salvar arquivo baixado",
+    "status": {
+      "queued": "Na fila",
+      "transferring": "Transferindo",
+      "done": "Concluído",
+      "error": "Erro",
+      "cancelled": "Cancelado"
+    }
   }
 }
