@@ -19,6 +19,7 @@ import { useCalendarStore } from '../store/calendar.store'
 import type { CalendarViewMode } from '../store/calendar.store'
 import { useDevicesStore } from '../store/devices.store'
 import { useScenesStore } from '../store/scenes.store'
+import { useStreamsStore } from '../store/streams.store'
 import type {
   CalendarEvent,
   CalendarAction,
@@ -164,6 +165,7 @@ function EventModal({ event, onSave, onDelete, onClose }: EventModalProps) {
   const deviceEntries = useDevicesStore((s) => s.entries)
   const devices = useMemo(() => Array.from(deviceEntries.values()).map((e) => e.device), [deviceEntries])
   const scenes = useScenesStore((s) => s.scenes)
+  const streams = useStreamsStore((s) => s.streams)
 
   const isNew = !event?.id
 
@@ -531,22 +533,20 @@ function EventModal({ event, onSave, onDelete, onClose }: EventModalProps) {
               </div>
             )}
             {actionType === 'online' && (
-              <div className="space-y-2">
-                <input
-                  type="text"
-                  value={streamUrl}
-                  onChange={(e) => setStreamUrl(e.target.value)}
-                  placeholder={t('action.streamUrlPlaceholder')}
-                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
-                />
-                <input
-                  type="text"
-                  value={streamName}
-                  onChange={(e) => setStreamName(e.target.value)}
-                  placeholder={t('action.streamNamePlaceholder')}
-                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
-                />
-              </div>
+              <select
+                value={streamUrl}
+                onChange={(e) => {
+                  const s = streams.find((st) => st.url === e.target.value)
+                  setStreamUrl(e.target.value)
+                  setStreamName(s?.name ?? '')
+                }}
+                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+              >
+                <option value="">{t('action.selectStream')}</option>
+                {streams.map((s) => (
+                  <option key={s.id} value={s.url}>{s.name}</option>
+                ))}
+              </select>
             )}
             {actionType === 'scene' && (
               <select
@@ -919,8 +919,9 @@ export default function Calendar() {
   } = useCalendarStore()
 
   const { setScenes } = useScenesStore()
+  const { setStreams } = useStreamsStore()
 
-  // Load events and scenes from main process on mount
+  // Load events, scenes and streams from main process on mount
   useEffect(() => {
     setLoading(true)
     window.electronAPI.calendar
@@ -929,7 +930,8 @@ export default function Calendar() {
       .catch(console.error)
       .finally(() => setLoading(false))
     window.electronAPI.scene.list().then(setScenes).catch(console.error)
-  }, [setEvents, setLoading, setScenes])
+    window.electronAPI.stream.list().then(setStreams).catch(console.error)
+  }, [setEvents, setLoading, setScenes, setStreams])
 
   // Derive the range the calendar is currently showing for event expansion
   const rangeStart = useMemo(() => {

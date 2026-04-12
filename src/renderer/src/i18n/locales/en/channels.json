@@ -61,6 +61,7 @@
     "playlist": "Playlist",
     "online": "Online",
     "streamPlaceholder": "http:// or rtsp:// stream URL",
+    "selectStream": "Select a stream…",
     "windowsCapture": "Windows audio capture",
     "audioStreaming": "Audio streaming",
     "quality": "Quality",

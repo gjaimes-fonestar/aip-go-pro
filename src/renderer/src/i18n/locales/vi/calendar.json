@@ -69,7 +69,8 @@
     "sceneName": "Tên cảnh",
     "browse": "Duyệt",
     "addFiles": "Thêm tệp",
-    "selectScene": "Chọn cảnh…"
+    "selectScene": "Chọn cảnh…",
+    "selectStream": "Chọn luồng phát…"
   },
   "recurrence": {
     "label": "Lặp lại",

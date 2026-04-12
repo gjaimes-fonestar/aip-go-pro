@@ -61,6 +61,7 @@
     "playlist": "播放列表",
     "online": "在线",
     "streamPlaceholder": "http:// 或 rtsp:// 流地址",
+    "selectStream": "选择流媒体…",
     "windowsCapture": "Windows 音频采集",
     "audioStreaming": "音频流",
     "quality": "质量",

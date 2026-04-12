@@ -69,7 +69,8 @@
     "sceneName": "Scene name",
     "browse": "Browse",
     "addFiles": "Add files",
-    "selectScene": "Select a scene…"
+    "selectScene": "Select a scene…",
+    "selectStream": "Select a stream…"
   },
   "recurrence": {
     "label": "Repeat",

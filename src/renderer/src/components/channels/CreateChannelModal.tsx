@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useStreamsStore } from '../../store/streams.store'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -100,6 +101,12 @@ export default function CreateChannelModal({ open, onClose, onCreate }: Props) {
   const { t } = useTranslation('channels')
   const [form, setForm] = useState<NewChannelForm>(DEFAULTS)
   const nameRef = useRef<HTMLInputElement>(null)
+  const { streams, setStreams } = useStreamsStore()
+
+  // Load streams once on mount
+  useEffect(() => {
+    window.electronAPI.stream.list().then(setStreams).catch(console.error)
+  }, [setStreams])
 
   // Focus name on open; reset on close
   useEffect(() => {
@@ -192,13 +199,16 @@ export default function CreateChannelModal({ open, onClose, onCreate }: Props) {
               />
               {form.sourceType === 'online' && (
                 <div className="ml-6">
-                  <input
-                    type="text"
+                  <select
                     value={form.streamUrl}
                     onChange={(e) => set('streamUrl', e.target.value)}
-                    placeholder={t('modal.streamPlaceholder')}
-                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs text-gray-900 placeholder-gray-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-                  />
+                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs text-gray-700 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
+                  >
+                    <option value="">{t('modal.selectStream')}</option>
+                    {streams.map((s) => (
+                      <option key={s.id} value={s.url}>{s.name}</option>
+                    ))}
+                  </select>
                 </div>
               )}
 

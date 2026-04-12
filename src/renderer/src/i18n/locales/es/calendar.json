@@ -69,7 +69,8 @@
     "sceneName": "Nombre de la escena",
     "browse": "Examinar",
     "addFiles": "Agregar archivos",
-    "selectScene": "Seleccionar escena…"
+    "selectScene": "Seleccionar escena…",
+    "selectStream": "Seleccionar transmisión…"
   },
   "recurrence": {
     "label": "Repetir",

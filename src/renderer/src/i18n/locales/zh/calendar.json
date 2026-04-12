@@ -69,7 +69,8 @@
     "sceneName": "场景名称",
     "browse": "浏览",
     "addFiles": "添加文件",
-    "selectScene": "选择场景…"
+    "selectScene": "选择场景…",
+    "selectStream": "选择流媒体…"
   },
   "recurrence": {
     "label": "重复",

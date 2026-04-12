@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { format, parseISO } from 'date-fns'
 import { useCalendarStore } from '../store/calendar.store'
 import { useDevicesStore } from '../store/devices.store'
+import { useStreamsStore } from '../store/streams.store'
 import type { CalendarEvent, CalendarAction, RecurrenceRule, Weekday, RecurrenceEnd } from '@shared/calendar'
 import { addMonths, addMinutes } from 'date-fns'
 
@@ -56,6 +57,7 @@ function MessageModal({ event, onSave, onDelete, onClose }: MessageModalProps) {
   const { t: tm } = useTranslation('messages')
   const deviceEntries = useDevicesStore((s) => s.entries)
   const devices = useMemo(() => Array.from(deviceEntries.values()).map((e) => e.device), [deviceEntries])
+  const streams = useStreamsStore((s) => s.streams)
   const isNew = !event?.id
 
   const initStart = event?.dtStart ? toDatetimeLocal(event.dtStart) : format(new Date(), "yyyy-MM-dd'T'HH:mm")
@@ -215,7 +217,16 @@ function MessageModal({ event, onSave, onDelete, onClose }: MessageModalProps) {
               </div>
             )}
             {actionType === 'online' && (
-              <input type="text" value={streamUrl} onChange={(e) => setStreamUrl(e.target.value)} placeholder={t('action.streamUrlPlaceholder')} className={inp} />
+              <select
+                value={streamUrl}
+                onChange={(e) => setStreamUrl(e.target.value)}
+                className={inp}
+              >
+                <option value="">{t('action.selectStream')}</option>
+                {streams.map((s) => (
+                  <option key={s.id} value={s.url}>{s.name}</option>
+                ))}
+              </select>
             )}
           </div>
 
@@ -365,6 +376,7 @@ const TYPE_BADGE: Record<string, string> = {
 export default function Messages() {
   const { t } = useTranslation('messages')
   const { events, setEvents, upsertEvent, removeEvent } = useCalendarStore()
+  const { setStreams: setAllStreams } = useStreamsStore()
   const [loading, setLoading] = useState(false)
   const [modalEventId, setModalEventId] = useState<string | null | undefined>(undefined)
 
@@ -376,7 +388,8 @@ export default function Messages() {
       .then(setEvents)
       .catch(console.error)
       .finally(() => setLoading(false))
-  }, [setEvents])
+    window.electronAPI.stream.list().then(setAllStreams).catch(console.error)
+  }, [setEvents, setAllStreams])
 
   const handleSave = useCallback(
     async (data: Omit<CalendarEvent, 'id' | 'createdAt' | 'updatedAt'>) => {
