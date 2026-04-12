@@ -31,6 +31,7 @@
   "labels": {
     "source": "来源",
     "tracks": "曲目",
+    "stream": "流媒体",
     "linkedDevices": "关联设备",
     "noTracks": "无曲目。",
     "noDevices": "无在线设备。"

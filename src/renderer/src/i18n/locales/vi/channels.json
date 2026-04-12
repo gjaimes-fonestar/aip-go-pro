@@ -31,6 +31,7 @@
   "labels": {
     "source": "Nguồn",
     "tracks": "Bản nhạc",
+    "stream": "Luồng phát",
     "linkedDevices": "Thiết bị liên kết",
     "noTracks": "Không có bản nhạc.",
     "noDevices": "Không có thiết bị trực tuyến."

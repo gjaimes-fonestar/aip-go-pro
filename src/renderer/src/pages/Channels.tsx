@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Badge } from '../components/ui/Badge'
 import CreateChannelModal, { type NewChannelForm } from '../components/channels/CreateChannelModal'
 import { useDevicesStore } from '../store/devices.store'
+import { useStreamsStore } from '../store/streams.store'
 import type {
   AipChannelInfo,
   AipChannelConfig,
@@ -214,11 +215,15 @@ function ChannelRow({
   const { t } = useTranslation('channels')
   const [expanded, setExpanded]           = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const streams = useStreamsStore((s) => s.streams)
 
-  const sourceType = detectSourceType(channel.urls)
-  const isPlaying  = channel.state === 1
-  const isPaused   = channel.state === 2
-  const currentUrl = channel.currentUrl || channel.urls[channel.trackIndex] || ''
+  const sourceType   = detectSourceType(channel.urls)
+  const isPlaying    = channel.state === 1
+  const isPaused     = channel.state === 2
+  const currentUrl   = channel.currentUrl || channel.urls[channel.trackIndex] || ''
+  const linkedStream = sourceType === 'online'
+    ? streams.find((s) => s.url === channel.urls[0]) ?? null
+    : null
 
   const handlePlay  = (e: React.MouseEvent) => { e.stopPropagation(); onPlay(channel.id, isPlaying) }
   const handleStop  = (e: React.MouseEvent) => { e.stopPropagation(); onStop(channel.id) }
@@ -268,22 +273,44 @@ function ChannelRow({
           onKeyDown={(e) => e.key === 'Enter' && setExpanded((v) => !v)}
           className="flex cursor-pointer items-center gap-4 px-5 py-4 hover:bg-gray-50/50 dark:hover:bg-gray-700/30 transition-colors"
         >
-          {/* Status dot */}
-          <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${STATE_DOT[channel.state] ?? 'bg-gray-400'}`} />
+          {/* Status indicator */}
+          {isPlaying && sourceType === 'online' ? (
+            <span className="flex shrink-0 items-end gap-px">
+              {[0, 150, 300].map((delay) => (
+                <span
+                  key={delay}
+                  className="w-0.5 rounded-sm bg-primary animate-[bounce_0.8s_ease-in-out_infinite]"
+                  style={{ height: '10px', animationDelay: `${delay}ms` }}
+                />
+              ))}
+            </span>
+          ) : (
+            <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${STATE_DOT[channel.state] ?? 'bg-gray-400'}`} />
+          )}
 
           {/* Name + meta */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-semibold text-gray-900 dark:text-white text-sm">{channel.name}</span>
+              <span className={`font-semibold text-sm ${isPlaying && sourceType === 'online' ? 'text-primary' : 'text-gray-900 dark:text-white'}`}>
+                {channel.name}
+              </span>
               <Badge label={t(`badges.${sourceType === 'windows' ? 'capture' : sourceType}` as 'badges.local' | 'badges.online' | 'badges.capture')} variant={SOURCE_VARIANT[sourceType]} />
               {channel.loop    && <Badge label={t('badges.loop')}    variant="default" />}
               {channel.shuffle && <Badge label={t('badges.shuffle')} variant="default" />}
             </div>
             <p className="mt-0.5 truncate text-xs text-gray-400 dark:text-gray-500">
-              {isPlaying || isPaused
-                ? <span className="text-primary font-medium">{urlLabel(currentUrl)}</span>
-                : (channel.urls[0] ? urlLabel(channel.urls[0]) : '—')
-              }
+              {linkedStream ? (
+                <span className={isPlaying ? 'text-primary font-medium' : ''}>
+                  {linkedStream.name}
+                  {linkedStream.description && (
+                    <span className="ml-1 font-normal text-gray-400 dark:text-gray-500">— {linkedStream.description}</span>
+                  )}
+                </span>
+              ) : isPlaying || isPaused ? (
+                <span className="text-primary font-medium">{urlLabel(currentUrl)}</span>
+              ) : (
+                channel.urls[0] ? urlLabel(channel.urls[0]) : '—'
+              )}
             </p>
           </div>
 
@@ -341,12 +368,31 @@ function ChannelRow({
 
             {/* Track list + devices — two-column grid on wider screens */}
             <div className="grid grid-cols-1 gap-0 sm:grid-cols-2">
-              {/* Tracks */}
+              {/* Tracks / Stream info */}
               <div className="p-4">
                 <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-                  <Ico.Music /> {t('labels.tracks')}
+                  <Ico.Music /> {sourceType === 'online' ? t('labels.stream') : t('labels.tracks')}
                 </p>
-                {channel.urls.length === 0 ? (
+                {sourceType === 'online' && linkedStream ? (
+                  <div className={`rounded-lg border px-3 py-2.5 ${isPlaying ? 'border-primary/30 bg-primary/5 dark:bg-primary/10' : 'border-gray-100 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50'}`}>
+                    <div className="flex items-center gap-2">
+                      {isPlaying && (
+                        <span className="flex shrink-0 items-end gap-px">
+                          {[0, 150, 300].map((delay) => (
+                            <span key={delay} className="w-0.5 rounded-sm bg-primary animate-[bounce_0.8s_ease-in-out_infinite]" style={{ height: '8px', animationDelay: `${delay}ms` }} />
+                          ))}
+                        </span>
+                      )}
+                      <p className={`text-xs font-semibold ${isPlaying ? 'text-primary' : 'text-gray-800 dark:text-gray-100'}`}>
+                        {linkedStream.name}
+                      </p>
+                    </div>
+                    {linkedStream.description && (
+                      <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">{linkedStream.description}</p>
+                    )}
+                    <p className="mt-1 truncate font-mono text-[10px] text-gray-400 dark:text-gray-500">{linkedStream.url}</p>
+                  </div>
+                ) : channel.urls.length === 0 ? (
                   <p className="text-xs text-gray-400">{t('labels.noTracks')}</p>
                 ) : (
                   <ul className="space-y-1">
@@ -496,6 +542,7 @@ function formatCountdown(seconds: number): string {
 export default function Channels() {
   const { t } = useTranslation('channels')
   const { aipReady, entries, discoveryStartedAt } = useDevicesStore()
+  const { setStreams } = useStreamsStore()
 
   const [activeTab, setActiveTab] = useState<'playback' | 'network'>('playback')
 
@@ -543,6 +590,10 @@ export default function Channels() {
     const list = await window.electronAPI.aip.getNetworkChannels()
     setNetworkChannels(list)
   }, [aipReady])
+
+  useEffect(() => {
+    window.electronAPI.stream.list().then(setStreams).catch(console.error)
+  }, [setStreams])
 
   useEffect(() => {
     refreshChannels().catch(console.error)

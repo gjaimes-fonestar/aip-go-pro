@@ -31,6 +31,7 @@
   "labels": {
     "source": "Fuente",
     "tracks": "Pistas",
+    "stream": "Transmisión",
     "linkedDevices": "Dispositivos vinculados",
     "noTracks": "Sin pistas.",
     "noDevices": "Sin dispositivos en línea."
