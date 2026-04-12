@@ -443,6 +443,14 @@ export function registerIpcHandlers(): void {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     },
+    {
+      id: 'stream-003',
+      name: 'La Mega',
+      url: 'https://stream.emisorasmusicales.net/listen/la_mega/lamega.mp3',
+      description: 'La Mega — música urbana y tropical',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
   ]
 
   const streamStore = new Map<string, Stream>(mockStreams.map((s) => [s.id, s]))
