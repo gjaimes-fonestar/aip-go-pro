@@ -7,3 +7,99 @@
   scrollbar-width: thin;
   scrollbar-color: theme('colors.gray.400') transparent;
 }
+
+/* react-big-calendar — base */
+.rbc-calendar {
+  font-family: inherit;
+}
+.rbc-header {
+  padding: 6px 8px;
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.rbc-event {
+  border-radius: 4px;
+  border: none;
+  padding: 2px 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+.rbc-today {
+  background-color: rgb(from theme('colors.primary.DEFAULT') r g b / 0.08);
+}
+
+/* react-big-calendar — dark mode */
+.dark .rbc-calendar {
+  color: theme('colors.gray.100');
+}
+.dark .rbc-toolbar button {
+  color: theme('colors.gray.300');
+  border-color: theme('colors.gray.600');
+  background: transparent;
+}
+.dark .rbc-toolbar button:hover,
+.dark .rbc-toolbar button:focus {
+  background: theme('colors.gray.700');
+  color: theme('colors.white');
+}
+.dark .rbc-toolbar button.rbc-active {
+  background: theme('colors.primary.DEFAULT');
+  color: theme('colors.white');
+  border-color: theme('colors.primary.DEFAULT');
+}
+.dark .rbc-month-view,
+.dark .rbc-time-view,
+.dark .rbc-agenda-view {
+  border-color: theme('colors.gray.700');
+}
+.dark .rbc-month-row,
+.dark .rbc-day-bg,
+.dark .rbc-time-content,
+.dark .rbc-time-header-content {
+  border-color: theme('colors.gray.700');
+}
+.dark .rbc-header {
+  color: theme('colors.gray.400');
+  border-color: theme('colors.gray.700');
+}
+.dark .rbc-header + .rbc-header {
+  border-color: theme('colors.gray.700');
+}
+.dark .rbc-off-range-bg {
+  background: theme('colors.gray.800');
+  opacity: 0.5;
+}
+.dark .rbc-today {
+  background-color: theme('colors.gray.800');
+}
+.dark .rbc-date-cell {
+  color: theme('colors.gray.300');
+}
+.dark .rbc-date-cell.rbc-off-range {
+  color: theme('colors.gray.600');
+}
+.dark .rbc-show-more {
+  color: theme('colors.primary.400');
+}
+.dark .rbc-time-slot,
+.dark .rbc-timeslot-group {
+  border-color: theme('colors.gray.700');
+  color: theme('colors.gray.500');
+}
+.dark .rbc-current-time-indicator {
+  background-color: theme('colors.red.400');
+}
+.dark .rbc-agenda-view table {
+  border-color: theme('colors.gray.700');
+}
+.dark .rbc-agenda-date-cell,
+.dark .rbc-agenda-time-cell,
+.dark .rbc-agenda-event-cell {
+  border-color: theme('colors.gray.700');
+  color: theme('colors.gray.200');
+}
+.dark .rbc-agenda-empty {
+  color: theme('colors.gray.500');
+}

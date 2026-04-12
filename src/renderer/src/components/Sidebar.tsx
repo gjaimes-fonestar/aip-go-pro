@@ -38,6 +38,11 @@ const Icons = {
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
     </svg>
   ),
+  Calendar: () => (
+    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+    </svg>
+  ),
   Log: () => (
     <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -119,6 +124,7 @@ export default function Sidebar() {
       label: t('groups.automation'),
       items: [
         { to: '/action-control', label: t('items.actionControl'), Icon: Icons.ActionControl },
+        { to: '/calendar',       label: t('items.calendar'),      Icon: Icons.Calendar      },
         { to: '/events',         label: t('items.events'),        Icon: Icons.Events        },
         { to: '/scenes',         label: t('items.scenes'),        Icon: Icons.Scenes        },
         { to: '/transfers',      label: t('items.transfers'),     Icon: Icons.Transfers     },

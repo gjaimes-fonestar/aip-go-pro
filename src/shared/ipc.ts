@@ -23,6 +23,16 @@ export const IPC = {
     OPEN_FILE: 'dialog:openFile',
     SAVE_FILE: 'dialog:saveFile',
   },
+  CALENDAR: {
+    LIST:    'calendar:list',
+    GET:     'calendar:get',
+    CREATE:  'calendar:create',
+    UPDATE:  'calendar:update',
+    DELETE:  'calendar:delete',
+    TOGGLE:  'calendar:toggle',
+    TRIGGER: 'calendar:trigger', // manually fire an event
+    FIRED:   'calendar:fired',   // push: main → renderer when event fires
+  },
   AIP: {
     // Core
     GET_STATUS:     'aip:getStatus',

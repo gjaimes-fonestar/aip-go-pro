@@ -6,6 +6,7 @@ import NotFound from '../pages/NotFound'
 import Placeholder from '../pages/Placeholder'
 import Channels from '../pages/Channels'
 import Webserver from '../pages/Webserver'
+import Calendar from '../pages/Calendar'
 
 export const router = createHashRouter([
   {
@@ -17,6 +18,7 @@ export const router = createHashRouter([
       { path: 'dashboard',       element: <Dashboard /> },
       { path: 'channels',        element: <Channels /> },
       { path: 'webserver',       element: <Webserver /> },
+      { path: 'calendar',         element: <Calendar /> },
       { path: 'action-control',  element: <Placeholder title="Action Control" /> },
       { path: 'messages',        element: <Placeholder title="Messages" /> },
       { path: 'multicast',       element: <Navigate to="/devices" replace /> },

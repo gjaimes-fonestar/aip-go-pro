@@ -1,0 +1,116 @@
+{
+  "title": "Calendar",
+  "views": {
+    "month": "Month",
+    "week": "Week",
+    "day": "Day",
+    "agenda": "Agenda"
+  },
+  "toolbar": {
+    "today": "Today",
+    "back": "Back",
+    "next": "Next",
+    "newEvent": "New Event"
+  },
+  "event": {
+    "new": "New Event",
+    "edit": "Edit Event",
+    "delete": "Delete Event",
+    "deleteConfirm": "Delete \"{{title}}\"?",
+    "deleteBody": "This action cannot be undone.",
+    "enabled": "Active",
+    "disabled": "Disabled",
+    "trigger": "Fire now",
+    "allDay": "All day"
+  },
+  "form": {
+    "title": "Title",
+    "titlePlaceholder": "Event title",
+    "description": "Description",
+    "descriptionPlaceholder": "Optional notes",
+    "startDate": "Start date",
+    "startTime": "Start time",
+    "endDate": "End date",
+    "endTime": "End time",
+    "color": "Color",
+    "section": {
+      "action": "Action",
+      "recurrence": "Recurrence",
+      "devices": "Target devices",
+      "options": "Options"
+    },
+    "duration": "Playback duration",
+    "durationMin": "min",
+    "durationSec": "sec"
+  },
+  "action": {
+    "label": "What to do",
+    "type": {
+      "file": "Play file",
+      "playlist": "Play playlist",
+      "online": "Online stream",
+      "scene": "Activate scene"
+    },
+    "filePath": "File path",
+    "filePathPlaceholder": "/messages/announcement.wav",
+    "fileName": "File name",
+    "fileNamePlaceholder": "Optional display name",
+    "playlistId": "Playlist ID",
+    "playlistIdPlaceholder": "pl-lobby-bgm",
+    "playlistName": "Playlist name",
+    "streamUrl": "Stream URL",
+    "streamUrlPlaceholder": "http://stream.example.com/radio",
+    "streamName": "Stream name",
+    "sceneId": "Scene ID",
+    "sceneIdPlaceholder": "scene-eob",
+    "sceneName": "Scene name"
+  },
+  "recurrence": {
+    "label": "Repeat",
+    "none": "Does not repeat",
+    "daily": "Daily",
+    "weekly": "Weekly",
+    "monthly": "Monthly",
+    "yearly": "Yearly",
+    "every": "Every",
+    "days": "day(s)",
+    "weeks": "week(s)",
+    "months": "month(s)",
+    "years": "year(s)",
+    "on": "On",
+    "onDay": "On day",
+    "ends": "Ends",
+    "endNever": "Never",
+    "endAfter": "After",
+    "endOn": "On date",
+    "occurrences": "occurrence(s)",
+    "days_short": {
+      "MO": "Mon",
+      "TU": "Tue",
+      "WE": "Wed",
+      "TH": "Thu",
+      "FR": "Fri",
+      "SA": "Sat",
+      "SU": "Sun"
+    },
+    "minutely": "Every N minutes",
+    "hourly": "Hourly",
+    "minutes": "minute(s)",
+    "hours": "hour(s)"
+  },
+  "devices": {
+    "allDevices": "All devices",
+    "selectDevices": "Select specific devices",
+    "noDevices": "No devices found"
+  },
+  "empty": {
+    "title": "No events scheduled",
+    "help": "Click New Event to schedule your first message, scene, or stream."
+  },
+  "agenda": {
+    "date": "Date",
+    "time": "Time",
+    "event": "Event",
+    "noEvents": "No events in this period"
+  }
+}

@@ -1,0 +1,116 @@
+{
+  "title": "Lịch",
+  "views": {
+    "month": "Tháng",
+    "week": "Tuần",
+    "day": "Ngày",
+    "agenda": "Lịch trình"
+  },
+  "toolbar": {
+    "today": "Hôm nay",
+    "back": "Quay lại",
+    "next": "Tiếp theo",
+    "newEvent": "Sự kiện mới"
+  },
+  "event": {
+    "new": "Sự kiện mới",
+    "edit": "Chỉnh sửa sự kiện",
+    "delete": "Xóa sự kiện",
+    "deleteConfirm": "Xóa \"{{title}}\"?",
+    "deleteBody": "Hành động này không thể hoàn tác.",
+    "enabled": "Đang hoạt động",
+    "disabled": "Đã tắt",
+    "trigger": "Kích hoạt ngay",
+    "allDay": "Cả ngày"
+  },
+  "form": {
+    "title": "Tiêu đề",
+    "titlePlaceholder": "Tiêu đề sự kiện",
+    "description": "Mô tả",
+    "descriptionPlaceholder": "Ghi chú tùy chọn",
+    "startDate": "Ngày bắt đầu",
+    "startTime": "Giờ bắt đầu",
+    "endDate": "Ngày kết thúc",
+    "endTime": "Giờ kết thúc",
+    "color": "Màu sắc",
+    "section": {
+      "action": "Hành động",
+      "recurrence": "Lặp lại",
+      "devices": "Thiết bị đích",
+      "options": "Tùy chọn"
+    },
+    "duration": "Thời lượng phát",
+    "durationMin": "phút",
+    "durationSec": "giây"
+  },
+  "action": {
+    "label": "Làm gì",
+    "type": {
+      "file": "Phát tệp",
+      "playlist": "Phát danh sách phát",
+      "online": "Stream trực tuyến",
+      "scene": "Kích hoạt cảnh"
+    },
+    "filePath": "Đường dẫn tệp",
+    "filePathPlaceholder": "/messages/thong-bao.wav",
+    "fileName": "Tên tệp",
+    "fileNamePlaceholder": "Tên hiển thị tùy chọn",
+    "playlistId": "ID danh sách phát",
+    "playlistIdPlaceholder": "pl-lobby-bgm",
+    "playlistName": "Tên danh sách phát",
+    "streamUrl": "URL stream",
+    "streamUrlPlaceholder": "http://stream.example.com/radio",
+    "streamName": "Tên stream",
+    "sceneId": "ID cảnh",
+    "sceneIdPlaceholder": "scene-eob",
+    "sceneName": "Tên cảnh"
+  },
+  "recurrence": {
+    "label": "Lặp lại",
+    "none": "Không lặp lại",
+    "daily": "Hàng ngày",
+    "weekly": "Hàng tuần",
+    "monthly": "Hàng tháng",
+    "yearly": "Hàng năm",
+    "every": "Mỗi",
+    "days": "ngày",
+    "weeks": "tuần",
+    "months": "tháng",
+    "years": "năm",
+    "on": "Vào",
+    "onDay": "Ngày",
+    "ends": "Kết thúc",
+    "endNever": "Không bao giờ",
+    "endAfter": "Sau",
+    "endOn": "Vào ngày",
+    "occurrences": "lần",
+    "days_short": {
+      "MO": "T2",
+      "TU": "T3",
+      "WE": "T4",
+      "TH": "T5",
+      "FR": "T6",
+      "SA": "T7",
+      "SU": "CN"
+    },
+    "minutely": "Mỗi N phút",
+    "hourly": "Theo giờ",
+    "minutes": "phút",
+    "hours": "giờ"
+  },
+  "devices": {
+    "allDevices": "Tất cả thiết bị",
+    "selectDevices": "Chọn thiết bị cụ thể",
+    "noDevices": "Không tìm thấy thiết bị"
+  },
+  "empty": {
+    "title": "Chưa có sự kiện nào được lên lịch",
+    "help": "Nhấp vào Sự kiện mới để lên lịch tin nhắn, cảnh hoặc stream đầu tiên."
+  },
+  "agenda": {
+    "date": "Ngày",
+    "time": "Giờ",
+    "event": "Sự kiện",
+    "noEvents": "Không có sự kiện trong khoảng thời gian này"
+  }
+}

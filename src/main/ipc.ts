@@ -14,6 +14,12 @@ import type {
   AipGateWebConfig,
   AipFileTransferRequest,
 } from '../shared/ipc'
+import type {
+  CalendarEvent,
+  CalendarCreatePayload,
+  CalendarUpdatePayload,
+  CalendarTogglePayload,
+} from '../shared/calendar'
 import { backendManager } from './backend'
 import { daemonManager } from './daemon'
 import { aipCore, aipDevices, aipChannels, aipWebserver } from './aip'
@@ -256,4 +262,171 @@ export function registerIpcHandlers(): void {
   )
 
   ipcMain.handle(IPC.AIP.CANCEL_FILE_TRANSFER, () => aipWebserver.cancelFileTransfer())
+
+  // Calendar — in-memory mock store
+
+  const now = new Date()
+  const iso = (d: Date): string => d.toISOString()
+  const daysFromNow = (n: number): Date => new Date(now.getTime() + n * 86_400_000)
+  const todayAt = (h: number, m = 0): string => {
+    const d = new Date(now)
+    d.setHours(h, m, 0, 0)
+    return iso(d)
+  }
+  const todayAtEnd = (h: number, m = 0): string => {
+    const d = new Date(now)
+    d.setHours(h, m, 0, 0)
+    return iso(d)
+  }
+
+  const mockEvents: CalendarEvent[] = [
+    {
+      id: 'evt-001',
+      title: 'Morning Background Music',
+      description: 'Lobby BGM — starts at opening time every weekday.',
+      color: '#6366f1',
+      dtStart: todayAt(8, 0),
+      dtEnd: todayAtEnd(12, 0),
+      recurrence: {
+        freq: 'weekly',
+        interval: 1,
+        byDay: ['MO', 'TU', 'WE', 'TH', 'FR'],
+        end: { type: 'never' },
+      },
+      action: { type: 'playlist', playlistId: 'pl-lobby-bgm', playlistName: 'Lobby Morning' },
+      targetDevices: [],
+      enabled: true,
+      createdAt: iso(now),
+      updatedAt: iso(now),
+    },
+    {
+      id: 'evt-002',
+      title: 'Fire Drill Announcement',
+      description: 'Monthly fire drill reminder message.',
+      color: '#ef4444',
+      dtStart: iso(daysFromNow(3)),
+      dtEnd: iso(new Date(daysFromNow(3).getTime() + 5 * 60_000)),
+      recurrence: {
+        freq: 'monthly',
+        interval: 1,
+        byMonthDay: new Date(daysFromNow(3)).getDate(),
+        end: { type: 'never' },
+      },
+      action: { type: 'file', filePath: '/messages/fire-drill.wav', fileName: 'Fire Drill' },
+      targetDevices: ['AA:BB:CC:DD:EE:01', 'AA:BB:CC:DD:EE:02'],
+      enabled: true,
+      createdAt: iso(now),
+      updatedAt: iso(now),
+    },
+    {
+      id: 'evt-003',
+      title: 'Online Radio Stream',
+      description: 'Afternoon radio stream in the cafeteria.',
+      color: '#10b981',
+      dtStart: todayAt(13, 0),
+      dtEnd: todayAtEnd(17, 0),
+      recurrence: {
+        freq: 'weekly',
+        interval: 1,
+        byDay: ['MO', 'TU', 'WE', 'TH', 'FR'],
+        end: { type: 'never' },
+      },
+      action: { type: 'online', streamUrl: 'http://stream.example.com/radio', streamName: 'Office Radio' },
+      targetDevices: [],
+      enabled: true,
+      createdAt: iso(now),
+      updatedAt: iso(now),
+    },
+    {
+      id: 'evt-004',
+      title: 'Close-of-Day Scene',
+      description: 'Activates the "End of Business" scene at 18:00.',
+      color: '#f59e0b',
+      dtStart: todayAt(18, 0),
+      recurrence: {
+        freq: 'weekly',
+        interval: 1,
+        byDay: ['MO', 'TU', 'WE', 'TH', 'FR'],
+        end: { type: 'never' },
+      },
+      action: { type: 'scene', sceneId: 'scene-eob', sceneName: 'End of Business' },
+      targetDevices: [],
+      enabled: true,
+      createdAt: iso(now),
+      updatedAt: iso(now),
+    },
+    {
+      id: 'evt-005',
+      title: 'Saturday Maintenance Window',
+      description: 'Weekly maintenance announcement on Saturdays.',
+      color: '#8b5cf6',
+      dtStart: (() => { const d = new Date(daysFromNow(6)); d.setHours(9, 0, 0, 0); return iso(d) })(),
+      dtEnd: (() => { const d = new Date(daysFromNow(6)); d.setHours(10, 0, 0, 0); return iso(d) })(),
+      recurrence: {
+        freq: 'weekly',
+        interval: 1,
+        byDay: ['SA'],
+        end: { type: 'count', count: 8 },
+      },
+      action: { type: 'file', filePath: '/messages/maintenance.wav', fileName: 'Maintenance Notice' },
+      targetDevices: [],
+      enabled: false,
+      createdAt: iso(now),
+      updatedAt: iso(now),
+    },
+  ]
+
+  const calendarStore = new Map<string, CalendarEvent>(mockEvents.map((e) => [e.id, e]))
+
+  ipcMain.handle(IPC.CALENDAR.LIST, () => {
+    const events = Array.from(calendarStore.values())
+    console.log('[calendar:list]', events.length, 'events')
+    return events
+  })
+
+  ipcMain.handle(IPC.CALENDAR.GET, (_e, id: string) => {
+    const event = calendarStore.get(id) ?? null
+    console.log('[calendar:get]', id, event ? 'found' : 'not found')
+    return event
+  })
+
+  ipcMain.handle(IPC.CALENDAR.CREATE, (_e, payload: CalendarCreatePayload) => {
+    const id = `evt-${Date.now()}`
+    const ts = new Date().toISOString()
+    const event: CalendarEvent = { id, ...payload.event, createdAt: ts, updatedAt: ts }
+    calendarStore.set(id, event)
+    console.log('[calendar:create]', event)
+    return event
+  })
+
+  ipcMain.handle(IPC.CALENDAR.UPDATE, (_e, payload: CalendarUpdatePayload) => {
+    const existing = calendarStore.get(payload.id)
+    if (!existing) return null
+    const updated: CalendarEvent = { ...existing, ...payload.changes, updatedAt: new Date().toISOString() }
+    calendarStore.set(payload.id, updated)
+    console.log('[calendar:update]', updated)
+    return updated
+  })
+
+  ipcMain.handle(IPC.CALENDAR.DELETE, (_e, id: string) => {
+    const removed = calendarStore.delete(id)
+    console.log('[calendar:delete]', id, removed)
+    return { removed }
+  })
+
+  ipcMain.handle(IPC.CALENDAR.TOGGLE, (_e, payload: CalendarTogglePayload) => {
+    const existing = calendarStore.get(payload.id)
+    if (!existing) return null
+    const updated: CalendarEvent = { ...existing, enabled: payload.enabled, updatedAt: new Date().toISOString() }
+    calendarStore.set(payload.id, updated)
+    console.log('[calendar:toggle]', payload.id, payload.enabled)
+    return updated
+  })
+
+  ipcMain.handle(IPC.CALENDAR.TRIGGER, (_e, id: string) => {
+    const event = calendarStore.get(id)
+    if (!event) return { fired: false }
+    console.log('[calendar:trigger] manual fire:', event)
+    return { fired: true, event }
+  })
 }

@@ -1,0 +1,116 @@
+{
+  "title": "日历",
+  "views": {
+    "month": "月",
+    "week": "周",
+    "day": "日",
+    "agenda": "议程"
+  },
+  "toolbar": {
+    "today": "今天",
+    "back": "上一页",
+    "next": "下一页",
+    "newEvent": "新建事件"
+  },
+  "event": {
+    "new": "新建事件",
+    "edit": "编辑事件",
+    "delete": "删除事件",
+    "deleteConfirm": "删除「{{title}}」？",
+    "deleteBody": "此操作无法撤销。",
+    "enabled": "已启用",
+    "disabled": "已停用",
+    "trigger": "立即执行",
+    "allDay": "全天"
+  },
+  "form": {
+    "title": "标题",
+    "titlePlaceholder": "事件标题",
+    "description": "描述",
+    "descriptionPlaceholder": "可选备注",
+    "startDate": "开始日期",
+    "startTime": "开始时间",
+    "endDate": "结束日期",
+    "endTime": "结束时间",
+    "color": "颜色",
+    "section": {
+      "action": "动作",
+      "recurrence": "重复",
+      "devices": "目标设备",
+      "options": "选项"
+    },
+    "duration": "播放时长",
+    "durationMin": "分",
+    "durationSec": "秒"
+  },
+  "action": {
+    "label": "执行操作",
+    "type": {
+      "file": "播放文件",
+      "playlist": "播放播放列表",
+      "online": "在线流媒体",
+      "scene": "激活场景"
+    },
+    "filePath": "文件路径",
+    "filePathPlaceholder": "/messages/announcement.wav",
+    "fileName": "文件名",
+    "fileNamePlaceholder": "可选显示名称",
+    "playlistId": "播放列表 ID",
+    "playlistIdPlaceholder": "pl-lobby-bgm",
+    "playlistName": "播放列表名称",
+    "streamUrl": "流媒体 URL",
+    "streamUrlPlaceholder": "http://stream.example.com/radio",
+    "streamName": "流媒体名称",
+    "sceneId": "场景 ID",
+    "sceneIdPlaceholder": "scene-eob",
+    "sceneName": "场景名称"
+  },
+  "recurrence": {
+    "label": "重复",
+    "none": "不重复",
+    "daily": "每天",
+    "weekly": "每周",
+    "monthly": "每月",
+    "yearly": "每年",
+    "every": "每",
+    "days": "天",
+    "weeks": "周",
+    "months": "月",
+    "years": "年",
+    "on": "在",
+    "onDay": "第",
+    "ends": "结束",
+    "endNever": "从不",
+    "endAfter": "执行",
+    "endOn": "截止日期",
+    "occurrences": "次后",
+    "days_short": {
+      "MO": "周一",
+      "TU": "周二",
+      "WE": "周三",
+      "TH": "周四",
+      "FR": "周五",
+      "SA": "周六",
+      "SU": "周日"
+    },
+    "minutely": "每 N 分钟",
+    "hourly": "每小时",
+    "minutes": "分钟",
+    "hours": "小时"
+  },
+  "devices": {
+    "allDevices": "所有设备",
+    "selectDevices": "选择特定设备",
+    "noDevices": "未找到设备"
+  },
+  "empty": {
+    "title": "暂无计划事件",
+    "help": "点击新建事件以安排您的第一条消息、场景或流媒体。"
+  },
+  "agenda": {
+    "date": "日期",
+    "time": "时间",
+    "event": "事件",
+    "noEvents": "此期间无事件"
+  }
+}

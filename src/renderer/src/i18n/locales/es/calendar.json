@@ -1,0 +1,116 @@
+{
+  "title": "Calendario",
+  "views": {
+    "month": "Mes",
+    "week": "Semana",
+    "day": "Día",
+    "agenda": "Agenda"
+  },
+  "toolbar": {
+    "today": "Hoy",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "newEvent": "Nuevo evento"
+  },
+  "event": {
+    "new": "Nuevo evento",
+    "edit": "Editar evento",
+    "delete": "Eliminar evento",
+    "deleteConfirm": "¿Eliminar \"{{title}}\"?",
+    "deleteBody": "Esta acción no se puede deshacer.",
+    "enabled": "Activo",
+    "disabled": "Desactivado",
+    "trigger": "Ejecutar ahora",
+    "allDay": "Todo el día"
+  },
+  "form": {
+    "title": "Título",
+    "titlePlaceholder": "Título del evento",
+    "description": "Descripción",
+    "descriptionPlaceholder": "Notas opcionales",
+    "startDate": "Fecha de inicio",
+    "startTime": "Hora de inicio",
+    "endDate": "Fecha de fin",
+    "endTime": "Hora de fin",
+    "color": "Color",
+    "section": {
+      "action": "Acción",
+      "recurrence": "Repetición",
+      "devices": "Dispositivos destino",
+      "options": "Opciones"
+    },
+    "duration": "Duración de reproducción",
+    "durationMin": "min",
+    "durationSec": "seg"
+  },
+  "action": {
+    "label": "Qué hacer",
+    "type": {
+      "file": "Reproducir archivo",
+      "playlist": "Reproducir lista",
+      "online": "Stream en línea",
+      "scene": "Activar escena"
+    },
+    "filePath": "Ruta del archivo",
+    "filePathPlaceholder": "/messages/anuncio.wav",
+    "fileName": "Nombre del archivo",
+    "fileNamePlaceholder": "Nombre opcional",
+    "playlistId": "ID de lista",
+    "playlistIdPlaceholder": "pl-lobby-bgm",
+    "playlistName": "Nombre de la lista",
+    "streamUrl": "URL del stream",
+    "streamUrlPlaceholder": "http://stream.ejemplo.com/radio",
+    "streamName": "Nombre del stream",
+    "sceneId": "ID de escena",
+    "sceneIdPlaceholder": "scene-eob",
+    "sceneName": "Nombre de la escena"
+  },
+  "recurrence": {
+    "label": "Repetir",
+    "none": "No se repite",
+    "daily": "Diariamente",
+    "weekly": "Semanalmente",
+    "monthly": "Mensualmente",
+    "yearly": "Anualmente",
+    "every": "Cada",
+    "days": "día(s)",
+    "weeks": "semana(s)",
+    "months": "mes(es)",
+    "years": "año(s)",
+    "on": "El",
+    "onDay": "El día",
+    "ends": "Termina",
+    "endNever": "Nunca",
+    "endAfter": "Después de",
+    "endOn": "En la fecha",
+    "occurrences": "vez/veces",
+    "days_short": {
+      "MO": "Lun",
+      "TU": "Mar",
+      "WE": "Mié",
+      "TH": "Jue",
+      "FR": "Vie",
+      "SA": "Sáb",
+      "SU": "Dom"
+    },
+    "minutely": "Cada N minutos",
+    "hourly": "Por hora",
+    "minutes": "minuto(s)",
+    "hours": "hora(s)"
+  },
+  "devices": {
+    "allDevices": "Todos los dispositivos",
+    "selectDevices": "Seleccionar dispositivos",
+    "noDevices": "No se encontraron dispositivos"
+  },
+  "empty": {
+    "title": "No hay eventos programados",
+    "help": "Haz clic en Nuevo evento para programar tu primer mensaje, escena o stream."
+  },
+  "agenda": {
+    "date": "Fecha",
+    "time": "Hora",
+    "event": "Evento",
+    "noEvents": "No hay eventos en este período"
+  }
+}

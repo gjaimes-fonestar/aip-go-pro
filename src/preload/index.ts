@@ -1,6 +1,12 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { IPC } from '../shared/ipc'
 import type {
+  CalendarEvent,
+  CalendarCreatePayload,
+  CalendarUpdatePayload,
+  CalendarTogglePayload,
+} from '../shared/calendar'
+import type {
   BackendInfo,
   DialogOpenOptions,
   DialogSaveOptions,
@@ -54,6 +60,22 @@ const electronAPI = {
       ipcRenderer.invoke(IPC.DIALOG.OPEN_FILE, opts),
     saveFile: (opts?: DialogSaveOptions): Promise<string | null> =>
       ipcRenderer.invoke(IPC.DIALOG.SAVE_FILE, opts),
+  },
+
+  calendar: {
+    list:    (): Promise<CalendarEvent[]>            => ipcRenderer.invoke(IPC.CALENDAR.LIST),
+    get:     (id: string): Promise<CalendarEvent | null> => ipcRenderer.invoke(IPC.CALENDAR.GET, id),
+    create:  (payload: CalendarCreatePayload): Promise<CalendarEvent>        => ipcRenderer.invoke(IPC.CALENDAR.CREATE, payload),
+    update:  (payload: CalendarUpdatePayload): Promise<CalendarEvent | null> => ipcRenderer.invoke(IPC.CALENDAR.UPDATE, payload),
+    delete:  (id: string): Promise<{ removed: boolean }> => ipcRenderer.invoke(IPC.CALENDAR.DELETE, id),
+    toggle:  (payload: CalendarTogglePayload): Promise<CalendarEvent | null> => ipcRenderer.invoke(IPC.CALENDAR.TOGGLE, payload),
+    trigger: (id: string): Promise<{ fired: boolean; event?: CalendarEvent }> => ipcRenderer.invoke(IPC.CALENDAR.TRIGGER, id),
+
+    onEventFired: (cb: (id: string, firedAt: string) => void): (() => void) => {
+      const listener = (_e: Electron.IpcRendererEvent, id: string, firedAt: string): void => cb(id, firedAt)
+      ipcRenderer.on(IPC.CALENDAR.FIRED, listener)
+      return () => ipcRenderer.removeListener(IPC.CALENDAR.FIRED, listener)
+    },
   },
 
   aip: {
