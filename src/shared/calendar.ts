@@ -14,8 +14,7 @@ export interface CalendarActionFile {
 /** Play a playlist (ordered list of audio file paths). */
 export interface CalendarActionPlaylist {
   type: 'playlist'
-  playlistId: string
-  playlistName?: string
+  filePaths: string[]
 }
 
 /** Stream from an online source (URL). */

@@ -72,9 +72,9 @@ function MessageModal({ event, onSave, onDelete, onClose }: MessageModalProps) {
   const [actionType, setActionType] = useState<AudioActionType>(
     event?.action && AUDIO_TYPES.includes(event.action.type as AudioActionType) ? (event.action.type as AudioActionType) : 'file',
   )
-  const [filePath, setFilePath]     = useState(event?.action?.type === 'file' ? event.action.filePath : '')
-  const [playlistId, setPlaylistId] = useState(event?.action?.type === 'playlist' ? event.action.playlistId : '')
-  const [streamUrl, setStreamUrl]   = useState(event?.action?.type === 'online' ? event.action.streamUrl : '')
+  const [filePath, setFilePath]         = useState(event?.action?.type === 'file' ? event.action.filePath : '')
+  const [playlistFiles, setPlaylistFiles] = useState<string[]>(event?.action?.type === 'playlist' ? event.action.filePaths : [])
+  const [streamUrl, setStreamUrl]       = useState(event?.action?.type === 'online' ? event.action.streamUrl : '')
 
   const [durationSecs, setDurationSecs] = useState(() =>
     Math.max(0, Math.round((new Date(initEnd).getTime() - new Date(initStart).getTime()) / 1000))
@@ -118,10 +118,10 @@ function MessageModal({ event, onSave, onDelete, onClose }: MessageModalProps) {
   const buildAction = useCallback((): CalendarAction => {
     switch (actionType) {
       case 'file':     return { type: 'file',     filePath }
-      case 'playlist': return { type: 'playlist', playlistId }
+      case 'playlist': return { type: 'playlist', filePaths: playlistFiles }
       case 'online':   return { type: 'online',   streamUrl }
     }
-  }, [actionType, filePath, playlistId, streamUrl])
+  }, [actionType, filePath, playlistFiles, streamUrl])
 
   const buildRecurrence = useCallback((): RecurrenceRule | undefined => {
     if (repeatFreq === 'none') return undefined
@@ -182,10 +182,37 @@ function MessageModal({ event, onSave, onDelete, onClose }: MessageModalProps) {
               ))}
             </div>
             {actionType === 'file' && (
-              <input type="text" value={filePath} onChange={(e) => setFilePath(e.target.value)} placeholder={t('action.filePathPlaceholder')} className={inp} />
+              <div className="flex gap-2">
+                <input type="text" value={filePath} onChange={(e) => setFilePath(e.target.value)} placeholder={t('action.filePathPlaceholder')} className={`${inp} flex-1`} />
+                <button type="button" onClick={async () => {
+                  const files = await window.electronAPI.dialog.openFile({ filters: [{ name: 'Audio', extensions: ['wav', 'mp3', 'ogg', 'flac', 'aac'] }] })
+                  if (files?.[0]) setFilePath(files[0])
+                }} className="shrink-0 rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-600 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800">
+                  {t('action.browse')}
+                </button>
+              </div>
             )}
             {actionType === 'playlist' && (
-              <input type="text" value={playlistId} onChange={(e) => setPlaylistId(e.target.value)} placeholder={t('action.playlistIdPlaceholder')} className={inp} />
+              <div className="space-y-2">
+                {playlistFiles.length > 0 && (
+                  <div className="max-h-32 overflow-y-auto rounded-lg border border-zinc-100 dark:border-zinc-700">
+                    {playlistFiles.map((fp, i) => (
+                      <div key={i} className="flex items-center gap-2 border-b border-zinc-100 px-3 py-1.5 last:border-0 dark:border-zinc-700">
+                        <span className="flex-1 truncate text-xs text-zinc-700 dark:text-zinc-300">{fp.split(/[\\/]/).pop()}</span>
+                        <button type="button" onClick={() => setPlaylistFiles((p) => p.filter((_, j) => j !== i))} className="shrink-0 rounded p-0.5 text-zinc-400 hover:text-red-500">
+                          <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <button type="button" onClick={async () => {
+                  const files = await window.electronAPI.dialog.openFile({ multiSelections: true, filters: [{ name: 'Audio', extensions: ['wav', 'mp3', 'ogg', 'flac', 'aac'] }] })
+                  if (files?.length) setPlaylistFiles((p) => [...p, ...files.filter((f) => !p.includes(f))])
+                }} className="w-full rounded-lg border border-dashed border-zinc-300 py-2 text-sm text-zinc-500 hover:border-primary hover:text-primary dark:border-zinc-600 dark:text-zinc-400">
+                  + {t('action.addFiles')}
+                </button>
+              </div>
             )}
             {actionType === 'online' && (
               <input type="text" value={streamUrl} onChange={(e) => setStreamUrl(e.target.value)} placeholder={t('action.streamUrlPlaceholder')} className={inp} />
@@ -337,7 +364,6 @@ const TYPE_BADGE: Record<string, string> = {
 
 export default function Messages() {
   const { t } = useTranslation('messages')
-  const { t: tc } = useTranslation('calendar')
   const { events, setEvents, upsertEvent, removeEvent } = useCalendarStore()
   const [loading, setLoading] = useState(false)
   const [modalEventId, setModalEventId] = useState<string | null | undefined>(undefined)

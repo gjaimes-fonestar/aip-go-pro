@@ -34,6 +34,7 @@
     "urlPlaceholder": "http://stream.example.com/radio",
     "volume": "Volume",
     "targetVolume": "Target volume",
-    "duration": "Duration (sec)"
+    "duration": "Duration (sec)",
+    "browse": "Browse"
   }
 }

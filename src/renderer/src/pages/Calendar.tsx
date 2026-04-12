@@ -18,6 +18,7 @@ import 'react-big-calendar/lib/css/react-big-calendar.css'
 import { useCalendarStore } from '../store/calendar.store'
 import type { CalendarViewMode } from '../store/calendar.store'
 import { useDevicesStore } from '../store/devices.store'
+import { useScenesStore } from '../store/scenes.store'
 import type {
   CalendarEvent,
   CalendarAction,
@@ -156,10 +157,13 @@ interface EventModalProps {
   onClose: () => void
 }
 
+const AUDIO_FILTERS = [{ name: 'Audio', extensions: ['wav', 'mp3', 'ogg', 'flac', 'aac'] }]
+
 function EventModal({ event, onSave, onDelete, onClose }: EventModalProps) {
   const { t } = useTranslation('calendar')
   const deviceEntries = useDevicesStore((s) => s.entries)
   const devices = useMemo(() => Array.from(deviceEntries.values()).map((e) => e.device), [deviceEntries])
+  const scenes = useScenesStore((s) => s.scenes)
 
   const isNew = !event?.id
 
@@ -224,11 +228,8 @@ function EventModal({ event, onSave, onDelete, onClose }: EventModalProps) {
   const [fileName, setFileName] = useState(
     event?.action?.type === 'file' ? (event.action.fileName ?? '') : '',
   )
-  const [playlistId, setPlaylistId] = useState(
-    event?.action?.type === 'playlist' ? event.action.playlistId : '',
-  )
-  const [playlistName, setPlaylistName] = useState(
-    event?.action?.type === 'playlist' ? (event.action.playlistName ?? '') : '',
+  const [playlistFiles, setPlaylistFiles] = useState<string[]>(
+    event?.action?.type === 'playlist' ? event.action.filePaths : [],
   )
   const [streamUrl, setStreamUrl] = useState(
     event?.action?.type === 'online' ? event.action.streamUrl : '',
@@ -273,12 +274,12 @@ function EventModal({ event, onSave, onDelete, onClose }: EventModalProps) {
 
   const buildAction = useCallback((): CalendarAction => {
     switch (actionType) {
-      case 'file':     return { type: 'file',     filePath,    fileName:     fileName     || undefined }
-      case 'playlist': return { type: 'playlist', playlistId,  playlistName: playlistName || undefined }
-      case 'online':   return { type: 'online',   streamUrl,   streamName:   streamName   || undefined }
-      case 'scene':    return { type: 'scene',    sceneId,     sceneName:    sceneName    || undefined }
+      case 'file':     return { type: 'file',     filePath,      fileName:  fileName  || undefined }
+      case 'playlist': return { type: 'playlist', filePaths: playlistFiles }
+      case 'online':   return { type: 'online',   streamUrl,     streamName: streamName || undefined }
+      case 'scene':    return { type: 'scene',    sceneId,       sceneName:  sceneName  || undefined }
     }
-  }, [actionType, filePath, fileName, playlistId, playlistName, streamUrl, streamName, sceneId, sceneName])
+  }, [actionType, filePath, fileName, playlistFiles, streamUrl, streamName, sceneId, sceneName])
 
   const buildRecurrence = useCallback((): RecurrenceRule | undefined => {
     if (repeatFreq === 'none') return undefined
@@ -474,39 +475,59 @@ function EventModal({ event, onSave, onDelete, onClose }: EventModalProps) {
             </div>
 
             {actionType === 'file' && (
-              <div className="space-y-2">
+              <div className="flex gap-2">
                 <input
                   type="text"
                   value={filePath}
                   onChange={(e) => setFilePath(e.target.value)}
                   placeholder={t('action.filePathPlaceholder')}
-                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+                  className="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
                 />
-                <input
-                  type="text"
-                  value={fileName}
-                  onChange={(e) => setFileName(e.target.value)}
-                  placeholder={t('action.fileNamePlaceholder')}
-                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
-                />
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const files = await window.electronAPI.dialog.openFile({ filters: AUDIO_FILTERS })
+                    if (files?.[0]) {
+                      setFilePath(files[0])
+                      setFileName(files[0].split(/[\\/]/).pop() ?? '')
+                    }
+                  }}
+                  className="shrink-0 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
+                >
+                  {t('action.browse')}
+                </button>
               </div>
             )}
             {actionType === 'playlist' && (
               <div className="space-y-2">
-                <input
-                  type="text"
-                  value={playlistId}
-                  onChange={(e) => setPlaylistId(e.target.value)}
-                  placeholder={t('action.playlistIdPlaceholder')}
-                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
-                />
-                <input
-                  type="text"
-                  value={playlistName}
-                  onChange={(e) => setPlaylistName(e.target.value)}
-                  placeholder={t('action.playlistIdPlaceholder')}
-                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
-                />
+                {playlistFiles.length > 0 && (
+                  <div className="max-h-36 overflow-y-auto rounded-lg border border-gray-100 dark:border-gray-700">
+                    {playlistFiles.map((fp, i) => (
+                      <div key={i} className="flex items-center gap-2 border-b border-gray-100 px-3 py-1.5 last:border-0 dark:border-gray-700">
+                        <span className="flex-1 truncate text-xs text-gray-700 dark:text-gray-300">{fp.split(/[\\/]/).pop()}</span>
+                        <button
+                          type="button"
+                          onClick={() => setPlaylistFiles((p) => p.filter((_, j) => j !== i))}
+                          className="shrink-0 rounded p-0.5 text-gray-400 hover:text-red-500"
+                        >
+                          <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const files = await window.electronAPI.dialog.openFile({ multiSelections: true, filters: AUDIO_FILTERS })
+                    if (files?.length) setPlaylistFiles((p) => [...p, ...files.filter((f) => !p.includes(f))])
+                  }}
+                  className="w-full rounded-lg border border-dashed border-gray-300 py-2 text-sm text-gray-500 hover:border-primary hover:text-primary dark:border-gray-600 dark:text-gray-400"
+                >
+                  + {t('action.addFiles')}
+                </button>
               </div>
             )}
             {actionType === 'online' && (
@@ -522,28 +543,26 @@ function EventModal({ event, onSave, onDelete, onClose }: EventModalProps) {
                   type="text"
                   value={streamName}
                   onChange={(e) => setStreamName(e.target.value)}
-                  placeholder={t('action.streamUrlPlaceholder')}
+                  placeholder={t('action.streamNamePlaceholder')}
                   className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
                 />
               </div>
             )}
             {actionType === 'scene' && (
-              <div className="space-y-2">
-                <input
-                  type="text"
-                  value={sceneId}
-                  onChange={(e) => setSceneId(e.target.value)}
-                  placeholder={t('action.sceneIdPlaceholder')}
-                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
-                />
-                <input
-                  type="text"
-                  value={sceneName}
-                  onChange={(e) => setSceneName(e.target.value)}
-                  placeholder={t('action.sceneIdPlaceholder')}
-                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
-                />
-              </div>
+              <select
+                value={sceneId}
+                onChange={(e) => {
+                  const sc = scenes.find((s) => s.id === e.target.value)
+                  setSceneId(e.target.value)
+                  setSceneName(sc?.name ?? '')
+                }}
+                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+              >
+                <option value="">{t('action.selectScene')}</option>
+                {scenes.map((sc) => (
+                  <option key={sc.id} value={sc.id}>{sc.name}</option>
+                ))}
+              </select>
             )}
           </div>
 
@@ -899,7 +918,9 @@ export default function Calendar() {
     setPendingSlot,
   } = useCalendarStore()
 
-  // Load events from main process on mount
+  const { setScenes } = useScenesStore()
+
+  // Load events and scenes from main process on mount
   useEffect(() => {
     setLoading(true)
     window.electronAPI.calendar
@@ -907,7 +928,8 @@ export default function Calendar() {
       .then(setEvents)
       .catch(console.error)
       .finally(() => setLoading(false))
-  }, [setEvents, setLoading])
+    window.electronAPI.scene.list().then(setScenes).catch(console.error)
+  }, [setEvents, setLoading, setScenes])
 
   // Derive the range the calendar is currently showing for event expansion
   const rangeStart = useMemo(() => {

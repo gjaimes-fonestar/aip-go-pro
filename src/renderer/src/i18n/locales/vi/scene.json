@@ -34,6 +34,7 @@
     "urlPlaceholder": "http://stream.example.com/radio",
     "volume": "Âm lượng",
     "targetVolume": "Âm lượng mục tiêu",
-    "duration": "Thời lượng (giây)"
+    "duration": "Thời lượng (giây)",
+    "browse": "Duyệt"
   }
 }

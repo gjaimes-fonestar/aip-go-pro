@@ -63,9 +63,13 @@
     "streamUrl": "流媒体 URL",
     "streamUrlPlaceholder": "http://stream.example.com/radio",
     "streamName": "流媒体名称",
+    "streamNamePlaceholder": "可选显示名称",
     "sceneId": "场景 ID",
     "sceneIdPlaceholder": "scene-eob",
-    "sceneName": "场景名称"
+    "sceneName": "场景名称",
+    "browse": "浏览",
+    "addFiles": "添加文件",
+    "selectScene": "选择场景…"
   },
   "recurrence": {
     "label": "重复",

@@ -63,9 +63,13 @@
     "streamUrl": "Stream URL",
     "streamUrlPlaceholder": "http://stream.example.com/radio",
     "streamName": "Stream name",
+    "streamNamePlaceholder": "Optional display name",
     "sceneId": "Scene ID",
     "sceneIdPlaceholder": "scene-eob",
-    "sceneName": "Scene name"
+    "sceneName": "Scene name",
+    "browse": "Browse",
+    "addFiles": "Add files",
+    "selectScene": "Select a scene…"
   },
   "recurrence": {
     "label": "Repeat",

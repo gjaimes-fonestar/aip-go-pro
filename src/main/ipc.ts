@@ -284,7 +284,7 @@ export function registerIpcHandlers(): void {
       dtStart: todayAt(8, 0),
       dtEnd: todayEnd(12, 0),
       recurrence: { freq: 'weekly', interval: 1, byDay: ['MO', 'TU', 'WE', 'TH', 'FR'], end: { type: 'never' } },
-      action: { type: 'playlist', playlistId: 'pl-lobby-bgm', playlistName: 'Lobby Morning' },
+      action: { type: 'playlist', filePaths: ['/audio/lobby-01.mp3', '/audio/lobby-02.mp3'] },
       volume: 60,
       targetDevices: [],
       enabled: true,

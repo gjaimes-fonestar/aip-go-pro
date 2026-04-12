@@ -34,6 +34,7 @@
     "urlPlaceholder": "http://stream.example.com/radio",
     "volume": "音量",
     "targetVolume": "目标音量",
-    "duration": "时长（秒）"
+    "duration": "时长（秒）",
+    "browse": "浏览"
   }
 }

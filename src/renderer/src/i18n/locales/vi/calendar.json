@@ -63,9 +63,13 @@
     "streamUrl": "URL stream",
     "streamUrlPlaceholder": "http://stream.example.com/radio",
     "streamName": "Tên stream",
+    "streamNamePlaceholder": "Tên hiển thị tùy chọn",
     "sceneId": "ID cảnh",
     "sceneIdPlaceholder": "scene-eob",
-    "sceneName": "Tên cảnh"
+    "sceneName": "Tên cảnh",
+    "browse": "Duyệt",
+    "addFiles": "Thêm tệp",
+    "selectScene": "Chọn cảnh…"
   },
   "recurrence": {
     "label": "Lặp lại",

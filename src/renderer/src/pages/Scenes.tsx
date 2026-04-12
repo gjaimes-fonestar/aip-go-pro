@@ -90,8 +90,18 @@ function StepRow({ step, devices, onChange, onRemove }: StepRowProps) {
             value={(step.action as { type: 'play_file'; filePath: string }).filePath}
             onChange={(e) => onChange({ ...step, action: { ...(step.action as { type: 'play_file'; filePath: string }), filePath: e.target.value } })}
             placeholder={t('action.filePathPlaceholder')}
-            className={field('flex-1 min-w-[160px]')}
+            className={field('flex-1 min-w-[120px]')}
           />
+          <button
+            type="button"
+            onClick={async () => {
+              const files = await window.electronAPI.dialog.openFile({ filters: [{ name: 'Audio', extensions: ['wav', 'mp3', 'ogg', 'flac', 'aac'] }] })
+              if (files?.[0]) onChange({ ...step, action: { ...(step.action as { type: 'play_file'; filePath: string }), filePath: files[0] } })
+            }}
+            className={field('shrink-0')}
+          >
+            {t('action.browse')}
+          </button>
           <input
             type="number"
             min={0}
