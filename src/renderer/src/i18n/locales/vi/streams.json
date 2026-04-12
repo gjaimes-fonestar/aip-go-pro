@@ -24,6 +24,7 @@
     "descriptionPlaceholder": "Ghi chú tùy chọn",
     "validate": "Kiểm tra",
     "delete": "Xóa",
-    "deleteConfirm": "Xóa \"{{name}}\"?"
+    "deleteConfirm": "Xóa \"{{name}}\"?",
+    "validateRequired": "Hãy kiểm tra URL trước khi lưu"
   }
 }

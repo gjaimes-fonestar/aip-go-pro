@@ -24,6 +24,7 @@
     "descriptionPlaceholder": "Optional notes",
     "validate": "Test",
     "delete": "Delete",
-    "deleteConfirm": "Delete \"{{name}}\"?"
+    "deleteConfirm": "Delete \"{{name}}\"?",
+    "validateRequired": "Test the stream URL before saving"
   }
 }

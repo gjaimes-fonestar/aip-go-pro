@@ -451,6 +451,14 @@ export function registerIpcHandlers(): void {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     },
+    {
+      id: 'stream-004',
+      name: 'Los 40 Venezuela',
+      url: 'https://stream-175.zeno.fm/xc0q62tc9f0uv?zt=eyJhbGciOiJIUzI1NiJ9.eyJzdHJlYW0iOiJ4YzBxNjJ0YzlmMHV2IiwiaG9zdCI6InN0cmVhbS0xNzUuemVuby5mbSIsInJ0dGwiOjUsImp0aSI6IkxIdzh3emtLU2lpcm1XR3NrMDM0QVEiLCJpYXQiOjE3NzYwMjA3OTAsImV4cCI6MTc3NjAyMDg1MH0.cyIBxLhEylEprcZPW1u0N66wWVPVderUKYjrlAJ3jlc',
+      description: 'Los 40 Venezuela — los mejores éxitos',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
   ]
 
   const streamStore = new Map<string, Stream>(mockStreams.map((s) => [s.id, s]))

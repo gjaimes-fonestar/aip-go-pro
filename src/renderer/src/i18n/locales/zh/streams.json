@@ -24,6 +24,7 @@
     "descriptionPlaceholder": "可选备注",
     "validate": "测试",
     "delete": "删除",
-    "deleteConfirm": "删除 \"{{name}}\"？"
+    "deleteConfirm": "删除 \"{{name}}\"？",
+    "validateRequired": "保存前请先测试 URL"
   }
 }

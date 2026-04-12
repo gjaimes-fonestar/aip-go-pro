@@ -24,6 +24,7 @@
     "descriptionPlaceholder": "Notas opcionales",
     "validate": "Probar",
     "delete": "Eliminar",
-    "deleteConfirm": "¿Eliminar \"{{name}}\"?"
+    "deleteConfirm": "¿Eliminar \"{{name}}\"?",
+    "validateRequired": "Prueba la URL antes de guardar"
   }
 }

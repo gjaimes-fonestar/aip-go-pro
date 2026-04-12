@@ -127,15 +127,20 @@ function StreamModal({ stream, onSave, onDelete, onClose }: StreamModalProps) {
               )
             )}
           </div>
-          <div className="flex gap-2">
-            <button onClick={onClose} className="rounded-lg border border-zinc-200 px-4 py-2 text-sm text-zinc-500 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-400 dark:hover:bg-zinc-800">{t('common:buttons.cancel', 'Cancel')}</button>
-            <button
-              onClick={handleSave}
-              disabled={!name.trim() || !url.trim()}
-              className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 disabled:opacity-50"
-            >
-              {t('common:buttons.save', 'Save')}
-            </button>
+          <div className="flex flex-col items-end gap-1.5">
+            {validation !== 'ok' && name.trim() && url.trim() && (
+              <p className="text-[11px] text-amber-500 dark:text-amber-400">{t('modal.validateRequired')}</p>
+            )}
+            <div className="flex gap-2">
+              <button onClick={onClose} className="rounded-lg border border-zinc-200 px-4 py-2 text-sm text-zinc-500 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-400 dark:hover:bg-zinc-800">{t('common:buttons.cancel', 'Cancel')}</button>
+              <button
+                onClick={handleSave}
+                disabled={!name.trim() || !url.trim() || validation !== 'ok'}
+                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 disabled:opacity-50"
+              >
+                {t('common:buttons.save', 'Save')}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -312,9 +317,16 @@ export default function Streams() {
             </thead>
             <tbody className="divide-y divide-zinc-100 dark:divide-zinc-700/50">
               {streams.map((stream) => (
-                <tr key={stream.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/30">
+                <tr
+                  key={stream.id}
+                  className={`transition-colors ${
+                    playingId === stream.id
+                      ? 'animate-[pulse_1.2s_ease-in-out_infinite] bg-primary/10 dark:bg-primary/20'
+                      : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/30'
+                  }`}
+                >
                   <td className="px-4 py-3">
-                    <span className="font-medium text-zinc-900 dark:text-white">{stream.name}</span>
+                    <span className={`font-medium ${playingId === stream.id ? 'text-primary' : 'text-zinc-900 dark:text-white'}`}>{stream.name}</span>
                   </td>
                   <td className="max-w-xs px-4 py-3">
                     <span className="block truncate font-mono text-xs text-zinc-500 dark:text-zinc-400">{stream.url}</span>
