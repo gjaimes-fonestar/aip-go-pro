@@ -6,6 +6,7 @@ import type {
   CalendarUpdatePayload,
   CalendarTogglePayload,
 } from '../shared/calendar'
+import type { Scene, SceneCreatePayload, SceneUpdatePayload } from '../shared/scene'
 import type {
   BackendInfo,
   DialogOpenOptions,
@@ -76,6 +77,15 @@ const electronAPI = {
       ipcRenderer.on(IPC.CALENDAR.FIRED, listener)
       return () => ipcRenderer.removeListener(IPC.CALENDAR.FIRED, listener)
     },
+  },
+
+  scene: {
+    list:    (): Promise<Scene[]>                          => ipcRenderer.invoke(IPC.SCENE.LIST),
+    get:     (id: string): Promise<Scene | null>           => ipcRenderer.invoke(IPC.SCENE.GET, id),
+    create:  (payload: SceneCreatePayload): Promise<Scene>             => ipcRenderer.invoke(IPC.SCENE.CREATE, payload),
+    update:  (payload: SceneUpdatePayload): Promise<Scene | null>      => ipcRenderer.invoke(IPC.SCENE.UPDATE, payload),
+    delete:  (id: string): Promise<{ removed: boolean }>  => ipcRenderer.invoke(IPC.SCENE.DELETE, id),
+    trigger: (id: string): Promise<{ fired: boolean }>    => ipcRenderer.invoke(IPC.SCENE.TRIGGER, id),
   },
 
   aip: {

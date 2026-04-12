@@ -30,8 +30,16 @@ export const IPC = {
     UPDATE:  'calendar:update',
     DELETE:  'calendar:delete',
     TOGGLE:  'calendar:toggle',
-    TRIGGER: 'calendar:trigger', // manually fire an event
-    FIRED:   'calendar:fired',   // push: main → renderer when event fires
+    TRIGGER: 'calendar:trigger',
+    FIRED:   'calendar:fired',
+  },
+  SCENE: {
+    LIST:    'scene:list',
+    GET:     'scene:get',
+    CREATE:  'scene:create',
+    UPDATE:  'scene:update',
+    DELETE:  'scene:delete',
+    TRIGGER: 'scene:trigger',
   },
   AIP: {
     // Core

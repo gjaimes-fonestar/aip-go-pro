@@ -1,0 +1,16 @@
+{
+  "title": "Sự kiện",
+  "new": "Sự kiện mới",
+  "noEvents": "Chưa có sự kiện nào được lên lịch",
+  "noEventsHelp": "Nhấp vào Sự kiện mới để lên lịch kích hoạt cảnh.",
+  "table": {
+    "title": "Tiêu đề",
+    "scene": "Cảnh",
+    "schedule": "Lịch",
+    "devices": "Thiết bị",
+    "status": "Trạng thái"
+  },
+  "allDevices": "Tất cả thiết bị",
+  "enabled": "Đang hoạt động",
+  "disabled": "Đã tắt"
+}

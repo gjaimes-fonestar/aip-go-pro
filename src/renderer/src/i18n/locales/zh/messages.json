@@ -1,0 +1,22 @@
+{
+  "title": "消息",
+  "new": "新建消息",
+  "noMessages": "暂无计划消息",
+  "noMessagesHelp": "点击新建消息以安排第一条音频消息。",
+  "table": {
+    "title": "标题",
+    "type": "类型",
+    "schedule": "计划",
+    "volume": "音量",
+    "devices": "设备",
+    "status": "状态"
+  },
+  "type": {
+    "file": "文件",
+    "playlist": "播放列表",
+    "online": "流媒体"
+  },
+  "allDevices": "所有设备",
+  "enabled": "已启用",
+  "disabled": "已停用"
+}

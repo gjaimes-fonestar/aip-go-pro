@@ -1,0 +1,16 @@
+{
+  "title": "Eventos",
+  "new": "Nuevo evento",
+  "noEvents": "No hay eventos programados",
+  "noEventsHelp": "Haz clic en Nuevo evento para programar una escena.",
+  "table": {
+    "title": "Título",
+    "scene": "Escena",
+    "schedule": "Horario",
+    "devices": "Dispositivos",
+    "status": "Estado"
+  },
+  "allDevices": "Todos los dispositivos",
+  "enabled": "Activo",
+  "disabled": "Desactivado"
+}

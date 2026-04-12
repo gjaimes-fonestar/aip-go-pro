@@ -20,6 +20,7 @@ import type {
   CalendarUpdatePayload,
   CalendarTogglePayload,
 } from '../shared/calendar'
+import type { Scene, SceneCreatePayload, SceneUpdatePayload } from '../shared/scene'
 import { backendManager } from './backend'
 import { daemonManager } from './daemon'
 import { aipCore, aipDevices, aipChannels, aipWebserver } from './aip'
@@ -263,36 +264,26 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle(IPC.AIP.CANCEL_FILE_TRANSFER, () => aipWebserver.cancelFileTransfer())
 
-  // Calendar — in-memory mock store
+  // Calendar + Scene — in-memory mock stores
 
   const now = new Date()
   const iso = (d: Date): string => d.toISOString()
-  const daysFromNow = (n: number): Date => new Date(now.getTime() + n * 86_400_000)
   const todayAt = (h: number, m = 0): string => {
-    const d = new Date(now)
-    d.setHours(h, m, 0, 0)
-    return iso(d)
+    const d = new Date(now); d.setHours(h, m, 0, 0); return iso(d)
   }
-  const todayAtEnd = (h: number, m = 0): string => {
-    const d = new Date(now)
-    d.setHours(h, m, 0, 0)
-    return iso(d)
+  const todayEnd = (h: number, m = 0): string => {
+    const d = new Date(now); d.setHours(h, m, 0, 0); return iso(d)
   }
 
   const mockEvents: CalendarEvent[] = [
     {
       id: 'evt-001',
-      title: 'Morning Background Music',
-      description: 'Lobby BGM — starts at opening time every weekday.',
+      title: 'Morning BGM',
+      description: 'Lobby background music on weekday mornings.',
       color: '#6366f1',
       dtStart: todayAt(8, 0),
-      dtEnd: todayAtEnd(12, 0),
-      recurrence: {
-        freq: 'weekly',
-        interval: 1,
-        byDay: ['MO', 'TU', 'WE', 'TH', 'FR'],
-        end: { type: 'never' },
-      },
+      dtEnd: todayEnd(12, 0),
+      recurrence: { freq: 'weekly', interval: 1, byDay: ['MO', 'TU', 'WE', 'TH', 'FR'], end: { type: 'never' } },
       action: { type: 'playlist', playlistId: 'pl-lobby-bgm', playlistName: 'Lobby Morning' },
       volume: 60,
       targetDevices: [],
@@ -302,97 +293,13 @@ export function registerIpcHandlers(): void {
     },
     {
       id: 'evt-002',
-      title: 'Fire Drill Announcement',
-      description: 'Monthly fire drill reminder message.',
-      color: '#ef4444',
-      dtStart: iso(daysFromNow(3)),
-      dtEnd: iso(new Date(daysFromNow(3).getTime() + 5 * 60_000)),
-      recurrence: {
-        freq: 'monthly',
-        interval: 1,
-        byMonthDay: new Date(daysFromNow(3)).getDate(),
-        end: { type: 'never' },
-      },
-      action: { type: 'file', filePath: '/messages/fire-drill.wav', fileName: 'Fire Drill' },
-      volume: 100,
-      targetDevices: ['AA:BB:CC:DD:EE:01', 'AA:BB:CC:DD:EE:02'],
-      enabled: true,
-      createdAt: iso(now),
-      updatedAt: iso(now),
-    },
-    {
-      id: 'evt-003',
-      title: 'Online Radio Stream',
-      description: 'Afternoon radio stream in the cafeteria.',
-      color: '#10b981',
-      dtStart: todayAt(13, 0),
-      dtEnd: todayAtEnd(17, 0),
-      recurrence: {
-        freq: 'weekly',
-        interval: 1,
-        byDay: ['MO', 'TU', 'WE', 'TH', 'FR'],
-        end: { type: 'never' },
-      },
-      action: { type: 'online', streamUrl: 'http://stream.example.com/radio', streamName: 'Office Radio' },
-      volume: 50,
-      targetDevices: [],
-      enabled: true,
-      createdAt: iso(now),
-      updatedAt: iso(now),
-    },
-    {
-      id: 'evt-004',
-      title: 'Close-of-Day Scene',
-      description: 'Activates the "End of Business" scene at 18:00.',
+      title: 'End of Business',
+      description: 'Activate EOB scene at close of day.',
       color: '#f59e0b',
       dtStart: todayAt(18, 0),
-      recurrence: {
-        freq: 'weekly',
-        interval: 1,
-        byDay: ['MO', 'TU', 'WE', 'TH', 'FR'],
-        end: { type: 'never' },
-      },
-      action: { type: 'scene', sceneId: 'scene-eob', sceneName: 'End of Business' },
-      targetDevices: [],
-      enabled: true,
-      createdAt: iso(now),
-      updatedAt: iso(now),
-    },
-    {
-      id: 'evt-005',
-      title: 'Saturday Maintenance Window',
-      description: 'Weekly maintenance announcement on Saturdays.',
-      color: '#8b5cf6',
-      dtStart: (() => { const d = new Date(daysFromNow(6)); d.setHours(9, 0, 0, 0); return iso(d) })(),
-      dtEnd: (() => { const d = new Date(daysFromNow(6)); d.setHours(10, 0, 0, 0); return iso(d) })(),
-      recurrence: {
-        freq: 'weekly',
-        interval: 1,
-        byDay: ['SA'],
-        end: { type: 'count', count: 8 },
-      },
-      action: { type: 'file', filePath: '/messages/maintenance.wav', fileName: 'Maintenance Notice' },
-      volume: 75,
-      targetDevices: [],
-      enabled: false,
-      createdAt: iso(now),
-      updatedAt: iso(now),
-    },
-    {
-      id: 'evt-006',
-      title: 'Hourly Time Chime',
-      description: 'Short chime every hour during business hours.',
-      color: '#14b8a6',
-      dtStart: todayAt(8, 0),
-      dtEnd: todayAtEnd(8, 10),
-      recurrence: {
-        freq: 'hourly',
-        interval: 1,
-        end: { type: 'never' },
-        window: { from: '08:00', to: '18:00' },
-      },
-      action: { type: 'file', filePath: '/sounds/chime.wav', fileName: 'Hourly Chime' },
-      volume: 40,
+      dtEnd: todayEnd(18, 1),
+      recurrence: { freq: 'weekly', interval: 1, byDay: ['MO', 'TU', 'WE', 'TH', 'FR'], end: { type: 'never' } },
+      action: { type: 'scene', sceneId: 'scene-001', sceneName: 'End of Business' },
       targetDevices: [],
       enabled: true,
       createdAt: iso(now),
@@ -452,5 +359,66 @@ export function registerIpcHandlers(): void {
     if (!event) return { fired: false }
     console.log('[calendar:trigger] manual fire:', event)
     return { fired: true, event }
+  })
+
+  // Scene — in-memory mock store
+
+  const mockScenes: Scene[] = [
+    {
+      id: 'scene-001',
+      name: 'End of Business',
+      description: 'Fade out audio and lower volume at end of day.',
+      steps: [
+        { id: 'step-001-1', targetDevice: 'all', action: { type: 'fade_out', durationSecs: 10 } },
+        { id: 'step-001-2', targetDevice: 'all', action: { type: 'set_volume', value: 30 } },
+      ],
+      createdAt: iso(now),
+      updatedAt: iso(now),
+    },
+    {
+      id: 'scene-002',
+      name: 'Emergency Alert',
+      description: 'Max volume and play the emergency announcement.',
+      steps: [
+        { id: 'step-002-1', targetDevice: 'all', action: { type: 'set_volume', value: 100 } },
+        { id: 'step-002-2', targetDevice: 'all', action: { type: 'play_file', filePath: '/messages/emergency.wav', fileName: 'Emergency Alert', durationSecs: 60 } },
+      ],
+      createdAt: iso(now),
+      updatedAt: iso(now),
+    },
+  ]
+
+  const sceneStore = new Map<string, Scene>(mockScenes.map((s) => [s.id, s]))
+
+  ipcMain.handle(IPC.SCENE.LIST, () => Array.from(sceneStore.values()))
+
+  ipcMain.handle(IPC.SCENE.GET, (_e, id: string) => sceneStore.get(id) ?? null)
+
+  ipcMain.handle(IPC.SCENE.CREATE, (_e, payload: SceneCreatePayload) => {
+    const id = `scene-${Date.now()}`
+    const ts = new Date().toISOString()
+    const scene: Scene = { id, ...payload.scene, createdAt: ts, updatedAt: ts }
+    sceneStore.set(id, scene)
+    return scene
+  })
+
+  ipcMain.handle(IPC.SCENE.UPDATE, (_e, payload: SceneUpdatePayload) => {
+    const existing = sceneStore.get(payload.id)
+    if (!existing) return null
+    const updated: Scene = { ...existing, ...payload.changes, updatedAt: new Date().toISOString() }
+    sceneStore.set(payload.id, updated)
+    return updated
+  })
+
+  ipcMain.handle(IPC.SCENE.DELETE, (_e, id: string) => {
+    const removed = sceneStore.delete(id)
+    return { removed }
+  })
+
+  ipcMain.handle(IPC.SCENE.TRIGGER, (_e, id: string) => {
+    const scene = sceneStore.get(id)
+    if (!scene) return { fired: false }
+    console.log('[scene:trigger] activate:', scene.name, scene.steps.length, 'steps')
+    return { fired: true }
   })
 }

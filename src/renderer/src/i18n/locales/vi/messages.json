@@ -1,0 +1,22 @@
+{
+  "title": "Tin nhắn",
+  "new": "Tin nhắn mới",
+  "noMessages": "Chưa có tin nhắn nào được lên lịch",
+  "noMessagesHelp": "Nhấp vào Tin nhắn mới để lên lịch âm thanh đầu tiên.",
+  "table": {
+    "title": "Tiêu đề",
+    "type": "Loại",
+    "schedule": "Lịch",
+    "volume": "Âm lượng",
+    "devices": "Thiết bị",
+    "status": "Trạng thái"
+  },
+  "type": {
+    "file": "Tệp",
+    "playlist": "Danh sách phát",
+    "online": "Stream"
+  },
+  "allDevices": "Tất cả thiết bị",
+  "enabled": "Đang hoạt động",
+  "disabled": "Đã tắt"
+}

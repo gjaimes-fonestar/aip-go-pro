@@ -1,0 +1,39 @@
+{
+  "title": "Cảnh",
+  "new": "Cảnh mới",
+  "edit": "Chỉnh sửa cảnh",
+  "delete": "Xóa cảnh",
+  "deleteConfirm": "Xóa \"{{name}}\"?",
+  "trigger": "Kích hoạt",
+  "noScenes": "Chưa có cảnh nào",
+  "noScenesHelp": "Tạo cảnh để định nghĩa hành động phối hợp cho các thiết bị.",
+  "form": {
+    "name": "Tên",
+    "namePlaceholder": "Tên cảnh",
+    "description": "Mô tả",
+    "descriptionPlaceholder": "Ghi chú tùy chọn"
+  },
+  "steps": {
+    "title": "Bước",
+    "add": "Thêm bước",
+    "device": "Thiết bị",
+    "allDevices": "Tất cả thiết bị",
+    "action": "Hành động",
+    "noSteps": "Chưa có bước nào — thêm bên dưới."
+  },
+  "action": {
+    "play_file": "Phát tệp",
+    "play_stream": "Phát stream",
+    "stop": "Dừng",
+    "set_volume": "Đặt âm lượng",
+    "fade_in": "Fade in",
+    "fade_out": "Fade out",
+    "filePath": "Đường dẫn tệp",
+    "filePathPlaceholder": "/messages/thong-bao.wav",
+    "url": "URL stream",
+    "urlPlaceholder": "http://stream.example.com/radio",
+    "volume": "Âm lượng",
+    "targetVolume": "Âm lượng mục tiêu",
+    "duration": "Thời lượng (giây)"
+  }
+}

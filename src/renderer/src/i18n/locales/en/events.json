@@ -1,0 +1,16 @@
+{
+  "title": "Events",
+  "new": "New Event",
+  "noEvents": "No events scheduled",
+  "noEventsHelp": "Click New Event to schedule a scene trigger.",
+  "table": {
+    "title": "Title",
+    "scene": "Scene",
+    "schedule": "Schedule",
+    "devices": "Devices",
+    "status": "Status"
+  },
+  "allDevices": "All devices",
+  "enabled": "Active",
+  "disabled": "Disabled"
+}

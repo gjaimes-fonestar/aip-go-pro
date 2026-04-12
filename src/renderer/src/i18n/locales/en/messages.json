@@ -1,0 +1,22 @@
+{
+  "title": "Messages",
+  "new": "New Message",
+  "noMessages": "No messages scheduled",
+  "noMessagesHelp": "Click New Message to schedule your first audio message.",
+  "table": {
+    "title": "Title",
+    "type": "Type",
+    "schedule": "Schedule",
+    "volume": "Volume",
+    "devices": "Devices",
+    "status": "Status"
+  },
+  "type": {
+    "file": "File",
+    "playlist": "Playlist",
+    "online": "Stream"
+  },
+  "allDevices": "All devices",
+  "enabled": "Active",
+  "disabled": "Disabled"
+}

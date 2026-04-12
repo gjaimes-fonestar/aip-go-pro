@@ -1,0 +1,22 @@
+{
+  "title": "Mensajes",
+  "new": "Nuevo mensaje",
+  "noMessages": "No hay mensajes programados",
+  "noMessagesHelp": "Haz clic en Nuevo mensaje para programar tu primer audio.",
+  "table": {
+    "title": "Título",
+    "type": "Tipo",
+    "schedule": "Horario",
+    "volume": "Volumen",
+    "devices": "Dispositivos",
+    "status": "Estado"
+  },
+  "type": {
+    "file": "Archivo",
+    "playlist": "Lista",
+    "online": "Stream"
+  },
+  "allDevices": "Todos los dispositivos",
+  "enabled": "Activo",
+  "disabled": "Desactivado"
+}

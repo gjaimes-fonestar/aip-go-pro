@@ -1,0 +1,39 @@
+{
+  "title": "Escenas",
+  "new": "Nueva escena",
+  "edit": "Editar escena",
+  "delete": "Eliminar escena",
+  "deleteConfirm": "¿Eliminar \"{{name}}\"?",
+  "trigger": "Activar",
+  "noScenes": "No hay escenas definidas",
+  "noScenesHelp": "Crea una escena para definir una acción coordinada en tus dispositivos.",
+  "form": {
+    "name": "Nombre",
+    "namePlaceholder": "Nombre de la escena",
+    "description": "Descripción",
+    "descriptionPlaceholder": "Notas opcionales"
+  },
+  "steps": {
+    "title": "Pasos",
+    "add": "Agregar paso",
+    "device": "Dispositivo",
+    "allDevices": "Todos los dispositivos",
+    "action": "Acción",
+    "noSteps": "Sin pasos — agrega uno abajo."
+  },
+  "action": {
+    "play_file": "Reproducir archivo",
+    "play_stream": "Reproducir stream",
+    "stop": "Detener",
+    "set_volume": "Ajustar volumen",
+    "fade_in": "Fade in",
+    "fade_out": "Fade out",
+    "filePath": "Ruta del archivo",
+    "filePathPlaceholder": "/messages/anuncio.wav",
+    "url": "URL del stream",
+    "urlPlaceholder": "http://stream.ejemplo.com/radio",
+    "volume": "Volumen",
+    "targetVolume": "Volumen objetivo",
+    "duration": "Duración (seg)"
+  }
+}

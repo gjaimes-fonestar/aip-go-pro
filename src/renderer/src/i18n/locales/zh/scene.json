@@ -1,0 +1,39 @@
+{
+  "title": "场景",
+  "new": "新建场景",
+  "edit": "编辑场景",
+  "delete": "删除场景",
+  "deleteConfirm": "删除「{{name}}」？",
+  "trigger": "激活",
+  "noScenes": "尚未定义场景",
+  "noScenesHelp": "创建场景以定义设备的协调动作。",
+  "form": {
+    "name": "名称",
+    "namePlaceholder": "场景名称",
+    "description": "描述",
+    "descriptionPlaceholder": "可选备注"
+  },
+  "steps": {
+    "title": "步骤",
+    "add": "添加步骤",
+    "device": "设备",
+    "allDevices": "所有设备",
+    "action": "动作",
+    "noSteps": "暂无步骤 — 在下方添加。"
+  },
+  "action": {
+    "play_file": "播放文件",
+    "play_stream": "播放流媒体",
+    "stop": "停止",
+    "set_volume": "设置音量",
+    "fade_in": "渐入",
+    "fade_out": "渐出",
+    "filePath": "文件路径",
+    "filePathPlaceholder": "/messages/announcement.wav",
+    "url": "流媒体 URL",
+    "urlPlaceholder": "http://stream.example.com/radio",
+    "volume": "音量",
+    "targetVolume": "目标音量",
+    "duration": "时长（秒）"
+  }
+}

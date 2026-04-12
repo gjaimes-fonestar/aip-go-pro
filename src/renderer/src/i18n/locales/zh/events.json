@@ -1,0 +1,16 @@
+{
+  "title": "事件",
+  "new": "新建事件",
+  "noEvents": "暂无计划事件",
+  "noEventsHelp": "点击新建事件以安排场景触发器。",
+  "table": {
+    "title": "标题",
+    "scene": "场景",
+    "schedule": "计划",
+    "devices": "设备",
+    "status": "状态"
+  },
+  "allDevices": "所有设备",
+  "enabled": "已启用",
+  "disabled": "已停用"
+}

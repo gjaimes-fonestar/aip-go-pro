@@ -1,0 +1,39 @@
+{
+  "title": "Scenes",
+  "new": "New Scene",
+  "edit": "Edit Scene",
+  "delete": "Delete Scene",
+  "deleteConfirm": "Delete \"{{name}}\"?",
+  "trigger": "Activate",
+  "noScenes": "No scenes defined yet",
+  "noScenesHelp": "Create a scene to define a coordinated action across your devices.",
+  "form": {
+    "name": "Name",
+    "namePlaceholder": "Scene name",
+    "description": "Description",
+    "descriptionPlaceholder": "Optional notes"
+  },
+  "steps": {
+    "title": "Steps",
+    "add": "Add step",
+    "device": "Device",
+    "allDevices": "All devices",
+    "action": "Action",
+    "noSteps": "No steps yet — add one below."
+  },
+  "action": {
+    "play_file": "Play file",
+    "play_stream": "Play stream",
+    "stop": "Stop",
+    "set_volume": "Set volume",
+    "fade_in": "Fade in",
+    "fade_out": "Fade out",
+    "filePath": "File path",
+    "filePathPlaceholder": "/messages/announcement.wav",
+    "url": "Stream URL",
+    "urlPlaceholder": "http://stream.example.com/radio",
+    "volume": "Volume",
+    "targetVolume": "Target volume",
+    "duration": "Duration (sec)"
+  }
+}
