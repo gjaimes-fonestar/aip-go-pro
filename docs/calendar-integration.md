@@ -1099,3 +1099,239 @@ If you are an AI continuing this work, here is the complete state:
 - Conventional commits: `type(scope): description`, no co-author trailer.
 - The Electron app uses `frame: false` (custom TitleBar). Layout is `flex flex-col h-screen`.
 - Tailwind `darkMode: 'class'`, primary color `#3C50E0`.
+
+---
+
+## Scene Module — Persistence and Architecture
+
+Scenes follow the same Clean Architecture patterns as Calendar events. They are independent entities that calendar events reference by `sceneId`.
+
+### Prisma schema
+
+```prisma
+model Scene {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  steps       String   // JSON: SceneStep[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+```
+
+`steps` is stored as a JSON column (same approach as calendar `action`, `recurrence`, `targetDevices`). Prisma's SQLite adapter handles serialization/deserialization via a mapper.
+
+### Module tree
+
+```
+src/main/scene/
+├── domain/
+│   └── ISceneRepository.ts     // interface SceneRepository { list, get, create, update, delete }
+├── infrastructure/
+│   ├── PrismaSceneRepository.ts // implements ISceneRepository using Prisma
+│   └── SceneMapper.ts           // maps DB record ↔ Scene domain object
+├── application/
+│   └── SceneService.ts          // orchestrates CRUD, validates steps
+└── index.ts                     // composition root, exports initScene(db)
+```
+
+### ISceneRepository
+
+```typescript
+import type { Scene, SceneCreatePayload, SceneUpdatePayload } from '../../../shared/scene'
+
+export interface ISceneRepository {
+  list(): Promise<Scene[]>
+  get(id: string): Promise<Scene | null>
+  create(payload: SceneCreatePayload): Promise<Scene>
+  update(payload: SceneUpdatePayload): Promise<Scene | null>
+  delete(id: string): Promise<boolean>
+}
+```
+
+### SceneMapper
+
+```typescript
+import type { Scene, SceneStep } from '../../../shared/scene'
+
+export class SceneMapper {
+  static toDomain(record: { id: string; name: string; description: string | null; steps: string; createdAt: Date; updatedAt: Date }): Scene {
+    return {
+      id:          record.id,
+      name:        record.name,
+      description: record.description ?? undefined,
+      steps:       JSON.parse(record.steps) as SceneStep[],
+      createdAt:   record.createdAt.toISOString(),
+      updatedAt:   record.updatedAt.toISOString(),
+    }
+  }
+
+  static toCreate(payload: SceneCreatePayload): { name: string; description: string | null; steps: string } {
+    return {
+      name:        payload.scene.name,
+      description: payload.scene.description ?? null,
+      steps:       JSON.stringify(payload.scene.steps),
+    }
+  }
+}
+```
+
+### SceneService
+
+```typescript
+import type { ISceneRepository } from '../domain/ISceneRepository'
+import type { Scene, SceneCreatePayload, SceneUpdatePayload } from '../../../shared/scene'
+
+export class SceneService {
+  constructor(private readonly repo: ISceneRepository) {}
+
+  list(): Promise<Scene[]>                          { return this.repo.list() }
+  get(id: string): Promise<Scene | null>             { return this.repo.get(id) }
+  create(payload: SceneCreatePayload): Promise<Scene>{ return this.repo.create(payload) }
+  update(payload: SceneUpdatePayload): Promise<Scene | null> { return this.repo.update(payload) }
+  delete(id: string): Promise<boolean>               { return this.repo.delete(id) }
+
+  /** Activate a scene: dispatch all steps to their target devices. */
+  async trigger(id: string, dispatcher: SceneDispatcher): Promise<boolean> {
+    const scene = await this.repo.get(id)
+    if (!scene) return false
+    await Promise.all(scene.steps.map((step) => dispatcher.dispatch(step)))
+    return true
+  }
+}
+```
+
+### SceneDispatcher — firing steps
+
+When a scene is triggered (manually or from the calendar scheduler), a `SceneDispatcher` maps each step's action to the real AIP SDK call:
+
+```typescript
+import type { SceneStep } from '../../../shared/scene'
+import type { AipManager } from '../../aip'  // your existing AIP SDK wrapper
+
+export class SceneDispatcher {
+  constructor(private readonly aip: AipManager) {}
+
+  async dispatch(step: SceneStep): Promise<void> {
+    const macs = step.targetDevice === 'all'
+      ? this.aip.getConnectedMacs()
+      : [step.targetDevice]
+
+    for (const mac of macs) {
+      const { action } = step
+      switch (action.type) {
+        case 'play_file':
+          await this.aip.playFile(mac, action.filePath, action.durationSecs)
+          break
+        case 'play_stream':
+          await this.aip.playStream(mac, action.url, action.durationSecs)
+          break
+        case 'stop':
+          await this.aip.stopAudio(mac)
+          break
+        case 'set_volume':
+          await this.aip.setVolume(mac, action.value)
+          break
+        case 'fade_in':
+          await this.aip.fadeIn(mac, action.targetVolume, action.durationSecs)
+          break
+        case 'fade_out':
+          await this.aip.fadeOut(mac, action.durationSecs)
+          break
+      }
+    }
+  }
+}
+```
+
+> **Note:** `fadeIn` / `fadeOut` may not exist as single SDK calls. Implement as a volume ramp loop using `setVolume` + `setTimeout` until the target is reached over `durationSecs`.
+
+### IPC wiring (src/main/scene/index.ts)
+
+```typescript
+import { ipcMain } from 'electron'
+import { IPC } from '../../shared/ipc'
+import { PrismaSceneRepository } from './infrastructure/PrismaSceneRepository'
+import { SceneService } from './application/SceneService'
+import { SceneDispatcher } from './application/SceneDispatcher'
+import type { PrismaClient } from '@prisma/client'
+import type { AipManager } from '../aip'
+
+export function initScene(db: PrismaClient, aip: AipManager): void {
+  const repo       = new PrismaSceneRepository(db)
+  const service    = new SceneService(repo)
+  const dispatcher = new SceneDispatcher(aip)
+
+  ipcMain.handle(IPC.SCENE.LIST,    ()         => service.list())
+  ipcMain.handle(IPC.SCENE.GET,     (_e, id)   => service.get(id))
+  ipcMain.handle(IPC.SCENE.CREATE,  (_e, p)    => service.create(p))
+  ipcMain.handle(IPC.SCENE.UPDATE,  (_e, p)    => service.update(p))
+  ipcMain.handle(IPC.SCENE.DELETE,  (_e, id)   => service.delete(id))
+  ipcMain.handle(IPC.SCENE.TRIGGER, (_e, id)   => service.trigger(id, dispatcher))
+}
+```
+
+### Calendar ↔ Scene integration in the scheduler worker
+
+When the scheduler fires an event with `action.type === 'scene'`, it posts a message to the main thread:
+
+```typescript
+// In the worker, when an event fires:
+if (event.action.type === 'scene') {
+  parentPort?.postMessage({ type: 'scene_trigger', sceneId: event.action.sceneId, eventId: event.id })
+}
+```
+
+In the main thread handler:
+
+```typescript
+worker.on('message', async (msg) => {
+  if (msg.type === 'scene_trigger') {
+    await sceneService.trigger(msg.sceneId, dispatcher)
+    mainWindow?.webContents.send(IPC.CALENDAR.FIRED, msg.eventId, new Date().toISOString())
+  }
+})
+```
+
+### ER diagram update
+
+```mermaid
+erDiagram
+    CalendarEvent {
+        string id PK
+        string title
+        string description
+        string color
+        string dtStart
+        string dtEnd
+        number volume
+        string action   "JSON: CalendarAction"
+        string recurrence "JSON: RecurrenceRule | null"
+        string exDates  "JSON: string[]"
+        string targetDevices "JSON: string[]"
+        boolean enabled
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    Scene {
+        string id PK
+        string name
+        string description
+        string steps    "JSON: SceneStep[]"
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    CalendarEvent ||--o| Scene : "action.sceneId → id (soft FK)"
+```
+
+> The relationship is a **soft foreign key** — `action.sceneId` is just a string in the JSON column. Enforce referential integrity at the service layer (validate scene exists on create/update).
+
+### Recommendations for Scene integration
+
+1. **Validate sceneId on calendar create/update** — when a calendar event has `action.type === 'scene'`, check that `sceneId` resolves to an existing scene before persisting.
+2. **Denormalize sceneName** — store `sceneName` in the action JSON so the calendar/events UI can display it without a join.
+3. **Cascade consideration** — if a scene is deleted, decide whether to disable or delete the calendar events that reference it. Recommended: disable + mark with a `brokenSceneId` flag.
+4. **Parallel step execution** — `Promise.all(steps.map(dispatch))` is correct for current step types. If you add sequential steps later, add a `delayMs?: number` field to `SceneStep` and use `setTimeout` chaining.
+5. **Fade as volume ramp** — implement `fadeIn`/`fadeOut` as a loop: calculate volume delta per tick, call `setVolume` every 250ms until target reached over `durationSecs`.
