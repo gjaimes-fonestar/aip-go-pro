@@ -41,6 +41,13 @@ export const IPC = {
     DELETE:  'scene:delete',
     TRIGGER: 'scene:trigger',
   },
+  STREAM: {
+    LIST:   'stream:list',
+    GET:    'stream:get',
+    CREATE: 'stream:create',
+    UPDATE: 'stream:update',
+    DELETE: 'stream:delete',
+  },
   AIP: {
     // Core
     GET_STATUS:     'aip:getStatus',

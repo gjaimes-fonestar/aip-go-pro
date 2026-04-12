@@ -1,0 +1,29 @@
+{
+  "title": "流媒体",
+  "subtitle": "可用于日历事件和频道的在线音频源",
+  "add": "添加流媒体",
+  "empty": {
+    "title": "尚无保存的流媒体",
+    "help": "添加音频流 URL，即可在事件、消息和频道中使用。"
+  },
+  "table": {
+    "name": "名称",
+    "url": "URL",
+    "description": "描述",
+    "actions": "操作",
+    "edit": "编辑流媒体"
+  },
+  "modal": {
+    "add": "添加流媒体",
+    "edit": "编辑流媒体",
+    "name": "名称",
+    "namePlaceholder": "例如：电台热歌",
+    "url": "流媒体 URL",
+    "urlPlaceholder": "http://stream.example.com/radio",
+    "description": "描述",
+    "descriptionPlaceholder": "可选备注",
+    "validate": "测试",
+    "delete": "删除",
+    "deleteConfirm": "删除"{{name}}"？"
+  }
+}

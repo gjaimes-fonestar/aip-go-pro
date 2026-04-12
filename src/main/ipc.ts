@@ -21,6 +21,7 @@ import type {
   CalendarTogglePayload,
 } from '../shared/calendar'
 import type { Scene, SceneCreatePayload, SceneUpdatePayload } from '../shared/scene'
+import type { Stream, StreamCreatePayload, StreamUpdatePayload } from '../shared/stream'
 import { backendManager } from './backend'
 import { daemonManager } from './daemon'
 import { aipCore, aipDevices, aipChannels, aipWebserver } from './aip'
@@ -420,5 +421,52 @@ export function registerIpcHandlers(): void {
     if (!scene) return { fired: false }
     console.log('[scene:trigger] activate:', scene.name, scene.steps.length, 'steps')
     return { fired: true }
+  })
+
+  // Stream handlers
+  const mockStreams: Stream[] = [
+    {
+      id: 'stream-001',
+      name: 'Radio Hits',
+      url: 'https://ice1.somafm.com/groovesalad-128-mp3',
+      description: 'SomaFM Groove Salad — ambient/downtempo',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      id: 'stream-002',
+      name: 'Jazz FM',
+      url: 'https://ice1.somafm.com/dronezone-128-mp3',
+      description: 'SomaFM Drone Zone — atmospheric ambient',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+  ]
+
+  const streamStore = new Map<string, Stream>(mockStreams.map((s) => [s.id, s]))
+
+  ipcMain.handle(IPC.STREAM.LIST, () => Array.from(streamStore.values()))
+
+  ipcMain.handle(IPC.STREAM.GET, (_e, id: string) => streamStore.get(id) ?? null)
+
+  ipcMain.handle(IPC.STREAM.CREATE, (_e, payload: StreamCreatePayload) => {
+    const id = `stream-${Date.now()}`
+    const ts = new Date().toISOString()
+    const stream: Stream = { id, ...payload.stream, createdAt: ts, updatedAt: ts }
+    streamStore.set(id, stream)
+    return stream
+  })
+
+  ipcMain.handle(IPC.STREAM.UPDATE, (_e, payload: StreamUpdatePayload) => {
+    const existing = streamStore.get(payload.id)
+    if (!existing) return null
+    const updated: Stream = { ...existing, ...payload.changes, id: existing.id, updatedAt: new Date().toISOString() }
+    streamStore.set(payload.id, updated)
+    return updated
+  })
+
+  ipcMain.handle(IPC.STREAM.DELETE, (_e, id: string) => {
+    const removed = streamStore.delete(id)
+    return { removed }
   })
 }

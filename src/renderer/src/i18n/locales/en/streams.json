@@ -1,0 +1,29 @@
+{
+  "title": "Streams",
+  "subtitle": "Saved online audio sources available for scheduling and channels",
+  "add": "Add stream",
+  "empty": {
+    "title": "No streams saved yet",
+    "help": "Add an audio stream URL and it will be available in calendar events, messages, and channels."
+  },
+  "table": {
+    "name": "Name",
+    "url": "URL",
+    "description": "Description",
+    "actions": "Actions",
+    "edit": "Edit stream"
+  },
+  "modal": {
+    "add": "Add stream",
+    "edit": "Edit stream",
+    "name": "Name",
+    "namePlaceholder": "e.g. Radio Hits",
+    "url": "Stream URL",
+    "urlPlaceholder": "http://stream.example.com/radio",
+    "description": "Description",
+    "descriptionPlaceholder": "Optional notes",
+    "validate": "Test",
+    "delete": "Delete",
+    "deleteConfirm": "Delete \"{{name}}\"?"
+  }
+}

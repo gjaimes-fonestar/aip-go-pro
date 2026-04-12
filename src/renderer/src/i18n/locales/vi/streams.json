@@ -1,0 +1,29 @@
+{
+  "title": "Luồng phát",
+  "subtitle": "Nguồn âm thanh trực tuyến dùng cho lịch và kênh",
+  "add": "Thêm luồng",
+  "empty": {
+    "title": "Chưa có luồng nào được lưu",
+    "help": "Thêm URL âm thanh và nó sẽ có sẵn trong sự kiện, tin nhắn và kênh."
+  },
+  "table": {
+    "name": "Tên",
+    "url": "URL",
+    "description": "Mô tả",
+    "actions": "Thao tác",
+    "edit": "Chỉnh sửa luồng"
+  },
+  "modal": {
+    "add": "Thêm luồng",
+    "edit": "Chỉnh sửa luồng",
+    "name": "Tên",
+    "namePlaceholder": "VD: Radio Hits",
+    "url": "URL luồng",
+    "urlPlaceholder": "http://stream.example.com/radio",
+    "description": "Mô tả",
+    "descriptionPlaceholder": "Ghi chú tùy chọn",
+    "validate": "Kiểm tra",
+    "delete": "Xóa",
+    "deleteConfirm": "Xóa \"{{name}}\"?"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "title": "Streams",
+  "subtitle": "Fuentes de audio en línea disponibles para programación y canales",
+  "add": "Agregar stream",
+  "empty": {
+    "title": "No hay streams guardados",
+    "help": "Agrega una URL de audio y estará disponible en eventos, mensajes y canales."
+  },
+  "table": {
+    "name": "Nombre",
+    "url": "URL",
+    "description": "Descripción",
+    "actions": "Acciones",
+    "edit": "Editar stream"
+  },
+  "modal": {
+    "add": "Agregar stream",
+    "edit": "Editar stream",
+    "name": "Nombre",
+    "namePlaceholder": "Ej. Radio Éxitos",
+    "url": "URL del stream",
+    "urlPlaceholder": "http://stream.ejemplo.com/radio",
+    "description": "Descripción",
+    "descriptionPlaceholder": "Notas opcionales",
+    "validate": "Probar",
+    "delete": "Eliminar",
+    "deleteConfirm": "¿Eliminar \"{{name}}\"?"
+  }
+}

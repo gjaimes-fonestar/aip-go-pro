@@ -10,6 +10,7 @@ import Calendar from '../pages/Calendar'
 import Messages from '../pages/Messages'
 import Events from '../pages/Events'
 import Scenes from '../pages/Scenes'
+import Streams from '../pages/Streams'
 
 export const router = createHashRouter([
   {
@@ -22,7 +23,7 @@ export const router = createHashRouter([
       { path: 'channels',        element: <Channels /> },
       { path: 'webserver',       element: <Webserver /> },
       { path: 'calendar',         element: <Calendar /> },
-      { path: 'action-control',  element: <Placeholder title="Action Control" /> },
+      { path: 'streams',         element: <Streams /> },
       { path: 'messages',        element: <Messages /> },
       { path: 'multicast',       element: <Navigate to="/devices" replace /> },
       { path: 'sonometers',      element: <Placeholder title="Sonometers" /> },

@@ -1,0 +1,29 @@
+{
+  "title": "Streams",
+  "subtitle": "Fontes de áudio online disponíveis para agendamento e canais",
+  "add": "Adicionar stream",
+  "empty": {
+    "title": "Nenhum stream salvo ainda",
+    "help": "Adicione uma URL de áudio e ela ficará disponível em eventos, mensagens e canais."
+  },
+  "table": {
+    "name": "Nome",
+    "url": "URL",
+    "description": "Descrição",
+    "actions": "Ações",
+    "edit": "Editar stream"
+  },
+  "modal": {
+    "add": "Adicionar stream",
+    "edit": "Editar stream",
+    "name": "Nome",
+    "namePlaceholder": "Ex.: Rádio Hits",
+    "url": "URL do stream",
+    "urlPlaceholder": "http://stream.exemplo.com/radio",
+    "description": "Descrição",
+    "descriptionPlaceholder": "Notas opcionais",
+    "validate": "Testar",
+    "delete": "Excluir",
+    "deleteConfirm": "Excluir \"{{name}}\"?"
+  }
+}
