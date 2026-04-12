@@ -1,4 +1,6 @@
 import { ipcMain, dialog, app, BrowserWindow } from 'electron'
+import http from 'http'
+import https from 'https'
 import { IPC } from '../shared/ipc'
 import type {
   AipChannelConfig,
@@ -468,5 +470,30 @@ export function registerIpcHandlers(): void {
   ipcMain.handle(IPC.STREAM.DELETE, (_e, id: string) => {
     const removed = streamStore.delete(id)
     return { removed }
+  })
+
+  ipcMain.handle(IPC.STREAM.VALIDATE, (_e, url: string): Promise<{ ok: boolean; message: string }> => {
+    return new Promise((resolve) => {
+      const mod = url.startsWith('https') ? https : http
+      try {
+        const req = mod.request(url, { method: 'GET', timeout: 8000 }, (res) => {
+          const status = res.statusCode ?? 0
+          const ct = (res.headers['content-type'] ?? '').toLowerCase()
+          res.destroy()
+          req.destroy()
+          if (status >= 200 && status < 400) {
+            const typeLabel = ct ? ` · ${ct.split(';')[0].trim()}` : ''
+            resolve({ ok: true, message: `HTTP ${status}${typeLabel}` })
+          } else {
+            resolve({ ok: false, message: `Server returned HTTP ${status}` })
+          }
+        })
+        req.on('error', (err: Error) => resolve({ ok: false, message: err.message }))
+        req.on('timeout', () => { req.destroy(); resolve({ ok: false, message: 'Connection timeout (8 s)' }) })
+        req.end()
+      } catch (e) {
+        resolve({ ok: false, message: String(e) })
+      }
+    })
   })
 }

@@ -3,35 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useStreamsStore } from '../store/streams.store'
 import type { Stream } from '@shared/stream'
 
-// URL validation using the HTML Audio API
-
 type ValidationState = 'idle' | 'checking' | 'ok' | 'error'
-
-async function validateStreamUrl(url: string): Promise<{ ok: boolean; message: string }> {
-  return new Promise((resolve) => {
-    if (!url.trim()) {
-      resolve({ ok: false, message: '' })
-      return
-    }
-    const audio = new Audio()
-    let settled = false
-    const finish = (ok: boolean, message: string) => {
-      if (settled) return
-      settled = true
-      audio.src = ''
-      resolve({ ok, message })
-    }
-    const timer = setTimeout(() => finish(false, 'Timeout — no response after 8 s'), 8000)
-    audio.addEventListener('canplay', () => { clearTimeout(timer); finish(true, 'Stream reachable') })
-    audio.addEventListener('error', () => {
-      clearTimeout(timer)
-      finish(false, 'Cannot reach stream — check the URL and try again')
-    })
-    audio.preload = 'metadata'
-    audio.src = url
-    audio.load()
-  })
-}
 
 // Add / Edit modal
 
@@ -58,14 +30,16 @@ function StreamModal({ stream, onSave, onDelete, onClose }: StreamModalProps) {
   const handleValidate = async () => {
     setValidation('checking')
     setValidMsg('')
-    const result = await validateStreamUrl(url)
+    const result = await window.electronAPI.stream.validate(url)
     setValidation(result.ok ? 'ok' : 'error')
     setValidMsg(result.message)
   }
 
   const handleSave = async () => {
     if (validation !== 'ok') {
-      const result = await validateStreamUrl(url)
+      setValidation('checking')
+      setValidMsg('')
+      const result = await window.electronAPI.stream.validate(url)
       setValidation(result.ok ? 'ok' : 'error')
       setValidMsg(result.message)
       if (!result.ok) return
@@ -237,21 +211,29 @@ export default function Streams() {
   // Sync audio element with playing state
   useEffect(() => {
     if (!audioRef.current) {
-      audioRef.current = new Audio()
-      audioRef.current.addEventListener('ended', () => setPlayingId(null))
-      audioRef.current.addEventListener('error', () => setPlayingId(null))
+      const a = new Audio()
+      a.addEventListener('ended', () => setPlayingId(null))
+      a.addEventListener('error', () => setPlayingId(null))
+      audioRef.current = a
     }
     const audio = audioRef.current
     if (playingId) {
       const stream = streams.find((s) => s.id === playingId)
       if (stream) {
+        audio.pause()
         audio.src = stream.url
-        audio.play().catch(() => setPlayingId(null))
+        audio.load()
+        // play() after load() so the element has a chance to open the connection
+        const tid = setTimeout(() => {
+          audio.play().catch(() => setPlayingId(null))
+        }, 200)
+        return () => clearTimeout(tid)
       }
     } else {
       audio.pause()
       audio.src = ''
     }
+    return undefined
   }, [playingId, streams])
 
   // Stop audio when unmounting

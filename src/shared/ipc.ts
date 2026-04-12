@@ -42,11 +42,12 @@ export const IPC = {
     TRIGGER: 'scene:trigger',
   },
   STREAM: {
-    LIST:   'stream:list',
-    GET:    'stream:get',
-    CREATE: 'stream:create',
-    UPDATE: 'stream:update',
-    DELETE: 'stream:delete',
+    LIST:     'stream:list',
+    GET:      'stream:get',
+    CREATE:   'stream:create',
+    UPDATE:   'stream:update',
+    DELETE:   'stream:delete',
+    VALIDATE: 'stream:validate',
   },
   AIP: {
     // Core

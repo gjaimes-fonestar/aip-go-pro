@@ -90,11 +90,12 @@ const electronAPI = {
   },
 
   stream: {
-    list:   (): Promise<Stream[]>                             => ipcRenderer.invoke(IPC.STREAM.LIST),
-    get:    (id: string): Promise<Stream | null>              => ipcRenderer.invoke(IPC.STREAM.GET, id),
-    create: (payload: StreamCreatePayload): Promise<Stream>              => ipcRenderer.invoke(IPC.STREAM.CREATE, payload),
-    update: (payload: StreamUpdatePayload): Promise<Stream | null>       => ipcRenderer.invoke(IPC.STREAM.UPDATE, payload),
-    delete: (id: string): Promise<{ removed: boolean }>      => ipcRenderer.invoke(IPC.STREAM.DELETE, id),
+    list:     (): Promise<Stream[]>                                         => ipcRenderer.invoke(IPC.STREAM.LIST),
+    get:      (id: string): Promise<Stream | null>                          => ipcRenderer.invoke(IPC.STREAM.GET, id),
+    create:   (payload: StreamCreatePayload): Promise<Stream>               => ipcRenderer.invoke(IPC.STREAM.CREATE, payload),
+    update:   (payload: StreamUpdatePayload): Promise<Stream | null>        => ipcRenderer.invoke(IPC.STREAM.UPDATE, payload),
+    delete:   (id: string): Promise<{ removed: boolean }>                   => ipcRenderer.invoke(IPC.STREAM.DELETE, id),
+    validate: (url: string): Promise<{ ok: boolean; message: string }>      => ipcRenderer.invoke(IPC.STREAM.VALIDATE, url),
   },
 
   aip: {
