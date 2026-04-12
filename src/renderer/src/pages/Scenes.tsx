@@ -240,7 +240,7 @@ function SceneModal({ scene, onSave, onDelete, onClose }: SceneModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-xl bg-white shadow-2xl dark:bg-zinc-900 dark:text-zinc-100">
+      <div className="w-full max-w-2xl max-h-[95vh] overflow-y-auto rounded-xl bg-white shadow-2xl dark:bg-zinc-900 dark:text-zinc-100">
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-zinc-200 bg-white px-5 py-4 dark:border-zinc-700 dark:bg-zinc-900">
           <h2 className="text-base font-semibold">{isNew ? t('new') : t('edit')}</h2>
           <button
@@ -253,7 +253,7 @@ function SceneModal({ scene, onSave, onDelete, onClose }: SceneModalProps) {
           </button>
         </div>
 
-        <div className="space-y-4 px-5 py-4">
+        <div className="space-y-5 px-6 py-5">
           <div>
             <label className="mb-1 block text-xs font-medium text-zinc-500 dark:text-zinc-400">{t('form.name')}</label>
             <input
@@ -267,12 +267,12 @@ function SceneModal({ scene, onSave, onDelete, onClose }: SceneModalProps) {
 
           <div>
             <label className="mb-1 block text-xs font-medium text-zinc-500 dark:text-zinc-400">{t('form.description')}</label>
-            <input
-              type="text"
+            <textarea
+              rows={3}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder={t('form.descriptionPlaceholder')}
-              className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-primary dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+              className="w-full resize-none rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-primary dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
             />
           </div>
 
