@@ -26,6 +26,8 @@ export interface Scene {
   id: string
   name: string
   description?: string
+  /** Key from the SCENE_ICONS map — controls the icon shown on the card. */
+  icon?: string
   /** All steps execute simultaneously when the scene is activated. */
   steps: SceneStep[]
   createdAt: string

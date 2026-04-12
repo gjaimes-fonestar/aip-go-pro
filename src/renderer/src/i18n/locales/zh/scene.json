@@ -11,7 +11,9 @@
     "name": "名称",
     "namePlaceholder": "场景名称",
     "description": "描述",
-    "descriptionPlaceholder": "可选备注"
+    "descriptionPlaceholder": "可选备注",
+    "icon": "图标",
+    "iconClear": "清除图标"
   },
   "steps": {
     "title": "步骤",

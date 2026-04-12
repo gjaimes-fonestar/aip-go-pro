@@ -11,7 +11,9 @@
     "name": "Tên",
     "namePlaceholder": "Tên cảnh",
     "description": "Mô tả",
-    "descriptionPlaceholder": "Ghi chú tùy chọn"
+    "descriptionPlaceholder": "Ghi chú tùy chọn",
+    "icon": "Biểu tượng",
+    "iconClear": "Xóa biểu tượng"
   },
   "steps": {
     "title": "Bước",

@@ -11,7 +11,9 @@
     "name": "Name",
     "namePlaceholder": "Scene name",
     "description": "Description",
-    "descriptionPlaceholder": "Optional notes"
+    "descriptionPlaceholder": "Optional notes",
+    "icon": "Icon",
+    "iconClear": "Clear icon"
   },
   "steps": {
     "title": "Steps",

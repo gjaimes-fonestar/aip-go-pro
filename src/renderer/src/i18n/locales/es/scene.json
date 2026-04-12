@@ -11,7 +11,9 @@
     "name": "Nombre",
     "namePlaceholder": "Nombre de la escena",
     "description": "Descripción",
-    "descriptionPlaceholder": "Notas opcionales"
+    "descriptionPlaceholder": "Notas opcionales",
+    "icon": "Ícono",
+    "iconClear": "Quitar ícono"
   },
   "steps": {
     "title": "Pasos",
