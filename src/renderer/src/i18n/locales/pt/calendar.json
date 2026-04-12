@@ -41,7 +41,9 @@
     },
     "duration": "Duração de reprodução",
     "durationMin": "min",
-    "durationSec": "seg"
+    "durationSec": "seg",
+    "volume": "Volume",
+    "volumePercent": "%"
   },
   "action": {
     "label": "O que fazer",
@@ -96,7 +98,10 @@
     "minutely": "A cada N minutos",
     "hourly": "Por hora",
     "minutes": "minuto(s)",
-    "hours": "hora(s)"
+    "hours": "hora(s)",
+    "window": "Janela ativa",
+    "windowFrom": "De",
+    "windowTo": "até"
   },
   "devices": {
     "allDevices": "Todos os dispositivos",

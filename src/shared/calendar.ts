@@ -66,6 +66,12 @@ export interface RecurrenceRule {
   byMonthDay?: number
   /** How the recurrence ends. */
   end: RecurrenceEnd
+  /**
+   * Optional daily time window — only fire occurrences between these clock times.
+   * Values are HH:MM strings (24-hour). Useful for sub-daily frequencies so events
+   * don't fire outside business hours (e.g. every hour, but only 08:00–18:00).
+   */
+  window?: { from: string; to: string }
 }
 
 /** Unique identifier for a calendar event. */
@@ -94,8 +100,12 @@ export interface CalendarEvent {
   /** ISO 8601 end datetime. If absent, event is treated as instantaneous. */
   dtEnd?: string
 
-  /** Whether this is an all-day event (no specific time). */
-  allDay?: boolean
+  /**
+   * Playback volume as a percentage (0–100).
+   * Applies to audio action types (file, playlist, online) only.
+   * Absent means the device uses its current volume setting.
+   */
+  volume?: number
 
   /** If present, the event repeats according to this rule. */
   recurrence?: RecurrenceRule

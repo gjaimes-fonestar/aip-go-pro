@@ -41,7 +41,9 @@
     },
     "duration": "Thời lượng phát",
     "durationMin": "phút",
-    "durationSec": "giây"
+    "durationSec": "giây",
+    "volume": "Âm lượng",
+    "volumePercent": "%"
   },
   "action": {
     "label": "Làm gì",
@@ -96,7 +98,10 @@
     "minutely": "Mỗi N phút",
     "hourly": "Theo giờ",
     "minutes": "phút",
-    "hours": "giờ"
+    "hours": "giờ",
+    "window": "Khung giờ hoạt động",
+    "windowFrom": "Từ",
+    "windowTo": "đến"
   },
   "devices": {
     "allDevices": "Tất cả thiết bị",

@@ -41,7 +41,9 @@
     },
     "duration": "Duración de reproducción",
     "durationMin": "min",
-    "durationSec": "seg"
+    "durationSec": "seg",
+    "volume": "Volumen",
+    "volumePercent": "%"
   },
   "action": {
     "label": "Qué hacer",
@@ -96,7 +98,10 @@
     "minutely": "Cada N minutos",
     "hourly": "Por hora",
     "minutes": "minuto(s)",
-    "hours": "hora(s)"
+    "hours": "hora(s)",
+    "window": "Ventana activa",
+    "windowFrom": "De",
+    "windowTo": "a"
   },
   "devices": {
     "allDevices": "Todos los dispositivos",

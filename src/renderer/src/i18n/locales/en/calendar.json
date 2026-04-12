@@ -41,7 +41,9 @@
     },
     "duration": "Playback duration",
     "durationMin": "min",
-    "durationSec": "sec"
+    "durationSec": "sec",
+    "volume": "Volume",
+    "volumePercent": "%"
   },
   "action": {
     "label": "What to do",
@@ -96,7 +98,10 @@
     "minutely": "Every N minutes",
     "hourly": "Hourly",
     "minutes": "minute(s)",
-    "hours": "hour(s)"
+    "hours": "hour(s)",
+    "window": "Active window",
+    "windowFrom": "From",
+    "windowTo": "to"
   },
   "devices": {
     "allDevices": "All devices",

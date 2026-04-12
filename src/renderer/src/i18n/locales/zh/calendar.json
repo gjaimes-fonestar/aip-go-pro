@@ -41,7 +41,9 @@
     },
     "duration": "播放时长",
     "durationMin": "分",
-    "durationSec": "秒"
+    "durationSec": "秒",
+    "volume": "音量",
+    "volumePercent": "%"
   },
   "action": {
     "label": "执行操作",
@@ -96,7 +98,10 @@
     "minutely": "每 N 分钟",
     "hourly": "每小时",
     "minutes": "分钟",
-    "hours": "小时"
+    "hours": "小时",
+    "window": "活动时间段",
+    "windowFrom": "从",
+    "windowTo": "至"
   },
   "devices": {
     "allDevices": "所有设备",

@@ -26,12 +26,12 @@ import type {
   RecurrenceEnd,
 } from '@shared/calendar'
 
-// ─── date-fns localizer ───────────────────────────────────────────────────────
+// date-fns localizer
 
 const locales = { 'en-US': undefined }
 const localizer = dateFnsLocalizer({ format, parse, startOfWeek, getDay, locales })
 
-// ─── helpers ──────────────────────────────────────────────────────────────────
+// helpers
 
 const WEEKDAY_RRULE: Record<Weekday, typeof RRule.MO> = {
   MO: RRule.MO,
@@ -55,7 +55,7 @@ function expandEvent(ev: CalendarEvent, rangeStart: Date, rangeEnd: Date): RbcCa
 
   if (!ev.recurrence) {
     if (end < rangeStart || start > rangeEnd) return []
-    return [{ title: ev.title, start, end, allDay: ev.allDay, resource: ev }]
+    return [{ title: ev.title, start, end, allDay: false, resource: ev }]
   }
 
   const { freq, interval, byDay, byMonthDay, end: recEnd } = ev.recurrence
@@ -92,7 +92,7 @@ function expandEvent(ev: CalendarEvent, rangeStart: Date, rangeEnd: Date): RbcCa
       title: ev.title,
       start: occ,
       end: new Date(occ.getTime() + duration),
-      allDay: ev.allDay,
+      allDay: false,
       resource: ev,
     }))
 }
@@ -117,7 +117,7 @@ function hexAlpha(hex: string, alpha: number): string {
   return `rgba(${r},${g},${b},${alpha})`
 }
 
-// ─── Event modal ──────────────────────────────────────────────────────────────
+// Event modal
 
 const WEEKDAYS: Weekday[] = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU']
 const COLOR_PRESETS = ['#6366f1', '#3b82f6', '#10b981', '#14b8a6', '#f59e0b', '#f97316', '#ef4444', '#8b5cf6']
@@ -208,7 +208,12 @@ function EventModal({ event, onSave, onDelete, onClose }: EventModalProps) {
   const durationRemSecs = durationSecs % 60
 
   const [enabled, setEnabled] = useState(event?.enabled ?? true)
+  const [volume, setVolume] = useState(event?.volume ?? 80)
   const [targetDevices, setTargetDevices] = useState<string[]>(event?.targetDevices ?? [])
+
+  const [windowEnabled, setWindowEnabled] = useState(!!event?.recurrence?.window)
+  const [windowFrom, setWindowFrom] = useState(event?.recurrence?.window?.from ?? '08:00')
+  const [windowTo, setWindowTo] = useState(event?.recurrence?.window?.to ?? '18:00')
 
   const [actionType, setActionType] = useState<CalendarAction['type']>(
     event?.action?.type ?? 'file',
@@ -285,14 +290,16 @@ function EventModal({ event, onSave, onDelete, onClose }: EventModalProps) {
           ? { type: 'until', until: new Date(repeatEndUntil).toISOString() }
           : { type: 'never' }
 
+    const isSubDaily = repeatFreq === 'minutely' || repeatFreq === 'hourly'
     return {
       freq: repeatFreq,
       interval: repeatInterval,
       byDay: repeatFreq === 'weekly' && repeatByDay.length > 0 ? repeatByDay : undefined,
       byMonthDay: repeatFreq === 'monthly' ? repeatByMonthDay : undefined,
       end: endRule,
+      window: isSubDaily && windowEnabled ? { from: windowFrom, to: windowTo } : undefined,
     }
-  }, [repeatFreq, repeatInterval, repeatByDay, repeatByMonthDay, repeatEndType, repeatEndCount, repeatEndUntil])
+  }, [repeatFreq, repeatInterval, repeatByDay, repeatByMonthDay, repeatEndType, repeatEndCount, repeatEndUntil, windowEnabled, windowFrom, windowTo])
 
   const handleSave = () => {
     onSave({
@@ -303,6 +310,7 @@ function EventModal({ event, onSave, onDelete, onClose }: EventModalProps) {
       dtEnd: fromDatetimeLocal(dtEnd),
       recurrence: buildRecurrence(),
       action: buildAction(),
+      volume: isAudioAction(actionType) ? volume : undefined,
       targetDevices,
       enabled,
     })
@@ -578,6 +586,39 @@ function EventModal({ event, onSave, onDelete, onClose }: EventModalProps) {
                   <span className="text-xs text-gray-500">{unitLabel[repeatFreq]}</span>
                 </div>
 
+                {/* Active window — sub-daily recurrences only */}
+                {(repeatFreq === 'minutely' || repeatFreq === 'hourly') && (
+                  <div>
+                    <label className="mb-2 flex cursor-pointer items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={windowEnabled}
+                        onChange={(e) => setWindowEnabled(e.target.checked)}
+                        className="rounded accent-primary"
+                      />
+                      <span className="text-xs text-gray-600 dark:text-gray-300">{t('recurrence.window')}</span>
+                    </label>
+                    {windowEnabled && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-500">{t('recurrence.windowFrom')}</span>
+                        <input
+                          type="time"
+                          value={windowFrom}
+                          onChange={(e) => setWindowFrom(e.target.value)}
+                          className="rounded border border-gray-200 bg-white px-2 py-1 text-xs text-gray-900 outline-none focus:border-primary dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+                        />
+                        <span className="text-xs text-gray-500">{t('recurrence.windowTo')}</span>
+                        <input
+                          type="time"
+                          value={windowTo}
+                          onChange={(e) => setWindowTo(e.target.value)}
+                          className="rounded border border-gray-200 bg-white px-2 py-1 text-xs text-gray-900 outline-none focus:border-primary dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Weekly — day picker */}
                 {repeatFreq === 'weekly' && (
                   <div>
@@ -718,15 +759,42 @@ function EventModal({ event, onSave, onDelete, onClose }: EventModalProps) {
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
               {t('form.section.options')}
             </p>
-            <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-              <input
-                type="checkbox"
-                checked={enabled}
-                onChange={(e) => setEnabled(e.target.checked)}
-                className="rounded accent-primary"
-              />
-              {enabled ? t('event.enabled') : t('event.disabled')}
-            </label>
+            <div className="space-y-3">
+              <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                <input
+                  type="checkbox"
+                  checked={enabled}
+                  onChange={(e) => setEnabled(e.target.checked)}
+                  className="rounded accent-primary"
+                />
+                {enabled ? t('event.enabled') : t('event.disabled')}
+              </label>
+
+              {isAudioAction(actionType) && (
+                <div className="rounded-lg border border-gray-100 bg-gray-50 px-3 py-2.5 dark:border-gray-700 dark:bg-gray-800/50">
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="text-xs text-gray-500">{t('form.volume')}</span>
+                    <span className="text-xs font-semibold text-gray-700 dark:text-gray-200">
+                      {volume}{t('form.volumePercent')}
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    step={1}
+                    value={volume}
+                    onChange={(e) => setVolume(parseInt(e.target.value))}
+                    className="w-full accent-primary"
+                  />
+                  <div className="mt-1 flex justify-between text-xs text-gray-300 dark:text-gray-600">
+                    <span>0</span>
+                    <span>50</span>
+                    <span>100</span>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -781,7 +849,7 @@ function EventModal({ event, onSave, onDelete, onClose }: EventModalProps) {
   )
 }
 
-// ─── Event indicator dot (month view) ─────────────────────────────────────────
+// Event indicator dot (month view)
 
 interface DateCellWrapperProps {
   value: Date
@@ -808,7 +876,7 @@ function DateCellWrapper({ value, events, children }: DateCellWrapperProps & { c
   )
 }
 
-// ─── Main Calendar page ───────────────────────────────────────────────────────
+// Main Calendar page
 
 export default function Calendar() {
   const { t } = useTranslation('calendar')
