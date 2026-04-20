@@ -1,0 +1,26 @@
+{
+  "title": "Transfers",
+  "subtitle": "Session file transfer log",
+  "empty": "No transfers this session",
+  "emptyHelp": "Gate file operations will appear here",
+  "clearCompleted": "Clear completed",
+  "clearAll": "Clear all",
+  "inProgress_one": "{{count}} operation in progress",
+  "inProgress_other": "{{count}} operations in progress",
+  "kind": {
+    "gate-upload": "Upload",
+    "gate-download": "Download",
+    "gate-delete": "Delete",
+    "gate-folder-create": "Create folder",
+    "gate-folder-delete": "Delete folder",
+    "gate-folder-rename": "Rename folder",
+    "ftp-upload": "FTP Upload",
+    "ftp-download": "FTP Download"
+  },
+  "status": {
+    "pending": "In progress",
+    "done": "Done",
+    "error": "Error",
+    "cancelled": "Cancelled"
+  }
+}

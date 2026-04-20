@@ -1,0 +1,26 @@
+{
+  "title": "Transferencias",
+  "subtitle": "Registro de transferencias de la sesión",
+  "empty": "Sin transferencias en esta sesión",
+  "emptyHelp": "Las operaciones de archivos Gate aparecerán aquí",
+  "clearCompleted": "Limpiar completadas",
+  "clearAll": "Limpiar todo",
+  "inProgress_one": "{{count}} operación en curso",
+  "inProgress_other": "{{count}} operaciones en curso",
+  "kind": {
+    "gate-upload": "Subida",
+    "gate-download": "Descarga",
+    "gate-delete": "Eliminar",
+    "gate-folder-create": "Crear carpeta",
+    "gate-folder-delete": "Eliminar carpeta",
+    "gate-folder-rename": "Renombrar carpeta",
+    "ftp-upload": "Subida FTP",
+    "ftp-download": "Descarga FTP"
+  },
+  "status": {
+    "pending": "En curso",
+    "done": "Completado",
+    "error": "Error",
+    "cancelled": "Cancelado"
+  }
+}

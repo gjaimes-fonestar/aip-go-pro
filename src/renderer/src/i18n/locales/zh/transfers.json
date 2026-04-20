@@ -1,0 +1,26 @@
+{
+  "title": "传输",
+  "subtitle": "本次会话文件传输记录",
+  "empty": "本次会话无传输",
+  "emptyHelp": "Gate 文件操作将显示在此处",
+  "clearCompleted": "清除已完成",
+  "clearAll": "全部清除",
+  "inProgress_one": "{{count}} 个操作进行中",
+  "inProgress_other": "{{count}} 个操作进行中",
+  "kind": {
+    "gate-upload": "上传",
+    "gate-download": "下载",
+    "gate-delete": "删除",
+    "gate-folder-create": "创建文件夹",
+    "gate-folder-delete": "删除文件夹",
+    "gate-folder-rename": "重命名文件夹",
+    "ftp-upload": "FTP 上传",
+    "ftp-download": "FTP 下载"
+  },
+  "status": {
+    "pending": "进行中",
+    "done": "完成",
+    "error": "错误",
+    "cancelled": "已取消"
+  }
+}

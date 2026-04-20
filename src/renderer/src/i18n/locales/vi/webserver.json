@@ -81,6 +81,30 @@
       "done": "Hoàn thành",
       "error": "Lỗi",
       "cancelled": "Đã hủy"
+    },
+    "gate": {
+      "selectUpload": "Chọn tệp để tải lên",
+      "upload": "Tải lên tệp",
+      "download": "Tải xuống",
+      "delete": "Xóa tệp",
+      "folder": "Thư mục",
+      "noFolder": "— Gốc —",
+      "noFilesInCategory": "Không có tệp trong danh mục này",
+      "noFolders": "Không có thư mục",
+      "createFolder": "Tạo thư mục",
+      "renameFolder": "Đổi tên thư mục",
+      "deleteFolder": "Xóa thư mục",
+      "folderName": "Tên thư mục",
+      "newFolderName": "Tên thư mục mới",
+      "folders": "Thư mục",
+      "duration": "{{sec}} s",
+      "authRequired": "Cần xác thực",
+      "username": "Tên người dùng",
+      "password": "Mật khẩu",
+      "operationDone": "Thao tác hoàn thành",
+      "operationError": "Thao tác thất bại",
+      "confirmDelete": "Xóa {{name}}?",
+      "deleteWarning": "Hành động này không thể hoàn tác."
     }
   }
 }

@@ -13,7 +13,12 @@ import type {
   AipSipExtension,
   AipSipConference,
   AipSipConferenceParticipant,
-  AipAudioFile,
+  AipGateConnectionConfig,
+  AipGateRemoteFile,
+  AipGateRemoteFolder,
+  AipGateFilesUpdatedEvent,
+  AipGateFoldersUpdatedEvent,
+  AipGateWebConfig,
 } from '@shared/ipc'
 import { useDevicesStore } from '../store/devices.store'
 import {
@@ -21,8 +26,8 @@ import {
   confKey,
   type WebserverTab,
   type FilesSubTab,
-  type TrackedFile,
 } from '../store/webserver.store'
+import { useTransfersStore } from '../store/transfers.store'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -604,190 +609,291 @@ function SipConferencesTab({ gateMac }: { gateMac: string }) {
   )
 }
 
-// ─── File row ─────────────────────────────────────────────────────────────────
+// ─── Gate Files tab ───────────────────────────────────────────────────────────
 
-function FileRow({ file, onRemove }: { file: TrackedFile; onRemove: (id: string) => void }) {
+const GATE_CATEGORIES: FilesSubTab[] = ['messages', 'events', 'bgm']
+
+const EditIcon = () => (
+  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+  </svg>
+)
+
+function GateFileRow({
+  file, onDownload, onDelete,
+}: {
+  file: AipGateRemoteFile
+  onDownload: (f: AipGateRemoteFile) => void
+  onDelete:   (f: AipGateRemoteFile) => void
+}) {
   const { t } = useTranslation('webserver')
-  const statusBadge = {
-    idle:        <Badge color="gray">{t('files.status.queued')}</Badge>,
-    transferring:<Badge color="blue">{t('files.status.transferring')}</Badge>,
-    done:        <Badge color="green"><CheckIcon /> {t('files.status.done')}</Badge>,
-    error:       <Badge color="red">{t('files.status.error')}</Badge>,
-    cancelled:   <Badge color="yellow">{t('files.status.cancelled')}</Badge>,
-  }[file.status]
-
   return (
-    <div className="flex items-center gap-3 rounded-lg border border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800/60">
-      <div className="flex w-5 shrink-0 items-center justify-center text-gray-400">
-        {file.direction === 'upload' ? <UploadIcon /> : <DownloadIcon />}
-      </div>
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <div className="flex items-center justify-between gap-2">
-          <span className="truncate text-sm font-medium text-gray-900 dark:text-white">{file.label}</span>
-          {statusBadge}
-        </div>
-        <span className="truncate text-xs text-gray-400">{file.remotePath}</span>
-        {file.status === 'transferring' && (
-          <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
-            <div
-              className="h-full rounded-full bg-primary transition-all duration-300"
-              style={{ width: `${file.percent}%` }}
-            />
-          </div>
-        )}
-      </div>
-      <button
-        onClick={() => onRemove(file.id)}
-        className="shrink-0 rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700"
-        title={t('files.removeFromList')}
-      >
-        <XIcon />
-      </button>
-    </div>
-  )
-}
-
-// ─── Catalog file row ─────────────────────────────────────────────────────────
-
-function CatalogFileRow({ file, deviceIp }: { file: AipAudioFile; deviceIp: string }) {
-  const { t } = useTranslation('webserver')
-  const { addFile } = useWebserverStore()
-  const uid = useId()
-
-  const handleDownload = async () => {
-    const savePath = await window.electronAPI.dialog.saveFile({
-      title:       t('files.save'),
-      defaultPath: file.name,
-    })
-    if (!savePath) return
-    const remotePath = file.directoryName ? `${file.directoryName}/${file.name}` : file.name
-    const id         = `${uid}-${Date.now()}`
-    addFile({
-      id,
-      category:   'messages',
-      label:      file.name,
-      localPath:  savePath,
-      remotePath,
-      deviceIp,
-      direction:  'download',
-      status:     'idle',
-      percent:    0,
-    })
-    await window.electronAPI.aip.enqueueFileTransfer({
-      localPath:  savePath,
-      remotePath,
-      deviceIp,
-      direction:  'download',
-    })
-  }
-
-  return (
-    <div className="flex items-center justify-between px-3 py-2.5 bg-white hover:bg-gray-50 dark:bg-gray-900 dark:hover:bg-gray-800/60">
+    <div className="flex items-center gap-2 px-3 py-2.5 bg-white hover:bg-gray-50 dark:bg-gray-900 dark:hover:bg-gray-800/60">
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm text-gray-900 dark:text-white">{file.name}</p>
-        {file.directoryName && (
-          <p className="truncate text-xs text-gray-400">{file.directoryName}</p>
-        )}
+        <p className="truncate text-xs text-gray-400">
+          {file.folder ? `${file.folder} · ` : ''}{file.duration > 0 ? t('files.gate.duration', { sec: file.duration }) : ''}
+        </p>
       </div>
-      <Btn onClick={handleDownload} variant="ghost" size="xs" title="Download">
-        <DownloadIcon />
-      </Btn>
+      <div className="flex shrink-0 gap-1">
+        <Btn onClick={() => onDownload(file)} variant="ghost" size="xs" title={t('files.gate.download')}>
+          <DownloadIcon />
+        </Btn>
+        <Btn onClick={() => onDelete(file)} variant="danger" size="xs" title={t('files.gate.delete')}>
+          <TrashIcon />
+        </Btn>
+      </div>
     </div>
   )
 }
 
-// ─── Files tab ────────────────────────────────────────────────────────────────
-
-const FILE_SECTION_KEYS: FilesSubTab[] = ['messages', 'events', 'bgm']
-
-const REMOTE_PREFIXES: Record<FilesSubTab, string> = {
-  messages: '/messages/',
-  events:   '/events/',
-  bgm:      '/bgm/',
-}
-
-const AUDIO_TYPE_FOR_TAB: Record<FilesSubTab, number> = {
-  messages: 0,
-  events:   1,
-  bgm:      2,
-}
-
-function FilesTab({ deviceMac, deviceIp }: { deviceMac: string; deviceIp: string }) {
+function GateFolderRow({
+  folder, onRename, onDelete,
+}: {
+  folder: AipGateRemoteFolder
+  onRename: (f: AipGateRemoteFolder) => void
+  onDelete: (f: AipGateRemoteFolder) => void
+}) {
   const { t } = useTranslation('webserver')
-  const {
-    files, filesSubTab, setFilesSubTab, addFile, removeFile,
-    deviceAudioFiles, setDeviceAudioFiles,
-  } = useWebserverStore()
-  const [remotePath, setRemotePath] = useState('')
-  const [loadingCatalog, setLoadingCatalog] = useState(false)
+  return (
+    <div className="flex items-center gap-2 px-3 py-2 bg-white hover:bg-gray-50 dark:bg-gray-900 dark:hover:bg-gray-800/60">
+      <FolderIcon />
+      <span className="min-w-0 flex-1 truncate text-sm text-gray-700 dark:text-gray-300">{folder.name}</span>
+      <div className="flex shrink-0 gap-1">
+        <Btn onClick={() => onRename(folder)} variant="ghost" size="xs" title={t('files.gate.renameFolder')}>
+          <EditIcon />
+        </Btn>
+        <Btn onClick={() => onDelete(folder)} variant="danger" size="xs" title={t('files.gate.deleteFolder')}>
+          <TrashIcon />
+        </Btn>
+      </div>
+    </div>
+  )
+}
+
+function FilesTab({
+  gateMac, deviceIp, deviceName, gateWebConfig,
+}: {
+  gateMac: string
+  deviceIp: string
+  deviceName: string
+  gateWebConfig: AipGateWebConfig | undefined
+}) {
+  const { t } = useTranslation('webserver')
+  const { filesSubTab, setFilesSubTab, gateFiles, gateFolders, setGateFiles, setGateFolders } = useWebserverStore()
+  const addRecord = useTransfersStore((s) => s.addRecord)
   const uid = useId()
 
-  const sectionFiles = files.filter((f) => f.category === filesSubTab)
+  const [loading, setLoading]           = useState(false)
+  const [opPending, setOpPending]       = useState(false)
+  const [opError, setOpError]           = useState<string | null>(null)
+  const [opDone, setOpDone]             = useState<string | null>(null)
+  const [username, setUsername]         = useState('')
+  const [password, setPassword]         = useState('')
+  const [uploadFolder, setUploadFolder] = useState('')
+  const [showCreateFolder, setShowCreateFolder] = useState(false)
+  const [newFolderName, setNewFolderName]       = useState('')
+  const [renameTarget, setRenameTarget]         = useState<AipGateRemoteFolder | null>(null)
+  const [renameName, setRenameName]             = useState('')
+  const [deleteTarget, setDeleteTarget]         = useState<AipGateRemoteFile | null>(null)
 
-  const audioType = AUDIO_TYPE_FOR_TAB[filesSubTab]
-  const catalogFiles = deviceAudioFiles.filter((f) => f.audioType === audioType)
+  const authEnabled = gateWebConfig?.authEnabled ?? false
 
-  const reloadCatalog = useCallback(async () => {
-    setLoadingCatalog(true)
+  const buildConfig = useCallback((): AipGateConnectionConfig => ({
+    ip:         deviceIp,
+    sslEnabled: gateWebConfig?.sslEnabled ?? false,
+    username:   authEnabled ? username : undefined,
+    password:   authEnabled ? password : undefined,
+  }), [deviceIp, gateWebConfig, authEnabled, username, password])
+
+  const allFiles   = gateFiles.get(gateMac)   ?? []
+  const allFolders = gateFolders.get(gateMac) ?? []
+
+  const categoryFiles   = allFiles.filter((f) => f.category === filesSubTab)
+  const categoryFolders = allFolders.filter((f) => f.category === filesSubTab)
+
+  const refresh = useCallback(async () => {
+    setLoading(true)
+    setOpError(null)
     try {
-      const list = await window.electronAPI.aip.getAudioFilesForDevice(deviceMac, audioType)
-      setDeviceAudioFiles(list)
-    } catch {
-      // ignore — device may not support audio file queries
+      const config = buildConfig()
+      await window.electronAPI.aip.gateFetchFiles(gateMac, config)
+      await window.electronAPI.aip.gateFetchFolders(gateMac, config)
+      const [files, folders] = await Promise.all([
+        window.electronAPI.aip.gateGetFiles(gateMac),
+        window.electronAPI.aip.gateGetFolders(gateMac),
+      ])
+      setGateFiles(gateMac, files)
+      setGateFolders(gateMac, folders)
+    } catch (e) {
+      setOpError(String(e))
     } finally {
-      setLoadingCatalog(false)
+      setLoading(false)
     }
-  }, [deviceMac, audioType, setDeviceAudioFiles])
+  }, [gateMac, buildConfig, setGateFiles, setGateFolders])
 
   useEffect(() => {
-    reloadCatalog()
-  }, [reloadCatalog])
+    const u1 = window.electronAPI.aip.onGateFilesUpdated((ev: AipGateFilesUpdatedEvent) => {
+      if (ev.mac === gateMac) setGateFiles(gateMac, ev.files)
+    })
+    const u2 = window.electronAPI.aip.onGateFoldersUpdated((ev: AipGateFoldersUpdatedEvent) => {
+      if (ev.mac === gateMac) setGateFolders(gateMac, ev.folders)
+    })
+    return () => { u1(); u2() }
+  }, [gateMac, setGateFiles, setGateFolders])
+
+  useEffect(() => { refresh() }, [gateMac])
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (document.visibilityState === 'visible') refresh()
+    }, 5000)
+    return () => clearInterval(id)
+  }, [refresh])
 
   const handleUpload = async () => {
     const paths = await window.electronAPI.dialog.openFile({
-      title: t('files.selectFile'),
-      filters: [
-        { name: t('files.categories.messages'), extensions: ['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a'] },
-        { name: t('buttons.upload', { ns: 'common' }), extensions: ['*'] },
-      ],
+      title:   t('files.gate.selectUpload'),
+      filters: [{ name: 'Audio', extensions: ['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a'] }],
     })
     if (!paths || paths.length === 0) return
     const localPath = paths[0]
     const label     = basename(localPath)
-    const remote    = remotePath || `${REMOTE_PREFIXES[filesSubTab]}${label}`
     const id        = `${uid}-${Date.now()}`
-
-    addFile({ id, category: filesSubTab, label, localPath, remotePath: remote, deviceIp, direction: 'upload', status: 'idle', percent: 0 })
-    await window.electronAPI.aip.enqueueFileTransfer({ localPath, remotePath: remote, deviceIp, direction: 'upload' })
-    setRemotePath('')
+    addRecord({ id, startedAt: Date.now(), kind: 'gate-upload', mac: gateMac, deviceName, label, category: filesSubTab, status: 'pending' })
+    setOpPending(true)
+    setOpError(null)
+    try {
+      await window.electronAPI.aip.gateUploadFile(gateMac, buildConfig(), localPath, filesSubTab, uploadFolder || undefined)
+      setOpDone(label)
+    } catch (e) {
+      setOpError(String(e))
+    } finally {
+      setOpPending(false)
+    }
   }
 
-  const handleDownload = async () => {
-    if (!remotePath) return
+  const handleDownload = async (file: AipGateRemoteFile) => {
     const savePath = await window.electronAPI.dialog.saveFile({
-      title: t('files.saveDownloaded'),
-      defaultPath: basename(remotePath),
+      title:       t('files.gate.download'),
+      defaultPath: file.name,
     })
     if (!savePath) return
-    const id    = `${uid}-${Date.now()}`
-    const label = basename(remotePath)
-
-    addFile({ id, category: filesSubTab, label, localPath: savePath, remotePath, deviceIp, direction: 'download', status: 'idle', percent: 0 })
-    await window.electronAPI.aip.enqueueFileTransfer({ localPath: savePath, remotePath, deviceIp, direction: 'download' })
-    setRemotePath('')
+    const id = `${uid}-${Date.now()}`
+    addRecord({ id, startedAt: Date.now(), kind: 'gate-download', mac: gateMac, deviceName, label: file.name, category: filesSubTab, status: 'pending' })
+    setOpPending(true)
+    setOpError(null)
+    try {
+      await window.electronAPI.aip.gateDownloadFile(gateMac, buildConfig(), file.id, savePath)
+      setOpDone(file.name)
+    } catch (e) {
+      setOpError(String(e))
+    } finally {
+      setOpPending(false)
+    }
   }
 
-  const handleCancel = () => {
-    window.electronAPI.aip.cancelFileTransfer().catch(console.error)
+  const handleDelete = async (file: AipGateRemoteFile) => {
+    const id = `${uid}-${Date.now()}`
+    addRecord({ id, startedAt: Date.now(), kind: 'gate-delete', mac: gateMac, deviceName, label: file.name, category: filesSubTab, status: 'pending' })
+    setOpPending(true)
+    setOpError(null)
+    setDeleteTarget(null)
+    try {
+      await window.electronAPI.aip.gateDeleteFile(gateMac, buildConfig(), file.id)
+      await refresh()
+    } catch (e) {
+      setOpError(String(e))
+    } finally {
+      setOpPending(false)
+    }
   }
 
-  const hasActive = files.some((f) => f.status === 'transferring')
+  const handleCreateFolder = async () => {
+    if (!newFolderName) return
+    const id = `${uid}-${Date.now()}`
+    addRecord({ id, startedAt: Date.now(), kind: 'gate-folder-create', mac: gateMac, deviceName, label: newFolderName, category: filesSubTab, status: 'pending' })
+    setShowCreateFolder(false)
+    setNewFolderName('')
+    setOpPending(true)
+    setOpError(null)
+    try {
+      await window.electronAPI.aip.gateCreateFolder(gateMac, buildConfig(), newFolderName, filesSubTab)
+      await refresh()
+    } catch (e) {
+      setOpError(String(e))
+    } finally {
+      setOpPending(false)
+    }
+  }
+
+  const handleRenameFolder = async () => {
+    if (!renameTarget || !renameName) return
+    const id = `${uid}-${Date.now()}`
+    addRecord({ id, startedAt: Date.now(), kind: 'gate-folder-rename', mac: gateMac, deviceName, label: renameName, category: filesSubTab, status: 'pending' })
+    const target = renameTarget
+    setRenameTarget(null)
+    setRenameName('')
+    setOpPending(true)
+    setOpError(null)
+    try {
+      await window.electronAPI.aip.gateRenameFolder(gateMac, buildConfig(), target.name, renameName, filesSubTab)
+      await refresh()
+    } catch (e) {
+      setOpError(String(e))
+    } finally {
+      setOpPending(false)
+    }
+  }
+
+  const handleDeleteFolder = async (folder: AipGateRemoteFolder) => {
+    const id = `${uid}-${Date.now()}`
+    addRecord({ id, startedAt: Date.now(), kind: 'gate-folder-delete', mac: gateMac, deviceName, label: folder.name, category: filesSubTab, status: 'pending' })
+    setOpPending(true)
+    setOpError(null)
+    try {
+      await window.electronAPI.aip.gateDeleteFolder(gateMac, buildConfig(), folder.name, filesSubTab)
+      await refresh()
+    } catch (e) {
+      setOpError(String(e))
+    } finally {
+      setOpPending(false)
+    }
+  }
 
   return (
-    <div className="flex h-full flex-col gap-4 p-5">
-      {/* Section tabs */}
+    <div className="flex h-full flex-col gap-3 p-5">
+      {/* Auth credentials (only if device has auth enabled) */}
+      {authEnabled && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-700/50 dark:bg-amber-900/20">
+          <p className="mb-2 text-xs font-semibold text-amber-700 dark:text-amber-400">{t('files.gate.authRequired')}</p>
+          <div className="flex gap-2">
+            <TextInput value={username} onChange={setUsername} placeholder={t('files.gate.username')} />
+            <TextInput value={password} onChange={setPassword} placeholder={t('files.gate.password')} type="password" />
+          </div>
+        </div>
+      )}
+
+      {/* Status banners */}
+      {opError && (
+        <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+          <XIcon />
+          <span className="flex-1 truncate">{t('files.gate.operationError')}: {opError}</span>
+          <button onClick={() => setOpError(null)} className="shrink-0 text-red-400 hover:text-red-600"><XIcon /></button>
+        </div>
+      )}
+      {opDone && (
+        <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-2.5 text-sm text-green-700 dark:border-green-800 dark:bg-green-900/20 dark:text-green-400">
+          <CheckIcon />
+          <span className="flex-1">{t('files.gate.operationDone')}</span>
+          <button onClick={() => setOpDone(null)} className="shrink-0 text-green-400 hover:text-green-600"><XIcon /></button>
+        </div>
+      )}
+
+      {/* Category tabs */}
       <div className="flex gap-1 rounded-lg border border-gray-200 bg-gray-50 p-1 dark:border-gray-700 dark:bg-gray-800/50">
-        {FILE_SECTION_KEYS.map((key) => (
+        {GATE_CATEGORIES.map((key) => (
           <button
             key={key}
             onClick={() => setFilesSubTab(key)}
@@ -803,77 +909,143 @@ function FilesTab({ deviceMac, deviceIp }: { deviceMac: string; deviceIp: string
       </div>
 
       <div className="flex flex-1 gap-4 overflow-hidden">
-        {/* Left: device catalog */}
-        <div className="flex w-64 shrink-0 flex-col gap-2">
+        {/* Left: file list */}
+        <div className="flex flex-1 flex-col gap-2 overflow-hidden">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-              {t('files.onDevice')}
-            </span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">{t('files.onDevice')}</span>
             <div className="flex items-center gap-1">
-              {loadingCatalog && <SpinnerIcon />}
-              <Btn onClick={reloadCatalog} variant="ghost" size="xs">{t('buttons.refresh', { ns: 'common' })}</Btn>
+              {(loading || opPending) && <SpinnerIcon />}
+              <Btn onClick={refresh} variant="ghost" size="xs" disabled={loading || opPending}>{t('buttons.refresh', { ns: 'common' })}</Btn>
             </div>
           </div>
           <div className="flex-1 overflow-auto rounded-xl border border-gray-200 dark:border-gray-700">
-            {catalogFiles.length === 0 ? (
+            {categoryFiles.length === 0 ? (
               <div className="flex h-full flex-col items-center justify-center py-10 text-center">
                 <FolderIcon />
-                <p className="mt-2 text-xs text-gray-400">{t('files.empty')}</p>
+                <p className="mt-2 text-xs text-gray-400">{t('files.gate.noFilesInCategory')}</p>
               </div>
             ) : (
               <div className="divide-y divide-gray-100 dark:divide-gray-700/50">
-                {catalogFiles.map((f) => (
-                  <CatalogFileRow key={`${f.mac}|${f.id}`} file={f} deviceIp={deviceIp} />
+                {categoryFiles.map((f) => (
+                  <GateFileRow
+                    key={f.id}
+                    file={f}
+                    onDownload={handleDownload}
+                    onDelete={(file) => setDeleteTarget(file)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Upload */}
+          <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800/40 space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">{t('files.gate.upload')}</p>
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-gray-500 w-14 shrink-0">{t('files.gate.folder')}</label>
+              <select
+                value={uploadFolder}
+                onChange={(e) => setUploadFolder(e.target.value)}
+                className="h-8 flex-1 rounded-md border border-gray-200 bg-white px-2 text-sm text-gray-700 focus:border-primary focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+              >
+                <option value="">{t('files.gate.noFolder')}</option>
+                {categoryFolders.map((f) => (
+                  <option key={f.id} value={f.id}>{f.name}</option>
+                ))}
+              </select>
+            </div>
+            <Btn onClick={handleUpload} variant="primary" size="sm" disabled={opPending}>
+              <UploadIcon /> {t('files.gate.upload')}
+            </Btn>
+          </div>
+        </div>
+
+        {/* Right: folders */}
+        <div className="flex w-52 shrink-0 flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+              {t('files.gate.folders', { defaultValue: 'Folders' })}
+            </span>
+            <Btn onClick={() => { setShowCreateFolder(true); setNewFolderName('') }} variant="ghost" size="xs">
+              <PlusIcon />
+            </Btn>
+          </div>
+          <div className="flex-1 overflow-auto rounded-xl border border-gray-200 dark:border-gray-700">
+            {categoryFolders.length === 0 ? (
+              <div className="flex h-full items-center justify-center py-8">
+                <p className="text-xs text-gray-400">{t('files.gate.noFolders')}</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-100 dark:divide-gray-700/50">
+                {categoryFolders.map((f) => (
+                  <GateFolderRow
+                    key={f.id}
+                    folder={f}
+                    onRename={(folder) => { setRenameTarget(folder); setRenameName(folder.name) }}
+                    onDelete={handleDeleteFolder}
+                  />
                 ))}
               </div>
             )}
           </div>
         </div>
-
-        {/* Right: transfer queue */}
-        <div className="flex flex-1 flex-col gap-2">
-          <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-            {t('files.transfers')}
-          </span>
-          <div className="flex-1 space-y-2 overflow-auto">
-            {sectionFiles.length === 0 && (
-              <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 py-12 dark:border-gray-700">
-                <FolderIcon />
-                <p className="mt-2 text-sm text-gray-400">{t('files.noTransfers')}</p>
-                <p className="text-xs text-gray-400">{t('files.transferHelp')}</p>
-              </div>
-            )}
-            {sectionFiles.map((f) => (
-              <FileRow key={f.id} file={f} onRemove={removeFile} />
-            ))}
-          </div>
-
-          {/* Add-file row */}
-          <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/40">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">{t('files.remotePath')}</p>
-            <div className="flex gap-2">
-              <TextInput
-                value={remotePath}
-                onChange={setRemotePath}
-                placeholder={`${REMOTE_PREFIXES[filesSubTab]}filename.mp3`}
-              />
-            </div>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Btn onClick={handleUpload} variant="primary" size="sm">
-                <UploadIcon /> {t('files.uploadFile')}
-              </Btn>
-              <Btn onClick={handleDownload} variant="default" size="sm" disabled={!remotePath}>
-                <DownloadIcon /> {t('buttons.download', { ns: 'common' })}
-              </Btn>
-              {hasActive && (
-                <Btn onClick={handleCancel} variant="danger" size="sm">
-                  <XIcon /> {t('files.cancelTransfer')}
-                </Btn>
-              )}
-            </div>
-          </div>
-        </div>
       </div>
+
+      {/* Confirm delete file modal */}
+      {deleteTarget && (
+        <Modal
+          title={t('files.gate.confirmDelete', { name: deleteTarget.name })}
+          onClose={() => setDeleteTarget(null)}
+          footer={
+            <>
+              <Btn onClick={() => setDeleteTarget(null)} variant="default">{t('buttons.cancel', { ns: 'common' })}</Btn>
+              <Btn onClick={() => handleDelete(deleteTarget)} variant="danger">{t('buttons.delete', { ns: 'common' })}</Btn>
+            </>
+          }
+        >
+          <p className="text-sm text-gray-600 dark:text-gray-400">{t('files.gate.deleteWarning')}</p>
+        </Modal>
+      )}
+
+      {/* Create folder modal */}
+      {showCreateFolder && (
+        <Modal
+          title={t('files.gate.createFolder')}
+          onClose={() => setShowCreateFolder(false)}
+          footer={
+            <>
+              <Btn onClick={() => setShowCreateFolder(false)} variant="default">{t('buttons.cancel', { ns: 'common' })}</Btn>
+              <Btn onClick={handleCreateFolder} variant="primary" disabled={!newFolderName}>{t('buttons.create', { ns: 'common' })}</Btn>
+            </>
+          }
+        >
+          <div>
+            <label className="mb-1.5 block text-xs font-medium text-gray-600 dark:text-gray-400">{t('files.gate.folderName')}</label>
+            <TextInput value={newFolderName} onChange={setNewFolderName} placeholder={t('files.gate.folderName')} />
+          </div>
+        </Modal>
+      )}
+
+      {/* Rename folder modal */}
+      {renameTarget && (
+        <Modal
+          title={t('files.gate.renameFolder')}
+          onClose={() => setRenameTarget(null)}
+          footer={
+            <>
+              <Btn onClick={() => setRenameTarget(null)} variant="default">{t('buttons.cancel', { ns: 'common' })}</Btn>
+              <Btn onClick={handleRenameFolder} variant="primary" disabled={!renameName || renameName === renameTarget.name}>
+                {t('buttons.save', { ns: 'common' })}
+              </Btn>
+            </>
+          }
+        >
+          <div>
+            <label className="mb-1.5 block text-xs font-medium text-gray-600 dark:text-gray-400">{t('files.gate.newFolderName')}</label>
+            <TextInput value={renameName} onChange={setRenameName} placeholder={t('files.gate.newFolderName')} />
+          </div>
+        </Modal>
+      )}
     </div>
   )
 }
@@ -893,11 +1065,9 @@ const TABS: { key: WebserverTab; tKey: string; Icon: React.FC }[] = [
 
 export default function Webserver() {
   const { t } = useTranslation('webserver')
-  // Driven by the device selected in the Devices page
   const selectedMac   = useDevicesStore((s) => s.selectedMac)
   const entries       = useDevicesStore((s) => s.entries)
-  const { activeTab, setActiveTab, setSipExtensions, setSipConferences } = useWebserverStore()
-  const { applyProgress, applyCompleted } = useWebserverStore()
+  const { activeTab, setActiveTab, setSipExtensions, setSipConferences, gateWebConfigs } = useWebserverStore()
 
   const selectedEntry  = selectedMac ? entries.get(selectedMac) : undefined
   const selectedDevice = selectedEntry?.device ?? null
@@ -905,7 +1075,8 @@ export default function Webserver() {
     ? selectedDevice.device_type === 7 || selectedDevice.device_type === 9
     : false
 
-  // Load existing data from daemon on device change
+  const gateWebConfig = selectedDevice ? gateWebConfigs.get(selectedDevice.mac) : undefined
+
   useEffect(() => {
     if (!selectedDevice || !isWebserver) return
     const mac = selectedDevice.mac
@@ -915,14 +1086,16 @@ export default function Webserver() {
     window.electronAPI.aip.getSipConferencesForDevice(mac)
       .then(setSipConferences)
       .catch(console.error)
+    window.electronAPI.aip.getGateWebConfigs()
+      .then((configs) => {
+        const cfg = configs.find((c) => c.mac === mac)
+        if (cfg) {
+          const store = useWebserverStore.getState()
+          store.setGateWebConfig(cfg)
+        }
+      })
+      .catch(console.error)
   }, [selectedDevice?.mac])
-
-  // Wire file transfer push events for the lifetime of this page
-  useEffect(() => {
-    const unsubProgress  = window.electronAPI.aip.onFileTransferProgress(applyProgress)
-    const unsubCompleted = window.electronAPI.aip.onFileTransferCompleted(applyCompleted)
-    return () => { unsubProgress(); unsubCompleted() }
-  }, [applyProgress, applyCompleted])
 
   // Not a Gate/Webserver device selected
   if (!selectedDevice || !isWebserver) {
@@ -992,7 +1165,14 @@ export default function Webserver() {
       <div className="flex-1 overflow-hidden">
         {activeTab === 'sip-extensions'  && <SipExtensionsTab  gateMac={selectedDevice.mac} />}
         {activeTab === 'sip-conferences' && <SipConferencesTab gateMac={selectedDevice.mac} />}
-        {activeTab === 'files'           && <FilesTab          deviceMac={selectedDevice.mac} deviceIp={selectedDevice.network.ip} />}
+        {activeTab === 'files'           && (
+          <FilesTab
+            gateMac={selectedDevice.mac}
+            deviceIp={selectedDevice.network.ip}
+            deviceName={selectedDevice.name}
+            gateWebConfig={gateWebConfig}
+          />
+        )}
       </div>
     </div>
   )

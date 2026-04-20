@@ -11,6 +11,7 @@ import Messages from '../pages/Messages'
 import Events from '../pages/Events'
 import Scenes from '../pages/Scenes'
 import Streams from '../pages/Streams'
+import Transfers from '../pages/Transfers'
 
 export const router = createHashRouter([
   {
@@ -29,7 +30,7 @@ export const router = createHashRouter([
       { path: 'sonometers',      element: <Placeholder title="Sonometers" /> },
       { path: 'events',          element: <Events /> },
       { path: 'scenes',          element: <Scenes /> },
-      { path: 'transfers',       element: <Placeholder title="Transfers" /> },
+      { path: 'transfers',       element: <Transfers /> },
       { path: 'sip-devices',     element: <Placeholder title="SIP Devices" /> },
       { path: 'log',             element: <Placeholder title="Log" /> },
     ],

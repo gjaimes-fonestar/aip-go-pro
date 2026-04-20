@@ -15,6 +15,7 @@ import type {
   AipSipConferenceParticipant,
   AipGateWebConfig,
   AipFileTransferRequest,
+  AipGateConnectionConfig,
 } from '../shared/ipc'
 import type {
   CalendarEvent,
@@ -266,6 +267,57 @@ export function registerIpcHandlers(): void {
   )
 
   ipcMain.handle(IPC.AIP.CANCEL_FILE_TRANSFER, () => aipWebserver.cancelFileTransfer())
+
+  // ── AIP — Gate filesystem ────────────────────────────────────────────────────
+  ipcMain.handle(IPC.AIP.GATE_FETCH_FILES, (_e, mac: string, config: AipGateConnectionConfig) =>
+    aipWebserver.gateFetchFiles(mac, config)
+  )
+
+  ipcMain.handle(IPC.AIP.GATE_FETCH_FOLDERS, (_e, mac: string, config: AipGateConnectionConfig) =>
+    aipWebserver.gateFetchFolders(mac, config)
+  )
+
+  ipcMain.handle(IPC.AIP.GATE_GET_FILES, (_e, mac: string) =>
+    aipWebserver.gateGetFiles(mac)
+  )
+
+  ipcMain.handle(IPC.AIP.GATE_GET_FILES_BY_CAT, (_e, mac: string, category: string) =>
+    aipWebserver.gateGetFilesByCategory(mac, category)
+  )
+
+  ipcMain.handle(IPC.AIP.GATE_GET_FOLDERS, (_e, mac: string) =>
+    aipWebserver.gateGetFolders(mac)
+  )
+
+  ipcMain.handle(IPC.AIP.GATE_UPLOAD_FILE,
+    (_e, mac: string, config: AipGateConnectionConfig, localPath: string, category: string, folder?: string) =>
+      aipWebserver.gateUploadFile(mac, config, localPath, category, folder)
+  )
+
+  ipcMain.handle(IPC.AIP.GATE_DOWNLOAD_FILE,
+    (_e, mac: string, config: AipGateConnectionConfig, fileId: string, localPath: string) =>
+      aipWebserver.gateDownloadFile(mac, config, fileId, localPath)
+  )
+
+  ipcMain.handle(IPC.AIP.GATE_DELETE_FILE,
+    (_e, mac: string, config: AipGateConnectionConfig, fileId: string) =>
+      aipWebserver.gateDeleteFile(mac, config, fileId)
+  )
+
+  ipcMain.handle(IPC.AIP.GATE_CREATE_FOLDER,
+    (_e, mac: string, config: AipGateConnectionConfig, name: string, category: string) =>
+      aipWebserver.gateCreateFolder(mac, config, name, category)
+  )
+
+  ipcMain.handle(IPC.AIP.GATE_DELETE_FOLDER,
+    (_e, mac: string, config: AipGateConnectionConfig, name: string, category: string) =>
+      aipWebserver.gateDeleteFolder(mac, config, name, category)
+  )
+
+  ipcMain.handle(IPC.AIP.GATE_RENAME_FOLDER,
+    (_e, mac: string, config: AipGateConnectionConfig, name: string, newName: string, category: string) =>
+      aipWebserver.gateRenameFolder(mac, config, name, newName, category)
+  )
 
   // Calendar + Scene — in-memory mock stores
 

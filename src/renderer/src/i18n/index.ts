@@ -21,6 +21,7 @@ import en_scene        from './locales/en/scene.json'
 import en_messages     from './locales/en/messages.json'
 import en_events       from './locales/en/events.json'
 import en_streams      from './locales/en/streams.json'
+import en_transfers    from './locales/en/transfers.json'
 
 // Spanish
 import es_common       from './locales/es/common.json'
@@ -36,6 +37,7 @@ import es_scene        from './locales/es/scene.json'
 import es_messages     from './locales/es/messages.json'
 import es_events       from './locales/es/events.json'
 import es_streams      from './locales/es/streams.json'
+import es_transfers    from './locales/es/transfers.json'
 
 // Portuguese
 import pt_common       from './locales/pt/common.json'
@@ -51,6 +53,7 @@ import pt_scene        from './locales/pt/scene.json'
 import pt_messages     from './locales/pt/messages.json'
 import pt_events       from './locales/pt/events.json'
 import pt_streams      from './locales/pt/streams.json'
+import pt_transfers    from './locales/pt/transfers.json'
 
 // Chinese (Simplified)
 import zh_common       from './locales/zh/common.json'
@@ -66,6 +69,7 @@ import zh_scene        from './locales/zh/scene.json'
 import zh_messages     from './locales/zh/messages.json'
 import zh_events       from './locales/zh/events.json'
 import zh_streams      from './locales/zh/streams.json'
+import zh_transfers    from './locales/zh/transfers.json'
 
 // Vietnamese
 import vi_common       from './locales/vi/common.json'
@@ -81,6 +85,7 @@ import vi_scene        from './locales/vi/scene.json'
 import vi_messages     from './locales/vi/messages.json'
 import vi_events       from './locales/vi/events.json'
 import vi_streams      from './locales/vi/streams.json'
+import vi_transfers    from './locales/vi/transfers.json'
 
 /** All supported language options shown in the language selector. */
 export const SUPPORTED_LANGUAGES = [
@@ -111,11 +116,11 @@ export function saveLanguage(code: LanguageCode): void {
 
 i18n.use(initReactI18next).init({
   resources: {
-    en: { common: en_common, nav: en_nav, header: en_header, dashboard: en_dashboard, devices: en_devices, channels: en_channels, webserver: en_webserver, deviceConfig: en_deviceConfig, calendar: en_calendar, scene: en_scene, messages: en_messages, events: en_events, streams: en_streams },
-    es: { common: es_common, nav: es_nav, header: es_header, dashboard: es_dashboard, devices: es_devices, channels: es_channels, webserver: es_webserver, deviceConfig: es_deviceConfig, calendar: es_calendar, scene: es_scene, messages: es_messages, events: es_events, streams: es_streams },
-    pt: { common: pt_common, nav: pt_nav, header: pt_header, dashboard: pt_dashboard, devices: pt_devices, channels: pt_channels, webserver: pt_webserver, deviceConfig: pt_deviceConfig, calendar: pt_calendar, scene: pt_scene, messages: pt_messages, events: pt_events, streams: pt_streams },
-    zh: { common: zh_common, nav: zh_nav, header: zh_header, dashboard: zh_dashboard, devices: zh_devices, channels: zh_channels, webserver: zh_webserver, deviceConfig: zh_deviceConfig, calendar: zh_calendar, scene: zh_scene, messages: zh_messages, events: zh_events, streams: zh_streams },
-    vi: { common: vi_common, nav: vi_nav, header: vi_header, dashboard: vi_dashboard, devices: vi_devices, channels: vi_channels, webserver: vi_webserver, deviceConfig: vi_deviceConfig, calendar: vi_calendar, scene: vi_scene, messages: vi_messages, events: vi_events, streams: vi_streams },
+    en: { common: en_common, nav: en_nav, header: en_header, dashboard: en_dashboard, devices: en_devices, channels: en_channels, webserver: en_webserver, deviceConfig: en_deviceConfig, calendar: en_calendar, scene: en_scene, messages: en_messages, events: en_events, streams: en_streams, transfers: en_transfers },
+    es: { common: es_common, nav: es_nav, header: es_header, dashboard: es_dashboard, devices: es_devices, channels: es_channels, webserver: es_webserver, deviceConfig: es_deviceConfig, calendar: es_calendar, scene: es_scene, messages: es_messages, events: es_events, streams: es_streams, transfers: es_transfers },
+    pt: { common: pt_common, nav: pt_nav, header: pt_header, dashboard: pt_dashboard, devices: pt_devices, channels: pt_channels, webserver: pt_webserver, deviceConfig: pt_deviceConfig, calendar: pt_calendar, scene: pt_scene, messages: pt_messages, events: pt_events, streams: pt_streams, transfers: pt_transfers },
+    zh: { common: zh_common, nav: zh_nav, header: zh_header, dashboard: zh_dashboard, devices: zh_devices, channels: zh_channels, webserver: zh_webserver, deviceConfig: zh_deviceConfig, calendar: zh_calendar, scene: zh_scene, messages: zh_messages, events: zh_events, streams: zh_streams, transfers: zh_transfers },
+    vi: { common: vi_common, nav: vi_nav, header: vi_header, dashboard: vi_dashboard, devices: vi_devices, channels: vi_channels, webserver: vi_webserver, deviceConfig: vi_deviceConfig, calendar: vi_calendar, scene: vi_scene, messages: vi_messages, events: vi_events, streams: vi_streams, transfers: vi_transfers },
   },
   lng:          getSavedLanguage(),
   fallbackLng:  'en',

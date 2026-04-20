@@ -7,6 +7,9 @@ import type {
   AipGateWebConfig,
   AipFileTransferRequest,
   AipAudioFile,
+  AipGateConnectionConfig,
+  AipGateRemoteFile,
+  AipGateRemoteFolder,
 } from '../../shared/ipc'
 
 /**
@@ -158,5 +161,63 @@ export class AipWebserver {
 
   async cancelFileTransfer(): Promise<void> {
     await this.core.client.cancelFileTransfer()
+  }
+
+  // Gate filesystem
+
+  async gateFetchFiles(mac: string, config: AipGateConnectionConfig): Promise<void> {
+    await this.core.client.fetchGateFiles(mac, config)
+  }
+
+  async gateFetchFolders(mac: string, config: AipGateConnectionConfig): Promise<void> {
+    await this.core.client.fetchGateFolders(mac, config)
+  }
+
+  async gateGetFiles(mac: string): Promise<AipGateRemoteFile[]> {
+    try {
+      return (await this.core.client.getGateFiles(mac)) as AipGateRemoteFile[]
+    } catch {
+      return []
+    }
+  }
+
+  async gateGetFilesByCategory(mac: string, category: string): Promise<AipGateRemoteFile[]> {
+    try {
+      return (await this.core.client.getGateFilesByCategory(mac, category)) as AipGateRemoteFile[]
+    } catch {
+      return []
+    }
+  }
+
+  async gateGetFolders(mac: string): Promise<AipGateRemoteFolder[]> {
+    try {
+      return (await this.core.client.getGateFolders(mac)) as AipGateRemoteFolder[]
+    } catch {
+      return []
+    }
+  }
+
+  async gateUploadFile(mac: string, config: AipGateConnectionConfig, localPath: string, category: string, folder?: string): Promise<void> {
+    await this.core.client.uploadGateFile(mac, config, localPath, category, folder)
+  }
+
+  async gateDownloadFile(mac: string, config: AipGateConnectionConfig, fileId: string, localPath: string): Promise<void> {
+    await this.core.client.downloadGateFile(mac, config, fileId, localPath)
+  }
+
+  async gateDeleteFile(mac: string, config: AipGateConnectionConfig, fileId: string): Promise<void> {
+    await this.core.client.deleteGateFile(mac, config, fileId)
+  }
+
+  async gateCreateFolder(mac: string, config: AipGateConnectionConfig, name: string, category: string): Promise<void> {
+    await this.core.client.createGateFolder(mac, config, name, category)
+  }
+
+  async gateDeleteFolder(mac: string, config: AipGateConnectionConfig, name: string, category: string): Promise<void> {
+    await this.core.client.deleteGateFolder(mac, config, name, category)
+  }
+
+  async gateRenameFolder(mac: string, config: AipGateConnectionConfig, name: string, newName: string, category: string): Promise<void> {
+    await this.core.client.renameGateFolder(mac, config, name, newName, category)
   }
 }

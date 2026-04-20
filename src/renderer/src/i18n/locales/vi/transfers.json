@@ -1,0 +1,26 @@
+{
+  "title": "Truyền tệp",
+  "subtitle": "Nhật ký truyền tệp trong phiên",
+  "empty": "Không có truyền tệp trong phiên này",
+  "emptyHelp": "Các thao tác tệp Gate sẽ hiển thị ở đây",
+  "clearCompleted": "Xóa đã hoàn thành",
+  "clearAll": "Xóa tất cả",
+  "inProgress_one": "{{count}} thao tác đang thực hiện",
+  "inProgress_other": "{{count}} thao tác đang thực hiện",
+  "kind": {
+    "gate-upload": "Tải lên",
+    "gate-download": "Tải xuống",
+    "gate-delete": "Xóa",
+    "gate-folder-create": "Tạo thư mục",
+    "gate-folder-delete": "Xóa thư mục",
+    "gate-folder-rename": "Đổi tên thư mục",
+    "ftp-upload": "Tải lên FTP",
+    "ftp-download": "Tải xuống FTP"
+  },
+  "status": {
+    "pending": "Đang thực hiện",
+    "done": "Hoàn thành",
+    "error": "Lỗi",
+    "cancelled": "Đã hủy"
+  }
+}

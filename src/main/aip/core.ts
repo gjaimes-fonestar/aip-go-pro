@@ -65,6 +65,34 @@ export class AipCore {
       }
     })
 
+    this.client.setOnGateFilesUpdated((json: string) => {
+      for (const win of BrowserWindow.getAllWindows()) {
+        if (!win.isDestroyed())
+          win.webContents.send(IPC.AIP.GATE_FILES_UPDATED, json)
+      }
+    })
+
+    this.client.setOnGateFoldersUpdated((json: string) => {
+      for (const win of BrowserWindow.getAllWindows()) {
+        if (!win.isDestroyed())
+          win.webContents.send(IPC.AIP.GATE_FOLDERS_UPDATED, json)
+      }
+    })
+
+    this.client.setOnGateOperationError((json: string) => {
+      for (const win of BrowserWindow.getAllWindows()) {
+        if (!win.isDestroyed())
+          win.webContents.send(IPC.AIP.GATE_OPERATION_ERROR, json)
+      }
+    })
+
+    this.client.setOnGateOperationCompleted((json: string) => {
+      for (const win of BrowserWindow.getAllWindows()) {
+        if (!win.isDestroyed())
+          win.webContents.send(IPC.AIP.GATE_OPERATION_COMPLETED, json)
+      }
+    })
+
     this.client.connect()
   }
 

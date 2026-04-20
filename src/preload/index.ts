@@ -33,6 +33,13 @@ import type {
   AipFileTransferProgressEvent,
   AipFileTransferCompletedEvent,
   AipAudioFile,
+  AipGateConnectionConfig,
+  AipGateRemoteFile,
+  AipGateRemoteFolder,
+  AipGateFilesUpdatedEvent,
+  AipGateFoldersUpdatedEvent,
+  AipGateOperationErrorEvent,
+  AipGateOperationCompletedEvent,
 } from '../shared/ipc'
 
 /**
@@ -331,6 +338,72 @@ const electronAPI = {
       }
       ipcRenderer.on(IPC.AIP.FILE_TRANSFER_COMPLETED, listener)
       return () => ipcRenderer.removeListener(IPC.AIP.FILE_TRANSFER_COMPLETED, listener)
+    },
+
+    // ── Gate filesystem ────────────────────────────────────────────────────
+    gateFetchFiles: (mac: string, config: AipGateConnectionConfig): Promise<void> =>
+      ipcRenderer.invoke(IPC.AIP.GATE_FETCH_FILES, mac, config),
+
+    gateFetchFolders: (mac: string, config: AipGateConnectionConfig): Promise<void> =>
+      ipcRenderer.invoke(IPC.AIP.GATE_FETCH_FOLDERS, mac, config),
+
+    gateGetFiles: (mac: string): Promise<AipGateRemoteFile[]> =>
+      ipcRenderer.invoke(IPC.AIP.GATE_GET_FILES, mac),
+
+    gateGetFilesByCategory: (mac: string, category: string): Promise<AipGateRemoteFile[]> =>
+      ipcRenderer.invoke(IPC.AIP.GATE_GET_FILES_BY_CAT, mac, category),
+
+    gateGetFolders: (mac: string): Promise<AipGateRemoteFolder[]> =>
+      ipcRenderer.invoke(IPC.AIP.GATE_GET_FOLDERS, mac),
+
+    gateUploadFile: (mac: string, config: AipGateConnectionConfig, localPath: string, category: string, folder?: string): Promise<void> =>
+      ipcRenderer.invoke(IPC.AIP.GATE_UPLOAD_FILE, mac, config, localPath, category, folder),
+
+    gateDownloadFile: (mac: string, config: AipGateConnectionConfig, fileId: string, localPath: string): Promise<void> =>
+      ipcRenderer.invoke(IPC.AIP.GATE_DOWNLOAD_FILE, mac, config, fileId, localPath),
+
+    gateDeleteFile: (mac: string, config: AipGateConnectionConfig, fileId: string): Promise<void> =>
+      ipcRenderer.invoke(IPC.AIP.GATE_DELETE_FILE, mac, config, fileId),
+
+    gateCreateFolder: (mac: string, config: AipGateConnectionConfig, name: string, category: string): Promise<void> =>
+      ipcRenderer.invoke(IPC.AIP.GATE_CREATE_FOLDER, mac, config, name, category),
+
+    gateDeleteFolder: (mac: string, config: AipGateConnectionConfig, name: string, category: string): Promise<void> =>
+      ipcRenderer.invoke(IPC.AIP.GATE_DELETE_FOLDER, mac, config, name, category),
+
+    gateRenameFolder: (mac: string, config: AipGateConnectionConfig, name: string, newName: string, category: string): Promise<void> =>
+      ipcRenderer.invoke(IPC.AIP.GATE_RENAME_FOLDER, mac, config, name, newName, category),
+
+    onGateFilesUpdated: (cb: (event: AipGateFilesUpdatedEvent) => void): (() => void) => {
+      const listener = (_e: Electron.IpcRendererEvent, json: string): void => {
+        try { cb(JSON.parse(json) as AipGateFilesUpdatedEvent) } catch { /* ignore */ }
+      }
+      ipcRenderer.on(IPC.AIP.GATE_FILES_UPDATED, listener)
+      return () => ipcRenderer.removeListener(IPC.AIP.GATE_FILES_UPDATED, listener)
+    },
+
+    onGateFoldersUpdated: (cb: (event: AipGateFoldersUpdatedEvent) => void): (() => void) => {
+      const listener = (_e: Electron.IpcRendererEvent, json: string): void => {
+        try { cb(JSON.parse(json) as AipGateFoldersUpdatedEvent) } catch { /* ignore */ }
+      }
+      ipcRenderer.on(IPC.AIP.GATE_FOLDERS_UPDATED, listener)
+      return () => ipcRenderer.removeListener(IPC.AIP.GATE_FOLDERS_UPDATED, listener)
+    },
+
+    onGateOperationError: (cb: (event: AipGateOperationErrorEvent) => void): (() => void) => {
+      const listener = (_e: Electron.IpcRendererEvent, json: string): void => {
+        try { cb(JSON.parse(json) as AipGateOperationErrorEvent) } catch { /* ignore */ }
+      }
+      ipcRenderer.on(IPC.AIP.GATE_OPERATION_ERROR, listener)
+      return () => ipcRenderer.removeListener(IPC.AIP.GATE_OPERATION_ERROR, listener)
+    },
+
+    onGateOperationCompleted: (cb: (event: AipGateOperationCompletedEvent) => void): (() => void) => {
+      const listener = (_e: Electron.IpcRendererEvent, json: string): void => {
+        try { cb(JSON.parse(json) as AipGateOperationCompletedEvent) } catch { /* ignore */ }
+      }
+      ipcRenderer.on(IPC.AIP.GATE_OPERATION_COMPLETED, listener)
+      return () => ipcRenderer.removeListener(IPC.AIP.GATE_OPERATION_COMPLETED, listener)
     },
   },
 }

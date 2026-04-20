@@ -81,6 +81,30 @@
       "done": "Concluído",
       "error": "Erro",
       "cancelled": "Cancelado"
+    },
+    "gate": {
+      "selectUpload": "Select file to upload",
+      "upload": "Upload file",
+      "download": "Download",
+      "delete": "Delete file",
+      "folder": "Folder",
+      "noFolder": "— Root —",
+      "noFilesInCategory": "No files in this category",
+      "noFolders": "No folders",
+      "createFolder": "Create folder",
+      "renameFolder": "Rename folder",
+      "deleteFolder": "Delete folder",
+      "folderName": "Folder name",
+      "newFolderName": "New folder name",
+      "folders": "Folders",
+      "duration": "{{sec}} s",
+      "authRequired": "Authentication required",
+      "username": "Username",
+      "password": "Password",
+      "operationDone": "Operation completed",
+      "operationError": "Operation failed",
+      "confirmDelete": "Delete {{name}}?",
+      "deleteWarning": "This action cannot be undone."
     }
   }
 }

@@ -7,6 +7,8 @@ import type {
   AipFileTransferCompletedEvent,
   AipTransferResult,
   AipAudioFile,
+  AipGateRemoteFile,
+  AipGateRemoteFolder,
 } from '@shared/ipc'
 
 // ─── File transfer tracking ───────────────────────────────────────────────────
@@ -47,6 +49,9 @@ interface WebserverState {
   deviceAudioFiles:  AipAudioFile[]
   files:             TrackedFile[]
 
+  gateFiles:   Map<string, AipGateRemoteFile[]>
+  gateFolders: Map<string, AipGateRemoteFolder[]>
+
   setActiveTab:            (tab: WebserverTab) => void
   setFilesSubTab:          (tab: FilesSubTab) => void
   setSelectedConfKey:      (key: string | null) => void
@@ -61,6 +66,9 @@ interface WebserverState {
 
   setGateWebConfig:     (config: AipGateWebConfig) => void
   setDeviceAudioFiles:  (files: AipAudioFile[]) => void
+
+  setGateFiles:   (mac: string, files: AipGateRemoteFile[]) => void
+  setGateFolders: (mac: string, folders: AipGateRemoteFolder[]) => void
 
   addFile:           (file: TrackedFile) => void
   applyProgress:     (event: AipFileTransferProgressEvent) => void
@@ -81,6 +89,8 @@ export const useWebserverStore = create<WebserverState>((set) => ({
   gateWebConfigs:   new Map(),
   deviceAudioFiles: [],
   files:            [],
+  gateFiles:        new Map(),
+  gateFolders:      new Map(),
 
   setActiveTab:       (tab) => set({ activeTab: tab }),
   setFilesSubTab:     (tab) => set({ filesSubTab: tab }),
@@ -124,6 +134,20 @@ export const useWebserverStore = create<WebserverState>((set) => ({
     }),
 
   setDeviceAudioFiles: (files) => set({ deviceAudioFiles: files }),
+
+  setGateFiles: (mac, files) =>
+    set((s) => {
+      const next = new Map(s.gateFiles)
+      next.set(mac, files)
+      return { gateFiles: next }
+    }),
+
+  setGateFolders: (mac, folders) =>
+    set((s) => {
+      const next = new Map(s.gateFolders)
+      next.set(mac, folders)
+      return { gateFolders: next }
+    }),
 
   addFile: (file) => set((s) => ({ files: [...s.files, file] })),
 

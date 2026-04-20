@@ -135,6 +135,23 @@ export const IPC = {
     CANCEL_FILE_TRANSFER:     'aip:cancelFileTransfer',
     FILE_TRANSFER_PROGRESS:   'aip:fileTransferProgress',   // push: main → renderer
     FILE_TRANSFER_COMPLETED:  'aip:fileTransferCompleted',  // push: main → renderer
+
+    // Gate filesystem
+    GATE_FETCH_FILES:         'aip:gateFetchFiles',
+    GATE_FETCH_FOLDERS:       'aip:gateFetchFolders',
+    GATE_GET_FILES:           'aip:gateGetFiles',
+    GATE_GET_FILES_BY_CAT:    'aip:gateGetFilesByCategory',
+    GATE_GET_FOLDERS:         'aip:gateGetFolders',
+    GATE_UPLOAD_FILE:         'aip:gateUploadFile',
+    GATE_DOWNLOAD_FILE:       'aip:gateDownloadFile',
+    GATE_DELETE_FILE:         'aip:gateDeleteFile',
+    GATE_CREATE_FOLDER:       'aip:gateCreateFolder',
+    GATE_DELETE_FOLDER:       'aip:gateDeleteFolder',
+    GATE_RENAME_FOLDER:       'aip:gateRenameFolder',
+    GATE_FILES_UPDATED:       'aip:gateFilesUpdated',       // push: main → renderer
+    GATE_FOLDERS_UPDATED:     'aip:gateFoldersUpdated',     // push: main → renderer
+    GATE_OPERATION_ERROR:     'aip:gateOperationError',     // push: main → renderer
+    GATE_OPERATION_COMPLETED: 'aip:gateOperationCompleted', // push: main → renderer
   },
 } as const
 
@@ -458,6 +475,53 @@ export interface AipFileTransferCompletedEvent {
   localPath:  string
   remotePath: string
   deviceIp:   string
+}
+
+// ─── AIP — Gate filesystem ───────────────────────────────────────────────────
+
+export type AipGateCategory = 'bgm' | 'messages' | 'events'
+
+export interface AipGateConnectionConfig {
+  ip:          string
+  port?:       number
+  sslEnabled?: boolean
+  username?:   string
+  password?:   string
+}
+
+export interface AipGateRemoteFile {
+  id:       string
+  name:     string
+  category: AipGateCategory | string
+  folder:   string
+  duration: number
+}
+
+export interface AipGateRemoteFolder {
+  id:       string
+  name:     string
+  category: AipGateCategory | string
+}
+
+export interface AipGateFilesUpdatedEvent {
+  mac:   string
+  files: AipGateRemoteFile[]
+}
+
+export interface AipGateFoldersUpdatedEvent {
+  mac:     string
+  folders: AipGateRemoteFolder[]
+}
+
+export interface AipGateOperationErrorEvent {
+  mac:       string
+  operation: string
+  message:   string
+}
+
+export interface AipGateOperationCompletedEvent {
+  mac:       string
+  operation: string
 }
 
 // ─── Dialogs ─────────────────────────────────────────────────────────────────
