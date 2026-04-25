@@ -490,10 +490,12 @@ const STREAM_TYPE_LABEL: Record<number, string> = {
 
 function NetworkChannelRow({
   channel,
+  sourceName,
   onRemove,
 }: {
-  channel: AipNetworkChannel
-  onRemove: (mac: string, channelNumber: number) => void
+  channel:    AipNetworkChannel
+  sourceName: string
+  onRemove:   (mac: string, channelNumber: number) => void
 }) {
   const { t } = useTranslation('channels')
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -527,10 +529,11 @@ function NetworkChannelRow({
           </p>
         </div>
 
-        {/* Source MAC */}
+        {/* Source device */}
         <div className="hidden lg:block shrink-0 text-right">
           <p className="text-xs text-gray-400 dark:text-gray-500">{t('labels.source')}</p>
-          <p className="font-mono text-xs text-gray-600 dark:text-gray-300">{channel.sourceMac}</p>
+          <p className="text-xs text-gray-600 dark:text-gray-300">{sourceName}</p>
+          <p className="font-mono text-xs text-gray-400 dark:text-gray-500">{channel.sourceMac}</p>
         </div>
 
         {/* Remove */}
@@ -921,6 +924,7 @@ export default function Channels() {
                 <NetworkChannelRow
                   key={`${ch.sourceMac}-${ch.channelNumber}`}
                   channel={ch}
+                  sourceName={entries.get(ch.sourceMac)?.device.name ?? ch.sourceMac}
                   onRemove={handleRemoveNetworkChannel}
                 />
               ))}
