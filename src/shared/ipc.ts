@@ -217,6 +217,14 @@ export interface AipVolumeConfig {
   voice:     number
 }
 
+/** Stream snapshot embedded in every player device presence broadcast. */
+export interface AipStreamInfo {
+  active:         boolean
+  name:           string
+  source_mac:     string
+  channel_number: number
+}
+
 /**
  * JSON shape produced by the C++ NlohmannSerializer for a single device.
  * Matches the output of `aip::getDevicesJson()` / `aip::getDeviceByMacJson()`.
@@ -236,6 +244,7 @@ export interface AipDeviceJson {
   communication_port: number
   volumes:            AipVolumeConfig
   button_color:       { r: number; g: number; b: number }
+  stream_config?:     AipStreamInfo
 }
 
 /** Event payload for device_added / device_updated. */
