@@ -2,7 +2,10 @@
   "tabs": {
     "extensions": "Số nội bộ SIP",
     "conferences": "Hội nghị SIP",
-    "files": "Tệp"
+    "files": "Tệp",
+    "channelPlayers": "Trình phát kênh",
+    "scenes": "Cảnh",
+    "schedules": "Lịch"
   },
   "empty": {
     "title": "Chưa chọn Gateway hoặc Máy chủ Web",
@@ -105,6 +108,70 @@
       "operationError": "Thao tác thất bại",
       "confirmDelete": "Xóa {{name}}?",
       "deleteWarning": "Hành động này không thể hoàn tác."
+    }
+  },
+  "channelPlayers": {
+    "activate": "Activate player",
+    "deactivate": "Deactivate",
+    "count_one": "{{count}} player",
+    "count_other": "{{count}} players",
+    "empty": "No active channel players",
+    "columns": {
+      "name": "Name",
+      "source": "Source",
+      "state": "State"
+    },
+    "form": {
+      "name": "Player name",
+      "namePlaceholder": "e.g. BGM Player 1",
+      "source": "Source (URL or folder path)",
+      "sourcePlaceholder": "http://... or /bgm/music"
+    }
+  },
+  "scenes": {
+    "create": "Create scene",
+    "edit": "Edit scene",
+    "count_one": "{{count}} scene",
+    "count_other": "{{count}} scenes",
+    "empty": "No scenes configured",
+    "columns": {
+      "name": "Name",
+      "startAt": "Start at",
+      "days": "Days"
+    },
+    "form": {
+      "name": "Scene name",
+      "namePlaceholder": "e.g. Morning routine",
+      "startAt": "Start time (HH:MM:SS)",
+      "dateFrom": "From date",
+      "dateTo": "To date",
+      "days": "Days of week",
+      "actions": "Actions (JSON)"
+    }
+  },
+  "schedules": {
+    "create": "Create schedule",
+    "edit": "Edit schedule",
+    "cancel": "Cancel active",
+    "count_one": "{{count}} schedule",
+    "count_other": "{{count}} schedules",
+    "empty": "No schedules configured",
+    "columns": {
+      "name": "Name",
+      "startAt": "Start at",
+      "days": "Days"
+    },
+    "form": {
+      "name": "Schedule name",
+      "namePlaceholder": "e.g. Morning announcement",
+      "fileId": "File ID",
+      "fileIdPlaceholder": "Gate file ID",
+      "startAt": "Start time (HH:MM:SS)",
+      "repeatEach": "Repeat each (HH:MM:SS)",
+      "repeatUntil": "Repeat until (HH:MM:SS)",
+      "durationLimit": "Duration limit (HH:MM:SS)",
+      "days": "Days of week",
+      "specialVolume": "Special volume (−1 = default)"
     }
   }
 }

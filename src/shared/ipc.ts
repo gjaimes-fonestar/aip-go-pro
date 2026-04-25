@@ -152,6 +152,30 @@ export const IPC = {
     GATE_FOLDERS_UPDATED:     'aip:gateFoldersUpdated',     // push: main → renderer
     GATE_OPERATION_ERROR:     'aip:gateOperationError',     // push: main → renderer
     GATE_OPERATION_COMPLETED: 'aip:gateOperationCompleted', // push: main → renderer
+
+    // Gate channel players
+    GATE_FETCH_CHANNEL_PLAYERS:    'aip:gateFetchChannelPlayers',
+    GATE_GET_CHANNEL_PLAYERS:      'aip:gateGetChannelPlayers',
+    GATE_ACTIVATE_CHANNEL_PLAYER:  'aip:gateActivateChannelPlayer',
+    GATE_DEACTIVATE_CHANNEL_PLAYER:'aip:gateDeactivateChannelPlayer',
+    GATE_CHANNEL_PLAYERS_UPDATED:  'aip:gateChannelPlayersUpdated', // push
+
+    // Gate scenes
+    GATE_FETCH_SCENES:  'aip:gateFetchScenes',
+    GATE_GET_SCENES:    'aip:gateGetScenes',
+    GATE_CREATE_SCENE:  'aip:gateCreateScene',
+    GATE_UPDATE_SCENE:  'aip:gateUpdateScene',
+    GATE_DELETE_SCENE:  'aip:gateDeleteScene',
+    GATE_SCENES_UPDATED:'aip:gateScenesUpdated',             // push
+
+    // Gate schedules
+    GATE_FETCH_SCHEDULES:   'aip:gateFetchSchedules',
+    GATE_GET_SCHEDULES:     'aip:gateGetSchedules',
+    GATE_CREATE_SCHEDULE:   'aip:gateCreateSchedule',
+    GATE_UPDATE_SCHEDULE:   'aip:gateUpdateSchedule',
+    GATE_DELETE_SCHEDULE:   'aip:gateDeleteSchedule',
+    GATE_CANCEL_SCHEDULE:   'aip:gateCancelSchedule',
+    GATE_SCHEDULES_UPDATED: 'aip:gateSchedulesUpdated',      // push
   },
 } as const
 
@@ -522,6 +546,69 @@ export interface AipGateOperationErrorEvent {
 export interface AipGateOperationCompletedEvent {
   mac:       string
   operation: string
+}
+
+// ─── AIP — Gate channel players / scenes / schedules ────────────────────────
+
+export interface AipGateChannelPlayer {
+  id:            string
+  name:          string
+  source:        string
+  sourceType:    'Folder' | 'Url' | string
+  playbackState: 'Playing' | 'Paused' | 'Stopped' | string
+  repeat:        boolean
+  shuffle:       boolean
+  currentTrack: {
+    position: number
+    folder:   string
+    fileId:   string
+  }
+}
+
+export interface AipGateSceneActions {
+  changeVolume:       Array<{ devices: string[]; volume: number }>
+  joinEmitterChannel: Array<{ devices: string[]; emitter: string }>
+  joinLocalChannel:   Array<{ channelId: string; devices: string[] }>
+  leaveChannel:       Array<{ devices: string[] }>
+}
+
+export interface AipGateRemoteScene {
+  id:         string
+  name:       string
+  startAt:    string
+  dateFrom:   string
+  dateTo:     string
+  daysOfWeek: number[]
+  actions:    AipGateSceneActions
+}
+
+export interface AipGateRemoteSchedule {
+  id:            string
+  name:          string
+  fileId:        string
+  startAt:       string
+  repeatEach:    string
+  repeatUntil:   string
+  daysOfWeek:    number[]
+  dateFrom:      string
+  dateTo:        string
+  specialVolume: number
+  durationLimit: string
+}
+
+export interface AipGateChannelPlayersUpdatedEvent {
+  mac:     string
+  players: AipGateChannelPlayer[]
+}
+
+export interface AipGateScenesUpdatedEvent {
+  mac:    string
+  scenes: AipGateRemoteScene[]
+}
+
+export interface AipGateSchedulesUpdatedEvent {
+  mac:       string
+  schedules: AipGateRemoteSchedule[]
 }
 
 // ─── Dialogs ─────────────────────────────────────────────────────────────────

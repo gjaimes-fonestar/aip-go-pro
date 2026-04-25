@@ -40,6 +40,12 @@ import type {
   AipGateFoldersUpdatedEvent,
   AipGateOperationErrorEvent,
   AipGateOperationCompletedEvent,
+  AipGateChannelPlayer,
+  AipGateRemoteScene,
+  AipGateRemoteSchedule,
+  AipGateChannelPlayersUpdatedEvent,
+  AipGateScenesUpdatedEvent,
+  AipGateSchedulesUpdatedEvent,
 } from '../shared/ipc'
 
 /**
@@ -404,6 +410,78 @@ const electronAPI = {
       }
       ipcRenderer.on(IPC.AIP.GATE_OPERATION_COMPLETED, listener)
       return () => ipcRenderer.removeListener(IPC.AIP.GATE_OPERATION_COMPLETED, listener)
+    },
+
+    // ── Gate channel players ───────────────────────────────────────────────
+    gateFetchChannelPlayers: (mac: string, config: AipGateConnectionConfig): Promise<void> =>
+      ipcRenderer.invoke(IPC.AIP.GATE_FETCH_CHANNEL_PLAYERS, mac, config),
+
+    gateGetChannelPlayers: (mac: string): Promise<AipGateChannelPlayer[]> =>
+      ipcRenderer.invoke(IPC.AIP.GATE_GET_CHANNEL_PLAYERS, mac),
+
+    gateActivateChannelPlayer: (mac: string, config: AipGateConnectionConfig, name: string, source: string): Promise<void> =>
+      ipcRenderer.invoke(IPC.AIP.GATE_ACTIVATE_CHANNEL_PLAYER, mac, config, name, source),
+
+    gateDeactivateChannelPlayer: (mac: string, config: AipGateConnectionConfig, playerId: string): Promise<void> =>
+      ipcRenderer.invoke(IPC.AIP.GATE_DEACTIVATE_CHANNEL_PLAYER, mac, config, playerId),
+
+    onGateChannelPlayersUpdated: (cb: (event: AipGateChannelPlayersUpdatedEvent) => void): (() => void) => {
+      const listener = (_e: Electron.IpcRendererEvent, json: string): void => {
+        try { cb(JSON.parse(json) as AipGateChannelPlayersUpdatedEvent) } catch { /* ignore */ }
+      }
+      ipcRenderer.on(IPC.AIP.GATE_CHANNEL_PLAYERS_UPDATED, listener)
+      return () => ipcRenderer.removeListener(IPC.AIP.GATE_CHANNEL_PLAYERS_UPDATED, listener)
+    },
+
+    // ── Gate scenes ────────────────────────────────────────────────────────
+    gateFetchScenes: (mac: string, config: AipGateConnectionConfig): Promise<void> =>
+      ipcRenderer.invoke(IPC.AIP.GATE_FETCH_SCENES, mac, config),
+
+    gateGetScenes: (mac: string): Promise<AipGateRemoteScene[]> =>
+      ipcRenderer.invoke(IPC.AIP.GATE_GET_SCENES, mac),
+
+    gateCreateScene: (mac: string, config: AipGateConnectionConfig, scene: object): Promise<void> =>
+      ipcRenderer.invoke(IPC.AIP.GATE_CREATE_SCENE, mac, config, scene),
+
+    gateUpdateScene: (mac: string, config: AipGateConnectionConfig, sceneId: string, scene: object): Promise<void> =>
+      ipcRenderer.invoke(IPC.AIP.GATE_UPDATE_SCENE, mac, config, sceneId, scene),
+
+    gateDeleteScene: (mac: string, config: AipGateConnectionConfig, sceneId: string): Promise<void> =>
+      ipcRenderer.invoke(IPC.AIP.GATE_DELETE_SCENE, mac, config, sceneId),
+
+    onGateScenesUpdated: (cb: (event: AipGateScenesUpdatedEvent) => void): (() => void) => {
+      const listener = (_e: Electron.IpcRendererEvent, json: string): void => {
+        try { cb(JSON.parse(json) as AipGateScenesUpdatedEvent) } catch { /* ignore */ }
+      }
+      ipcRenderer.on(IPC.AIP.GATE_SCENES_UPDATED, listener)
+      return () => ipcRenderer.removeListener(IPC.AIP.GATE_SCENES_UPDATED, listener)
+    },
+
+    // ── Gate schedules ─────────────────────────────────────────────────────
+    gateFetchSchedules: (mac: string, config: AipGateConnectionConfig): Promise<void> =>
+      ipcRenderer.invoke(IPC.AIP.GATE_FETCH_SCHEDULES, mac, config),
+
+    gateGetSchedules: (mac: string): Promise<AipGateRemoteSchedule[]> =>
+      ipcRenderer.invoke(IPC.AIP.GATE_GET_SCHEDULES, mac),
+
+    gateCreateSchedule: (mac: string, config: AipGateConnectionConfig, schedule: object): Promise<void> =>
+      ipcRenderer.invoke(IPC.AIP.GATE_CREATE_SCHEDULE, mac, config, schedule),
+
+    gateUpdateSchedule: (mac: string, config: AipGateConnectionConfig, scheduleId: string, schedule: object): Promise<void> =>
+      ipcRenderer.invoke(IPC.AIP.GATE_UPDATE_SCHEDULE, mac, config, scheduleId, schedule),
+
+    gateDeleteSchedule: (mac: string, config: AipGateConnectionConfig, scheduleId: string): Promise<void> =>
+      ipcRenderer.invoke(IPC.AIP.GATE_DELETE_SCHEDULE, mac, config, scheduleId),
+
+    gateCancelSchedule: (mac: string, config: AipGateConnectionConfig, scheduleId: string): Promise<void> =>
+      ipcRenderer.invoke(IPC.AIP.GATE_CANCEL_SCHEDULE, mac, config, scheduleId),
+
+    onGateSchedulesUpdated: (cb: (event: AipGateSchedulesUpdatedEvent) => void): (() => void) => {
+      const listener = (_e: Electron.IpcRendererEvent, json: string): void => {
+        try { cb(JSON.parse(json) as AipGateSchedulesUpdatedEvent) } catch { /* ignore */ }
+      }
+      ipcRenderer.on(IPC.AIP.GATE_SCHEDULES_UPDATED, listener)
+      return () => ipcRenderer.removeListener(IPC.AIP.GATE_SCHEDULES_UPDATED, listener)
     },
   },
 }

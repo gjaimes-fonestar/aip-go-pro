@@ -19,6 +19,9 @@ import type {
   AipGateFilesUpdatedEvent,
   AipGateFoldersUpdatedEvent,
   AipGateWebConfig,
+  AipGateSceneActions,
+  AipGateRemoteScene,
+  AipGateRemoteSchedule,
 } from '@shared/ipc'
 import { useDevicesStore } from '../store/devices.store'
 import {
@@ -88,12 +91,6 @@ const DownloadIcon = () => (
 const XIcon = () => (
   <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-  </svg>
-)
-
-const CheckIcon = () => (
-  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
   </svg>
 )
 
@@ -648,30 +645,6 @@ function GateFileRow({
   )
 }
 
-function GateFolderRow({
-  folder, onRename, onDelete,
-}: {
-  folder: AipGateRemoteFolder
-  onRename: (f: AipGateRemoteFolder) => void
-  onDelete: (f: AipGateRemoteFolder) => void
-}) {
-  const { t } = useTranslation('webserver')
-  return (
-    <div className="flex items-center gap-2 px-3 py-2 bg-white hover:bg-gray-50 dark:bg-gray-900 dark:hover:bg-gray-800/60">
-      <FolderIcon />
-      <span className="min-w-0 flex-1 truncate text-sm text-gray-700 dark:text-gray-300">{folder.name}</span>
-      <div className="flex shrink-0 gap-1">
-        <Btn onClick={() => onRename(folder)} variant="ghost" size="xs" title={t('files.gate.renameFolder')}>
-          <EditIcon />
-        </Btn>
-        <Btn onClick={() => onDelete(folder)} variant="danger" size="xs" title={t('files.gate.deleteFolder')}>
-          <TrashIcon />
-        </Btn>
-      </div>
-    </div>
-  )
-}
-
 function FilesTab({
   gateMac, deviceIp, deviceName, gateWebConfig,
 }: {
@@ -683,22 +656,21 @@ function FilesTab({
   const { t } = useTranslation('webserver')
   const { filesSubTab, setFilesSubTab, gateFiles, gateFolders, setGateFiles, setGateFolders } = useWebserverStore()
   const addRecord = useTransfersStore((s) => s.addRecord)
+  const enqueueOp = useTransfersStore((s) => s.enqueueOp)
   const uid = useId()
 
-  const [loading, setLoading]           = useState(false)
-  const [opPending, setOpPending]       = useState(false)
-  const [opError, setOpError]           = useState<string | null>(null)
-  const [opDone, setOpDone]             = useState<string | null>(null)
-  const [username, setUsername]         = useState('')
-  const [password, setPassword]         = useState('')
-  const [uploadFolder, setUploadFolder] = useState('')
-  const [showCreateFolder, setShowCreateFolder] = useState(false)
-  const [newFolderName, setNewFolderName]       = useState('')
-  const [renameTarget, setRenameTarget]         = useState<AipGateRemoteFolder | null>(null)
-  const [renameName, setRenameName]             = useState('')
-  const [deleteTarget, setDeleteTarget]         = useState<AipGateRemoteFile | null>(null)
+  const [loading, setLoading]                     = useState(false)
+  const [username, setUsername]                   = useState('')
+  const [password, setPassword]                   = useState('')
+  const [selectedFolder, setSelectedFolder] = useState<AipGateRemoteFolder | null>(null)
+  const [showCreateFolder, setShowCreateFolder]   = useState(false)
+  const [newFolderName, setNewFolderName]         = useState('')
+  const [renameTarget, setRenameTarget]           = useState<AipGateRemoteFolder | null>(null)
+  const [renameName, setRenameName]               = useState('')
+  const [deleteFileTarget, setDeleteFileTarget]   = useState<AipGateRemoteFile | null>(null)
 
   const authEnabled = gateWebConfig?.authEnabled ?? false
+  const canManageFolders = filesSubTab === 'bgm'
 
   const buildConfig = useCallback((): AipGateConnectionConfig => ({
     ip:         deviceIp,
@@ -710,12 +682,26 @@ function FilesTab({
   const allFiles   = gateFiles.get(gateMac)   ?? []
   const allFolders = gateFolders.get(gateMac) ?? []
 
-  const categoryFiles   = allFiles.filter((f) => f.category === filesSubTab)
   const categoryFolders = allFolders.filter((f) => f.category === filesSubTab)
 
-  const refresh = useCallback(async () => {
-    setLoading(true)
-    setOpError(null)
+  // Keep selectedFolder in sync with refreshed data; reset only if truly gone.
+  useEffect(() => {
+    setSelectedFolder((prev) => {
+      if (!prev) return prev
+      const fresh = categoryFolders.find((f) => f.id === prev.id)
+      if (fresh) return fresh
+      return categoryFolders.find((f) => f.name === prev.name) ?? null
+    })
+  }, [filesSubTab, categoryFolders])
+
+  const visibleFiles = allFiles.filter((f) => {
+    if (f.category !== filesSubTab) return false
+    if (selectedFolder !== null) return f.folder === selectedFolder.name
+    return true
+  })
+
+  const refresh = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true)
     try {
       const config = buildConfig()
       await window.electronAPI.aip.gateFetchFiles(gateMac, config)
@@ -726,10 +712,10 @@ function FilesTab({
       ])
       setGateFiles(gateMac, files)
       setGateFolders(gateMac, folders)
-    } catch (e) {
-      setOpError(String(e))
+    } catch (_) {
+      // silent errors on background refresh
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
   }, [gateMac, buildConfig, setGateFiles, setGateFolders])
 
@@ -747,8 +733,8 @@ function FilesTab({
 
   useEffect(() => {
     const id = setInterval(() => {
-      if (document.visibilityState === 'visible') refresh()
-    }, 5000)
+      if (document.visibilityState === 'visible') refresh(true)
+    }, 30_000)
     return () => clearInterval(id)
   }, [refresh])
 
@@ -761,17 +747,13 @@ function FilesTab({
     const localPath = paths[0]
     const label     = basename(localPath)
     const id        = `${uid}-${Date.now()}`
-    addRecord({ id, startedAt: Date.now(), kind: 'gate-upload', mac: gateMac, deviceName, label, category: filesSubTab, status: 'pending' })
-    setOpPending(true)
-    setOpError(null)
-    try {
-      await window.electronAPI.aip.gateUploadFile(gateMac, buildConfig(), localPath, filesSubTab, uploadFolder || undefined)
-      setOpDone(label)
-    } catch (e) {
-      setOpError(String(e))
-    } finally {
-      setOpPending(false)
-    }
+    const config    = buildConfig()
+    const folderId  = selectedFolder?.id ?? undefined
+    addRecord({ id, startedAt: Date.now(), kind: 'gate-upload', mac: gateMac, deviceName, label, category: filesSubTab, status: 'waiting' })
+    enqueueOp(id, async () => {
+      await window.electronAPI.aip.gateUploadFile(gateMac, config, localPath, filesSubTab, folderId)
+      await refresh(true)
+    })
   }
 
   const handleDownload = async (file: AipGateRemoteFile) => {
@@ -780,91 +762,68 @@ function FilesTab({
       defaultPath: file.name,
     })
     if (!savePath) return
-    const id = `${uid}-${Date.now()}`
-    addRecord({ id, startedAt: Date.now(), kind: 'gate-download', mac: gateMac, deviceName, label: file.name, category: filesSubTab, status: 'pending' })
-    setOpPending(true)
-    setOpError(null)
-    try {
-      await window.electronAPI.aip.gateDownloadFile(gateMac, buildConfig(), file.id, savePath)
-      setOpDone(file.name)
-    } catch (e) {
-      setOpError(String(e))
-    } finally {
-      setOpPending(false)
-    }
+    const id     = `${uid}-${Date.now()}`
+    const config = buildConfig()
+    addRecord({ id, startedAt: Date.now(), kind: 'gate-download', mac: gateMac, deviceName, label: file.name, category: filesSubTab, status: 'waiting' })
+    enqueueOp(id, async () => {
+      await window.electronAPI.aip.gateDownloadFile(gateMac, config, file.id, savePath)
+    })
   }
 
   const handleDelete = async (file: AipGateRemoteFile) => {
-    const id = `${uid}-${Date.now()}`
-    addRecord({ id, startedAt: Date.now(), kind: 'gate-delete', mac: gateMac, deviceName, label: file.name, category: filesSubTab, status: 'pending' })
-    setOpPending(true)
-    setOpError(null)
-    setDeleteTarget(null)
-    try {
-      await window.electronAPI.aip.gateDeleteFile(gateMac, buildConfig(), file.id)
-      await refresh()
-    } catch (e) {
-      setOpError(String(e))
-    } finally {
-      setOpPending(false)
-    }
+    setDeleteFileTarget(null)
+    const id     = `${uid}-${Date.now()}`
+    const config = buildConfig()
+    addRecord({ id, startedAt: Date.now(), kind: 'gate-delete', mac: gateMac, deviceName, label: file.name, category: filesSubTab, status: 'waiting' })
+    enqueueOp(id, async () => {
+      await window.electronAPI.aip.gateDeleteFile(gateMac, config, file.id)
+      await refresh(true)
+    })
   }
 
   const handleCreateFolder = async () => {
     if (!newFolderName) return
-    const id = `${uid}-${Date.now()}`
-    addRecord({ id, startedAt: Date.now(), kind: 'gate-folder-create', mac: gateMac, deviceName, label: newFolderName, category: filesSubTab, status: 'pending' })
+    const name   = newFolderName
+    const id     = `${uid}-${Date.now()}`
+    const config = buildConfig()
+    addRecord({ id, startedAt: Date.now(), kind: 'gate-folder-create', mac: gateMac, deviceName, label: name, category: filesSubTab, status: 'waiting' })
     setShowCreateFolder(false)
     setNewFolderName('')
-    setOpPending(true)
-    setOpError(null)
-    try {
-      await window.electronAPI.aip.gateCreateFolder(gateMac, buildConfig(), newFolderName, filesSubTab)
-      await refresh()
-    } catch (e) {
-      setOpError(String(e))
-    } finally {
-      setOpPending(false)
-    }
+    enqueueOp(id, async () => {
+      await window.electronAPI.aip.gateCreateFolder(gateMac, config, name, filesSubTab)
+      await refresh(true)
+    })
   }
 
   const handleRenameFolder = async () => {
     if (!renameTarget || !renameName) return
-    const id = `${uid}-${Date.now()}`
-    addRecord({ id, startedAt: Date.now(), kind: 'gate-folder-rename', mac: gateMac, deviceName, label: renameName, category: filesSubTab, status: 'pending' })
     const target = renameTarget
+    const name   = renameName
+    const id     = `${uid}-${Date.now()}`
+    const config = buildConfig()
+    addRecord({ id, startedAt: Date.now(), kind: 'gate-folder-rename', mac: gateMac, deviceName, label: name, category: filesSubTab, status: 'waiting' })
     setRenameTarget(null)
     setRenameName('')
-    setOpPending(true)
-    setOpError(null)
-    try {
-      await window.electronAPI.aip.gateRenameFolder(gateMac, buildConfig(), target.name, renameName, filesSubTab)
-      await refresh()
-    } catch (e) {
-      setOpError(String(e))
-    } finally {
-      setOpPending(false)
-    }
+    enqueueOp(id, async () => {
+      await window.electronAPI.aip.gateRenameFolder(gateMac, config, target.name, name, filesSubTab)
+      await refresh(true)
+    })
   }
 
   const handleDeleteFolder = async (folder: AipGateRemoteFolder) => {
-    const id = `${uid}-${Date.now()}`
-    addRecord({ id, startedAt: Date.now(), kind: 'gate-folder-delete', mac: gateMac, deviceName, label: folder.name, category: filesSubTab, status: 'pending' })
-    setOpPending(true)
-    setOpError(null)
-    try {
-      await window.electronAPI.aip.gateDeleteFolder(gateMac, buildConfig(), folder.name, filesSubTab)
-      await refresh()
-    } catch (e) {
-      setOpError(String(e))
-    } finally {
-      setOpPending(false)
-    }
+    const id     = `${uid}-${Date.now()}`
+    const config = buildConfig()
+    addRecord({ id, startedAt: Date.now(), kind: 'gate-folder-delete', mac: gateMac, deviceName, label: folder.name, category: filesSubTab, status: 'waiting' })
+    if (selectedFolder?.id === folder.id) setSelectedFolder(null)
+    enqueueOp(id, async () => {
+      await window.electronAPI.aip.gateDeleteFolder(gateMac, config, folder.name, filesSubTab)
+      await refresh(true)
+    })
   }
 
   return (
-    <div className="flex h-full flex-col gap-3 p-5">
-      {/* Auth credentials (only if device has auth enabled) */}
+    <div className="flex h-full flex-col gap-3 p-4">
+      {/* Auth credentials */}
       {authEnabled && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-700/50 dark:bg-amber-900/20">
           <p className="mb-2 text-xs font-semibold text-amber-700 dark:text-amber-400">{t('files.gate.authRequired')}</p>
@@ -875,28 +834,12 @@ function FilesTab({
         </div>
       )}
 
-      {/* Status banners */}
-      {opError && (
-        <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
-          <XIcon />
-          <span className="flex-1 truncate">{t('files.gate.operationError')}: {opError}</span>
-          <button onClick={() => setOpError(null)} className="shrink-0 text-red-400 hover:text-red-600"><XIcon /></button>
-        </div>
-      )}
-      {opDone && (
-        <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-2.5 text-sm text-green-700 dark:border-green-800 dark:bg-green-900/20 dark:text-green-400">
-          <CheckIcon />
-          <span className="flex-1">{t('files.gate.operationDone')}</span>
-          <button onClick={() => setOpDone(null)} className="shrink-0 text-green-400 hover:text-green-600"><XIcon /></button>
-        </div>
-      )}
-
       {/* Category tabs */}
       <div className="flex gap-1 rounded-lg border border-gray-200 bg-gray-50 p-1 dark:border-gray-700 dark:bg-gray-800/50">
         {GATE_CATEGORIES.map((key) => (
           <button
             key={key}
-            onClick={() => setFilesSubTab(key)}
+            onClick={() => { setFilesSubTab(key); setSelectedFolder(null) }}
             className={`flex-1 rounded-md py-1.5 text-sm font-medium transition-colors ${
               filesSubTab === key
                 ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-700 dark:text-white'
@@ -908,98 +851,141 @@ function FilesTab({
         ))}
       </div>
 
-      <div className="flex flex-1 gap-4 overflow-hidden">
-        {/* Left: file list */}
-        <div className="flex flex-1 flex-col gap-2 overflow-hidden">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">{t('files.onDevice')}</span>
+      {/* Explorer: folders left, files right */}
+      <div className="flex flex-1 gap-0 overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700">
+
+        {/* Left pane — folder tree */}
+        <div className="flex w-48 shrink-0 flex-col border-r border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50 px-3 py-2 dark:border-gray-700 dark:bg-gray-800/60">
+            <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+              {t('files.gate.folders', { defaultValue: 'Folders' })}
+            </span>
+            {canManageFolders && (
+              <button
+                onClick={() => { setShowCreateFolder(true); setNewFolderName('') }}
+                className="rounded p-0.5 text-gray-400 hover:bg-gray-200 hover:text-gray-700 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+                title={t('files.gate.createFolder')}
+              >
+                <PlusIcon />
+              </button>
+            )}
+          </div>
+          <div className="flex-1 overflow-y-auto">
+            {/* All files row */}
+            <button
+              onClick={() => setSelectedFolder(null)}
+              className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors ${
+                selectedFolder === null
+                  ? 'bg-primary/10 font-medium text-primary dark:bg-primary/20'
+                  : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800/60'
+              }`}
+            >
+              <FolderIcon />
+              <span className="truncate">{t('files.gate.allFiles', { defaultValue: 'All files' })}</span>
+            </button>
+            {categoryFolders.map((folder) => (
+              <div
+                key={folder.id}
+                className={`group flex items-center gap-1 pl-3 pr-1 py-2 transition-colors ${
+                  selectedFolder?.id === folder.id
+                    ? 'bg-primary/10 text-primary dark:bg-primary/20'
+                    : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800/60'
+                }`}
+              >
+                <button
+                  onClick={() => setSelectedFolder(folder)}
+                  className="flex min-w-0 flex-1 items-center gap-2 text-left text-sm"
+                >
+                  <FolderIcon />
+                  <span className="truncate">{folder.name}</span>
+                </button>
+                {canManageFolders && (
+                  <div className="flex shrink-0 gap-0.5 opacity-0 group-hover:opacity-100">
+                    <button
+                      onClick={() => { setRenameTarget(folder); setRenameName(folder.name) }}
+                      className="rounded p-0.5 text-gray-400 hover:bg-gray-200 hover:text-gray-600 dark:hover:bg-gray-700"
+                      title={t('files.gate.renameFolder')}
+                    >
+                      <EditIcon />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteFolder(folder)}
+                      className="rounded p-0.5 text-red-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/30"
+                      title={t('files.gate.deleteFolder')}
+                    >
+                      <TrashIcon />
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Right pane — file list */}
+        <div className="flex flex-1 flex-col overflow-hidden">
+          <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50 px-3 py-2 dark:border-gray-700 dark:bg-gray-800/60">
+            <span className="truncate text-xs font-medium text-gray-500">
+              {selectedFolder ? selectedFolder.name : t('files.gate.allFiles', { defaultValue: 'All files' })}
+              <span className="ml-1.5 text-gray-400">({visibleFiles.length})</span>
+            </span>
             <div className="flex items-center gap-1">
-              {(loading || opPending) && <SpinnerIcon />}
-              <Btn onClick={refresh} variant="ghost" size="xs" disabled={loading || opPending}>{t('buttons.refresh', { ns: 'common' })}</Btn>
+              {loading && <SpinnerIcon />}
+              <button
+                onClick={() => refresh()}
+                className="rounded p-1 text-gray-400 hover:bg-gray-200 hover:text-gray-600 dark:hover:bg-gray-700"
+                title={t('buttons.refresh', { ns: 'common' })}
+                disabled={loading}
+              >
+                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </button>
             </div>
           </div>
-          <div className="flex-1 overflow-auto rounded-xl border border-gray-200 dark:border-gray-700">
-            {categoryFiles.length === 0 ? (
+
+          <div className="flex-1 overflow-y-auto">
+            {visibleFiles.length === 0 ? (
               <div className="flex h-full flex-col items-center justify-center py-10 text-center">
                 <FolderIcon />
                 <p className="mt-2 text-xs text-gray-400">{t('files.gate.noFilesInCategory')}</p>
               </div>
             ) : (
               <div className="divide-y divide-gray-100 dark:divide-gray-700/50">
-                {categoryFiles.map((f) => (
+                {visibleFiles.map((f) => (
                   <GateFileRow
                     key={f.id}
                     file={f}
                     onDownload={handleDownload}
-                    onDelete={(file) => setDeleteTarget(file)}
+                    onDelete={(file) => setDeleteFileTarget(file)}
                   />
                 ))}
               </div>
             )}
           </div>
 
-          {/* Upload */}
-          <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800/40 space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">{t('files.gate.upload')}</p>
-            <div className="flex items-center gap-2">
-              <label className="text-xs text-gray-500 w-14 shrink-0">{t('files.gate.folder')}</label>
-              <select
-                value={uploadFolder}
-                onChange={(e) => setUploadFolder(e.target.value)}
-                className="h-8 flex-1 rounded-md border border-gray-200 bg-white px-2 text-sm text-gray-700 focus:border-primary focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-              >
-                <option value="">{t('files.gate.noFolder')}</option>
-                {categoryFolders.map((f) => (
-                  <option key={f.id} value={f.id}>{f.name}</option>
-                ))}
-              </select>
-            </div>
-            <Btn onClick={handleUpload} variant="primary" size="sm" disabled={opPending}>
-              <UploadIcon /> {t('files.gate.upload')}
+          {/* Upload bar */}
+          <div className="border-t border-gray-100 bg-gray-50 px-3 py-2 dark:border-gray-700 dark:bg-gray-800/40">
+            <Btn onClick={handleUpload} variant="primary" size="sm">
+              <UploadIcon />
+              {selectedFolder
+                ? t('files.gate.uploadToFolder', { name: selectedFolder.name, defaultValue: `Upload to ${selectedFolder.name}` })
+                : t('files.gate.upload')}
             </Btn>
-          </div>
-        </div>
-
-        {/* Right: folders */}
-        <div className="flex w-52 shrink-0 flex-col gap-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-              {t('files.gate.folders', { defaultValue: 'Folders' })}
-            </span>
-            <Btn onClick={() => { setShowCreateFolder(true); setNewFolderName('') }} variant="ghost" size="xs">
-              <PlusIcon />
-            </Btn>
-          </div>
-          <div className="flex-1 overflow-auto rounded-xl border border-gray-200 dark:border-gray-700">
-            {categoryFolders.length === 0 ? (
-              <div className="flex h-full items-center justify-center py-8">
-                <p className="text-xs text-gray-400">{t('files.gate.noFolders')}</p>
-              </div>
-            ) : (
-              <div className="divide-y divide-gray-100 dark:divide-gray-700/50">
-                {categoryFolders.map((f) => (
-                  <GateFolderRow
-                    key={f.id}
-                    folder={f}
-                    onRename={(folder) => { setRenameTarget(folder); setRenameName(folder.name) }}
-                    onDelete={handleDeleteFolder}
-                  />
-                ))}
-              </div>
-            )}
           </div>
         </div>
       </div>
 
       {/* Confirm delete file modal */}
-      {deleteTarget && (
+      {deleteFileTarget && (
         <Modal
-          title={t('files.gate.confirmDelete', { name: deleteTarget.name })}
-          onClose={() => setDeleteTarget(null)}
+          title={t('files.gate.confirmDelete', { name: deleteFileTarget.name })}
+          onClose={() => setDeleteFileTarget(null)}
           footer={
             <>
-              <Btn onClick={() => setDeleteTarget(null)} variant="default">{t('buttons.cancel', { ns: 'common' })}</Btn>
-              <Btn onClick={() => handleDelete(deleteTarget)} variant="danger">{t('buttons.delete', { ns: 'common' })}</Btn>
+              <Btn onClick={() => setDeleteFileTarget(null)} variant="default">{t('buttons.cancel', { ns: 'common' })}</Btn>
+              <Btn onClick={() => handleDelete(deleteFileTarget)} variant="danger">{t('buttons.delete', { ns: 'common' })}</Btn>
             </>
           }
         >
@@ -1007,7 +993,7 @@ function FilesTab({
         </Modal>
       )}
 
-      {/* Create folder modal */}
+      {/* Create folder modal (BGM only) */}
       {showCreateFolder && (
         <Modal
           title={t('files.gate.createFolder')}
@@ -1026,7 +1012,7 @@ function FilesTab({
         </Modal>
       )}
 
-      {/* Rename folder modal */}
+      {/* Rename folder modal (BGM only) */}
       {renameTarget && (
         <Modal
           title={t('files.gate.renameFolder')}
@@ -1050,6 +1036,1133 @@ function FilesTab({
   )
 }
 
+// ─── Icons for new tabs ───────────────────────────────────────────────────────
+
+const PlayIcon = () => (
+  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+      d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664zM21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
+)
+
+const SceneIcon = () => (
+  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+      d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+  </svg>
+)
+
+const ScheduleIcon = () => (
+  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+  </svg>
+)
+
+// ─── Gate Channel Players tab ─────────────────────────────────────────────────
+
+const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
+function DaysDisplay({ days }: { days: number[] }) {
+  return (
+    <div className="flex gap-0.5">
+      {DAY_LABELS.map((d, i) => (
+        <span key={d} className={`inline-flex h-5 w-6 items-center justify-center rounded text-xs font-medium ${
+          days.includes(i)
+            ? 'bg-primary/15 text-primary dark:bg-primary/25'
+            : 'bg-gray-100 text-gray-300 dark:bg-gray-800 dark:text-gray-600'
+        }`}>{d}</span>
+      ))}
+    </div>
+  )
+}
+
+function DaysCheckboxes({ days, onChange }: { days: number[]; onChange: (d: number[]) => void }) {
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {DAY_LABELS.map((label, i) => (
+        <label key={label} className="flex cursor-pointer items-center gap-1 text-xs text-gray-600 dark:text-gray-400">
+          <input
+            type="checkbox"
+            checked={days.includes(i)}
+            onChange={(e) => {
+              if (e.target.checked) onChange([...days, i].sort())
+              else onChange(days.filter((d) => d !== i))
+            }}
+            className="h-3.5 w-3.5 rounded border-gray-300 accent-primary"
+          />
+          {label}
+        </label>
+      ))}
+    </div>
+  )
+}
+
+type ChannelSourceType = 'folder' | 'file' | 'url'
+
+function ChannelPlayersTab({
+  gateMac, deviceIp, gateWebConfig,
+}: {
+  gateMac: string; deviceIp: string; gateWebConfig: AipGateWebConfig | undefined
+}) {
+  const { t } = useTranslation('webserver')
+  const { gateChannelPlayers, setGateChannelPlayers, gateFiles, setGateFiles, gateFolders, setGateFolders } = useWebserverStore()
+  const [loading, setLoading] = useState(false)
+  const [showActivate, setShowActivate] = useState(false)
+  const [activateName, setActivateName] = useState('')
+  const [sourceType, setSourceType] = useState<ChannelSourceType>('folder')
+  const [selectedFolderId, setSelectedFolderId] = useState('')
+  const [selectedFileId, setSelectedFileId] = useState('')
+  const [urlValue, setUrlValue] = useState('')
+
+  const authEnabled = gateWebConfig?.authEnabled ?? false
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+
+  const buildConfig = useCallback((): AipGateConnectionConfig => ({
+    ip: deviceIp, sslEnabled: gateWebConfig?.sslEnabled ?? false,
+    username: authEnabled ? username : undefined,
+    password: authEnabled ? password : undefined,
+  }), [deviceIp, gateWebConfig, authEnabled, username, password])
+
+  const players  = gateChannelPlayers.get(gateMac) ?? []
+  const files    = gateFiles.get(gateMac) ?? []
+  const folders  = gateFolders.get(gateMac) ?? []
+
+  const refresh = useCallback(async () => {
+    setLoading(true)
+    try {
+      await window.electronAPI.aip.gateFetchChannelPlayers(gateMac, buildConfig())
+      const list = await window.electronAPI.aip.gateGetChannelPlayers(gateMac)
+      setGateChannelPlayers(gateMac, list)
+    } finally { setLoading(false) }
+  }, [gateMac, buildConfig, setGateChannelPlayers])
+
+  const loadSources = useCallback(async () => {
+    const [fileList, folderList] = await Promise.all([
+      window.electronAPI.aip.gateGetFiles(gateMac),
+      window.electronAPI.aip.gateGetFolders(gateMac),
+    ])
+    setGateFiles(gateMac, fileList)
+    setGateFolders(gateMac, folderList)
+  }, [gateMac, setGateFiles, setGateFolders])
+
+  useEffect(() => { void refresh() }, [gateMac])
+
+  useEffect(() => {
+    return window.electronAPI.aip.onGateChannelPlayersUpdated((ev) => {
+      if (ev.mac === gateMac) setGateChannelPlayers(gateMac, ev.players)
+    })
+  }, [gateMac, setGateChannelPlayers])
+
+  const openActivate = () => {
+    setActivateName(''); setSourceType('folder'); setSelectedFolderId(''); setSelectedFileId(''); setUrlValue('')
+    void loadSources()
+    setShowActivate(true)
+  }
+
+  const computedSource = (): string => {
+    if (sourceType === 'url') return urlValue
+    if (sourceType === 'folder') {
+      const f = folders.find((f) => f.id === selectedFolderId)
+      return f ? `/${f.category}/${f.name}` : ''
+    }
+    const f = files.find((f) => f.id === selectedFileId)
+    if (!f) return ''
+    return f.folder ? `/${f.category}/${f.folder}/${f.name}` : `/${f.category}/${f.name}`
+  }
+
+  const handleActivate = async () => {
+    const source = computedSource()
+    if (!activateName || !source) return
+    await window.electronAPI.aip.gateActivateChannelPlayer(gateMac, buildConfig(), activateName, source)
+    setShowActivate(false)
+    await refresh()
+  }
+
+  const handleDeactivate = async (playerId: string) => {
+    await window.electronAPI.aip.gateDeactivateChannelPlayer(gateMac, buildConfig(), playerId)
+    await refresh()
+  }
+
+  const stateColor = (s: string): 'green' | 'yellow' | 'gray' =>
+    s === 'Playing' ? 'green' : s === 'Paused' ? 'yellow' : 'gray'
+
+  const selectCls = 'w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100'
+
+  const groupedFiles = files.reduce<Record<string, typeof files>>((acc, f) => {
+    const key = f.folder ? `${f.category} / ${f.folder}` : String(f.category)
+    if (!acc[key]) acc[key] = []
+    acc[key].push(f)
+    return acc
+  }, {})
+
+  const groupedFolders = folders.reduce<Record<string, typeof folders>>((acc, f) => {
+    const key = String(f.category)
+    if (!acc[key]) acc[key] = []
+    acc[key].push(f)
+    return acc
+  }, {})
+
+  const sourceIsValid = sourceType === 'url' ? !!urlValue : sourceType === 'folder' ? !!selectedFolderId : !!selectedFileId
+
+  return (
+    <div className="flex h-full flex-col gap-4 p-5">
+      {authEnabled && (
+        <div className="flex gap-3">
+          <div className="flex-1">
+            <label className="mb-1 block text-xs font-medium text-gray-500">{t('files.gate.username')}</label>
+            <TextInput value={username} onChange={setUsername} placeholder={t('files.gate.username')} />
+          </div>
+          <div className="flex-1">
+            <label className="mb-1 block text-xs font-medium text-gray-500">{t('files.gate.password')}</label>
+            <TextInput value={password} onChange={setPassword} type="password" placeholder={t('files.gate.password')} />
+          </div>
+        </div>
+      )}
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          {t('channelPlayers.count', { count: players.length })}
+        </span>
+        <div className="flex gap-2">
+          {loading && <SpinnerIcon />}
+          <Btn onClick={refresh} variant="default">{t('buttons.refresh', { ns: 'common' })}</Btn>
+          <Btn onClick={openActivate} variant="primary"><PlusIcon />{t('channelPlayers.activate')}</Btn>
+        </div>
+      </div>
+      <div className="flex-1 overflow-auto rounded-xl border border-gray-200 dark:border-gray-700">
+        <table className="min-w-full">
+          <thead className="sticky top-0 bg-gray-50 dark:bg-gray-800/80">
+            <tr>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">{t('channelPlayers.columns.name')}</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">{t('channelPlayers.columns.source')}</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">{t('channelPlayers.columns.state')}</th>
+              <th className="px-4 py-3" />
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50">
+            {players.length === 0 && (
+              <tr><td colSpan={4} className="px-4 py-10 text-center text-sm text-gray-400">{t('channelPlayers.empty')}</td></tr>
+            )}
+            {players.map((p) => (
+              <tr key={p.id} className="bg-white hover:bg-gray-50 dark:bg-gray-900 dark:hover:bg-gray-800/60">
+                <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">{p.name}</td>
+                <td className="px-4 py-3 max-w-xs truncate text-xs text-gray-500 font-mono">{p.source}</td>
+                <td className="px-4 py-3"><Badge color={stateColor(p.playbackState)}>{p.playbackState}</Badge></td>
+                <td className="px-4 py-3 text-right">
+                  <Btn onClick={() => handleDeactivate(p.id)} variant="danger" size="xs">
+                    <TrashIcon />{t('channelPlayers.deactivate')}
+                  </Btn>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {showActivate && (
+        <Modal title={t('channelPlayers.activate')} onClose={() => setShowActivate(false)}
+          footer={<>
+            <Btn onClick={() => setShowActivate(false)} variant="default">{t('buttons.cancel', { ns: 'common' })}</Btn>
+            <Btn onClick={handleActivate} variant="primary" disabled={!activateName || !sourceIsValid}>{t('buttons.save', { ns: 'common' })}</Btn>
+          </>}>
+          <div className="space-y-4">
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-gray-600 dark:text-gray-400">{t('channelPlayers.form.name')}</label>
+              <TextInput value={activateName} onChange={setActivateName} placeholder={t('channelPlayers.form.namePlaceholder')} />
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-gray-600 dark:text-gray-400">{t('channelPlayers.form.source')}</label>
+              <div className="mb-2 flex rounded-lg border border-gray-200 p-0.5 dark:border-gray-700">
+                {(['folder', 'file', 'url'] as ChannelSourceType[]).map((type) => (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => setSourceType(type)}
+                    className={`flex-1 rounded-md py-1.5 text-xs font-medium transition-colors ${
+                      sourceType === type
+                        ? 'bg-primary text-white shadow-sm'
+                        : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                    }`}
+                  >
+                    {type === 'folder' ? t('files.gate.folder') : type === 'file' ? 'File' : 'Online'}
+                  </button>
+                ))}
+              </div>
+
+              {sourceType === 'folder' && (
+                folders.length === 0 ? (
+                  <p className="rounded-lg border border-dashed border-gray-200 py-3 text-center text-xs text-gray-400 dark:border-gray-700">
+                    {t('files.gate.noFolders')} — visit the Files tab to load them.
+                  </p>
+                ) : (
+                  <select value={selectedFolderId} onChange={(e) => setSelectedFolderId(e.target.value)} className={selectCls}>
+                    <option value="">— Select a folder —</option>
+                    {Object.entries(groupedFolders).map(([cat, flds]) => (
+                      <optgroup key={cat} label={cat}>
+                        {flds.map((f) => (
+                          <option key={f.id} value={f.id}>{f.name}</option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
+                )
+              )}
+
+              {sourceType === 'file' && (
+                files.length === 0 ? (
+                  <p className="rounded-lg border border-dashed border-gray-200 py-3 text-center text-xs text-gray-400 dark:border-gray-700">
+                    {t('files.gate.noFilesInCategory')} — visit the Files tab to load them.
+                  </p>
+                ) : (
+                  <select value={selectedFileId} onChange={(e) => setSelectedFileId(e.target.value)} className={selectCls}>
+                    <option value="">— Select a file —</option>
+                    {Object.entries(groupedFiles).map(([grp, fls]) => (
+                      <optgroup key={grp} label={grp}>
+                        {fls.map((f) => (
+                          <option key={f.id} value={f.id}>{f.name}</option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
+                )
+              )}
+
+              {sourceType === 'url' && (
+                <TextInput value={urlValue} onChange={setUrlValue} placeholder="http://stream.example.com/radio" />
+              )}
+            </div>
+          </div>
+        </Modal>
+      )}
+    </div>
+  )
+}
+
+// ─── Gate Scenes tab ──────────────────────────────────────────────────────────
+
+type GateActionType = 'changeVolume' | 'joinEmitterChannel' | 'joinLocalChannel' | 'leaveChannel'
+
+interface GateStep {
+  id:        string
+  type:      GateActionType
+  devices:   string[]
+  volume:    number
+  emitter:   string
+  channelId: string
+}
+
+const GATE_ACTION_TYPES: GateActionType[] = ['changeVolume', 'joinEmitterChannel', 'joinLocalChannel', 'leaveChannel']
+
+const GATE_ACTION_COLORS: Record<GateActionType, string> = {
+  changeVolume:       'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
+  joinEmitterChannel: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300',
+  joinLocalChannel:   'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+  leaveChannel:       'bg-zinc-100 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300',
+}
+
+function actionsToSteps(actions: AipGateSceneActions): GateStep[] {
+  const steps: GateStep[] = []
+  for (const e of actions.changeVolume ?? []) {
+    steps.push({ id: `cv-${Math.random()}`, type: 'changeVolume', devices: e.devices, volume: e.volume, emitter: '', channelId: '' })
+  }
+  for (const e of actions.joinEmitterChannel ?? []) {
+    steps.push({ id: `jec-${Math.random()}`, type: 'joinEmitterChannel', devices: e.devices, volume: 0, emitter: e.emitter, channelId: '' })
+  }
+  for (const e of actions.joinLocalChannel ?? []) {
+    steps.push({ id: `jlc-${Math.random()}`, type: 'joinLocalChannel', devices: e.devices, volume: 0, emitter: '', channelId: e.channelId })
+  }
+  for (const e of actions.leaveChannel ?? []) {
+    steps.push({ id: `lc-${Math.random()}`, type: 'leaveChannel', devices: e.devices, volume: 0, emitter: '', channelId: '' })
+  }
+  return steps
+}
+
+function stepsToActions(steps: GateStep[]): AipGateSceneActions {
+  return {
+    changeVolume:       steps.filter((s) => s.type === 'changeVolume').map((s) => ({ devices: s.devices, volume: s.volume })),
+    joinEmitterChannel: steps.filter((s) => s.type === 'joinEmitterChannel').map((s) => ({ devices: s.devices, emitter: s.emitter })),
+    joinLocalChannel:   steps.filter((s) => s.type === 'joinLocalChannel').map((s) => ({ channelId: s.channelId, devices: s.devices })),
+    leaveChannel:       steps.filter((s) => s.type === 'leaveChannel').map((s) => ({ devices: s.devices })),
+  }
+}
+
+function newStep(): GateStep {
+  return { id: `step-${Date.now()}-${Math.random()}`, type: 'changeVolume', devices: [], volume: 80, emitter: '', channelId: '' }
+}
+
+interface GateStepRowProps {
+  step: GateStep
+  allDevices: Array<{ mac: string; name: string }>
+  onChange: (s: GateStep) => void
+  onRemove: () => void
+}
+
+function GateStepRow({ step, allDevices, onChange, onRemove }: GateStepRowProps) {
+  const field = (cls = '') =>
+    `rounded border border-gray-200 bg-white px-2 py-1 text-xs text-gray-800 outline-none focus:border-primary dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 ${cls}`
+
+  const toggleDevice = (mac: string, on: boolean) => {
+    const next = on ? [...step.devices, mac] : step.devices.filter((m) => m !== mac)
+    onChange({ ...step, devices: next })
+  }
+
+  return (
+    <div className="flex flex-col gap-2 rounded-lg border border-gray-100 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800/50">
+      <div className="flex items-center gap-2">
+        <select
+          value={step.type}
+          onChange={(e) => onChange({ ...step, type: e.target.value as GateActionType })}
+          className={field('min-w-[160px]')}
+        >
+          {GATE_ACTION_TYPES.map((t) => (
+            <option key={t} value={t}>{t}</option>
+          ))}
+        </select>
+
+        {step.type === 'changeVolume' && (
+          <div className="flex items-center gap-1.5">
+            <input
+              type="range"
+              min={0} max={100}
+              value={step.volume}
+              onChange={(e) => onChange({ ...step, volume: parseInt(e.target.value) })}
+              className="w-28 accent-primary"
+            />
+            <span className="w-7 text-xs text-gray-500">{step.volume}%</span>
+          </div>
+        )}
+
+        {step.type === 'joinEmitterChannel' && (
+          <input
+            type="text"
+            value={step.emitter}
+            onChange={(e) => onChange({ ...step, emitter: e.target.value })}
+            placeholder="Emitter MAC"
+            className={field('flex-1 min-w-[140px] font-mono')}
+          />
+        )}
+
+        {step.type === 'joinLocalChannel' && (
+          <input
+            type="text"
+            value={step.channelId}
+            onChange={(e) => onChange({ ...step, channelId: e.target.value })}
+            placeholder="Channel ID"
+            className={field('w-28')}
+          />
+        )}
+
+        <button
+          onClick={onRemove}
+          className="ml-auto rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
+        >
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      {allDevices.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 pl-1">
+          {allDevices.map((d) => (
+            <label key={d.mac} className="flex cursor-pointer items-center gap-1 text-xs text-gray-600 dark:text-gray-400">
+              <input
+                type="checkbox"
+                checked={step.devices.includes(d.mac)}
+                onChange={(e) => toggleDevice(d.mac, e.target.checked)}
+                className="h-3.5 w-3.5 rounded border-gray-300 accent-primary"
+              />
+              {d.name}
+            </label>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+interface GateSceneModalProps {
+  scene: AipGateRemoteScene | null
+  allDevices: Array<{ mac: string; name: string }>
+  onSave: (payload: { name: string; startAt: string; dateRange: { from: string; to: string }; daysOfWeek: number[]; actions: AipGateSceneActions }) => void
+  onDelete?: () => void
+  onClose: () => void
+  saving?: boolean
+}
+
+function GateSceneModal({ scene, allDevices, onSave, onDelete, onClose, saving }: GateSceneModalProps) {
+  const isNew = !scene?.id
+  const [name, setName] = useState(scene?.name ?? '')
+  const [startAt, setStartAt] = useState(scene?.startAt ?? '08:00:00')
+  const [daysOfWeek, setDaysOfWeek] = useState<number[]>(scene?.daysOfWeek ? [...scene.daysOfWeek] : [1, 2, 3, 4, 5])
+  const [steps, setSteps] = useState<GateStep[]>(scene ? actionsToSteps(scene.actions) : [])
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+
+  const addStep = () => setSteps((prev) => [...prev, newStep()])
+  const updateStep = (idx: number, s: GateStep) => setSteps((prev) => { const n = [...prev]; n[idx] = s; return n })
+  const removeStep = (idx: number) => setSteps((prev) => prev.filter((_, i) => i !== idx))
+
+  const handleSave = () => {
+    onSave({ name, startAt, dateRange: { from: '', to: '' }, daysOfWeek, actions: stepsToActions(steps) })
+  }
+
+  const inputCls = 'w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100'
+  const labelCls = 'mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400'
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="w-full max-w-2xl max-h-[95vh] overflow-y-auto rounded-xl bg-white shadow-2xl dark:bg-gray-900 dark:text-gray-100">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white px-5 py-4 dark:border-gray-700 dark:bg-gray-900">
+          <h2 className="text-base font-semibold">{isNew ? 'New scene' : 'Edit scene'}</h2>
+          <button
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+          >
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="space-y-5 px-6 py-5">
+          <div>
+            <label className={labelCls}>Name</label>
+            <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Morning routine" className={inputCls} />
+          </div>
+
+          <div>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Timing</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={labelCls}>Start time</label>
+                <input type="text" value={startAt} onChange={(e) => setStartAt(e.target.value)} placeholder="HH:MM:SS" className={inputCls} />
+              </div>
+            </div>
+            <div className="mt-3">
+              <label className={labelCls}>Days</label>
+              <DaysCheckboxes days={daysOfWeek} onChange={setDaysOfWeek} />
+            </div>
+          </div>
+
+          <div>
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Actions</p>
+              <button
+                onClick={addStep}
+                className="flex items-center gap-1 rounded-lg border border-primary px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/5"
+              >
+                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Add action
+              </button>
+            </div>
+            {steps.length === 0 ? (
+              <p className="rounded-lg border border-dashed border-gray-200 py-4 text-center text-xs text-gray-400 dark:border-gray-700">
+                No actions. Click "Add action" to begin.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {steps.map((step, idx) => (
+                  <GateStepRow
+                    key={step.id}
+                    step={step}
+                    allDevices={allDevices}
+                    onChange={(s) => updateStep(idx, s)}
+                    onRemove={() => removeStep(idx)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="sticky bottom-0 flex items-center justify-between gap-3 border-t border-gray-200 bg-white px-5 py-4 dark:border-gray-700 dark:bg-gray-900">
+          <div>
+            {!isNew && onDelete && (
+              showDeleteConfirm ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-red-500">Delete "{name}"?</span>
+                  <button onClick={onDelete} className="rounded-lg bg-red-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-600">Delete</button>
+                  <button onClick={() => setShowDeleteConfirm(false)} className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs text-gray-500 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800">Cancel</button>
+                </div>
+              ) : (
+                <button onClick={() => setShowDeleteConfirm(true)} className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-500 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/20">Delete</button>
+              )
+            )}
+          </div>
+          <div className="flex gap-2">
+            <button onClick={onClose} className="rounded-lg border border-gray-200 px-4 py-2 text-sm text-gray-500 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-800">Cancel</button>
+            <button onClick={handleSave} disabled={!name.trim() || saving} className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 disabled:opacity-50">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ScenesTab({
+  gateMac, deviceIp, gateWebConfig,
+}: {
+  gateMac: string; deviceIp: string; gateWebConfig: AipGateWebConfig | undefined
+}) {
+  const { t } = useTranslation('webserver')
+  const { gateScenes, setGateScenes } = useWebserverStore()
+  const deviceEntries = useDevicesStore((s) => s.entries)
+  const allDevices = Array.from(deviceEntries.values()).map((e) => ({ mac: e.device.mac, name: e.device.name }))
+  const [loading, setLoading] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [modalScene, setModalScene] = useState<AipGateRemoteScene | null | undefined>(undefined)
+  const authEnabled = gateWebConfig?.authEnabled ?? false
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+
+  const buildConfig = useCallback((): AipGateConnectionConfig => ({
+    ip: deviceIp, sslEnabled: gateWebConfig?.sslEnabled ?? false,
+    username: authEnabled ? username : undefined,
+    password: authEnabled ? password : undefined,
+  }), [deviceIp, gateWebConfig, authEnabled, username, password])
+
+  const scenes = gateScenes.get(gateMac) ?? []
+
+  const refresh = useCallback(async () => {
+    setLoading(true)
+    try {
+      await window.electronAPI.aip.gateFetchScenes(gateMac, buildConfig())
+      const list = await window.electronAPI.aip.gateGetScenes(gateMac)
+      setGateScenes(gateMac, list)
+    } finally { setLoading(false) }
+  }, [gateMac, buildConfig, setGateScenes])
+
+  useEffect(() => { void refresh() }, [gateMac])
+
+  useEffect(() => {
+    return window.electronAPI.aip.onGateScenesUpdated((ev) => {
+      if (ev.mac === gateMac) setGateScenes(gateMac, ev.scenes)
+    })
+  }, [gateMac, setGateScenes])
+
+  const handleSave = async (payload: { name: string; startAt: string; dateRange: { from: string; to: string }; daysOfWeek: number[]; actions: AipGateSceneActions }) => {
+    setSaving(true)
+    try {
+      if (modalScene?.id) await window.electronAPI.aip.gateUpdateScene(gateMac, buildConfig(), modalScene.id, payload)
+      else                await window.electronAPI.aip.gateCreateScene(gateMac, buildConfig(), payload)
+      setModalScene(undefined)
+      await refresh()
+    } finally { setSaving(false) }
+  }
+
+  const handleDelete = async () => {
+    if (!modalScene?.id) return
+    await window.electronAPI.aip.gateDeleteScene(gateMac, buildConfig(), modalScene.id)
+    setModalScene(undefined)
+    await refresh()
+  }
+
+  const countActionTypes = (sc: AipGateRemoteScene): Record<string, number> => {
+    const counts: Record<string, number> = {}
+    for (const type of GATE_ACTION_TYPES) {
+      const arr = (sc.actions as unknown as Record<string, unknown[]>)[type]
+      if (arr?.length) counts[type] = arr.length
+    }
+    return counts
+  }
+
+  return (
+    <div className="flex h-full flex-col overflow-hidden">
+      {authEnabled && (
+        <div className="flex gap-3 border-b border-gray-100 px-5 py-3 dark:border-gray-700">
+          <div className="flex-1">
+            <label className="mb-1 block text-xs font-medium text-gray-500">{t('files.gate.username')}</label>
+            <TextInput value={username} onChange={setUsername} placeholder={t('files.gate.username')} />
+          </div>
+          <div className="flex-1">
+            <label className="mb-1 block text-xs font-medium text-gray-500">{t('files.gate.password')}</label>
+            <TextInput value={password} onChange={setPassword} type="password" placeholder={t('files.gate.password')} />
+          </div>
+        </div>
+      )}
+
+      <div className="flex items-center justify-between px-5 py-4">
+        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          {t('scenes.count', { count: scenes.length })}
+        </span>
+        <div className="flex gap-2">
+          {loading && <SpinnerIcon />}
+          <Btn onClick={refresh} variant="default">{t('buttons.refresh', { ns: 'common' })}</Btn>
+          <Btn onClick={() => setModalScene(null)} variant="primary"><PlusIcon />{t('scenes.create')}</Btn>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-5 pb-5">
+        {!loading && scenes.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <SceneIcon />
+            <p className="mt-3 text-sm font-medium text-gray-500 dark:text-gray-400">{t('scenes.empty')}</p>
+          </div>
+        )}
+
+        {scenes.length > 0 && (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {scenes.map((sc) => {
+              const actionCounts = countActionTypes(sc)
+              return (
+                <div
+                  key={sc.id}
+                  className="flex flex-col rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900"
+                >
+                  <div className="mb-2 flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">{sc.name}</p>
+                      <p className="mt-0.5 tabular-nums text-xs text-gray-400">{sc.startAt}</p>
+                    </div>
+                    <button
+                      onClick={() => setModalScene(sc)}
+                      className="shrink-0 rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800"
+                    >
+                      <EditIcon />
+                    </button>
+                  </div>
+
+                  <div className="mb-3">
+                    <DaysDisplay days={sc.daysOfWeek} />
+                  </div>
+
+                  <div className="flex flex-wrap gap-1">
+                    {Object.entries(actionCounts).map(([type, count]) => (
+                      <span
+                        key={type}
+                        className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${GATE_ACTION_COLORS[type as GateActionType] ?? 'bg-gray-100 text-gray-600'}`}
+                      >
+                        {type} ({count})
+                      </span>
+                    ))}
+                    {Object.keys(actionCounts).length === 0 && (
+                      <span className="text-xs text-gray-400">No actions</span>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      {modalScene !== undefined && (
+        <GateSceneModal
+          scene={modalScene}
+          allDevices={allDevices}
+          onSave={handleSave}
+          onDelete={modalScene?.id ? handleDelete : undefined}
+          onClose={() => setModalScene(undefined)}
+          saving={saving}
+        />
+      )}
+    </div>
+  )
+}
+
+// ─── Mini file explorer (used in Schedule modal) ─────────────────────────────
+
+interface MiniFileExplorerProps {
+  files:      AipGateRemoteFile[]
+  folders:    AipGateRemoteFolder[]
+  selectedId: string
+  loading:    boolean
+  onSelect:   (fileId: string) => void
+}
+
+function fmtDuration(sec: number): string {
+  if (!sec) return ''
+  const m = Math.floor(sec / 60)
+  const s = sec % 60
+  return m > 0 ? `${m}:${String(s).padStart(2, '0')}` : `${s}s`
+}
+
+function MiniFileExplorer({ files, folders, selectedId, loading, onSelect }: MiniFileExplorerProps) {
+  const [activeFolder, setActiveFolder] = useState<string | null>(null)
+
+  const visibleFiles = activeFolder === null
+    ? files
+    : files.filter((f) => f.folder === activeFolder)
+
+  const selectedFile = files.find((f) => f.id === selectedId)
+
+  if (loading) {
+    return (
+      <div className="flex h-44 items-center justify-center rounded-lg border border-gray-200 dark:border-gray-700">
+        <SpinnerIcon />
+      </div>
+    )
+  }
+
+  if (files.length === 0) {
+    return (
+      <p className="rounded-lg border border-dashed border-gray-200 py-4 text-center text-xs text-gray-400 dark:border-gray-700">
+        No message files loaded. Open the <strong>Files → Messages</strong> tab first to load them.
+      </p>
+    )
+  }
+
+  const folderBtnCls = (active: boolean) =>
+    `flex w-full items-center gap-1 px-2 py-1.5 text-left text-xs truncate transition-colors ${
+      active
+        ? 'bg-primary/10 font-medium text-primary dark:bg-primary/20'
+        : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700'
+    }`
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="flex h-48 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
+        {folders.length > 0 && (
+          <div className="w-36 shrink-0 overflow-y-auto border-r border-gray-100 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/60">
+            <button onClick={() => setActiveFolder(null)} className={folderBtnCls(activeFolder === null)}>
+              <FolderIcon /> All files
+            </button>
+            {folders.map((f) => (
+              <button key={f.id} onClick={() => setActiveFolder(f.name)} className={folderBtnCls(activeFolder === f.name)}>
+                <FolderIcon /> {f.name}
+              </button>
+            ))}
+          </div>
+        )}
+        <div className="flex-1 overflow-y-auto">
+          {visibleFiles.length === 0 ? (
+            <p className="flex h-full items-center justify-center text-xs text-gray-400">No files in this folder</p>
+          ) : (
+            visibleFiles.map((f) => (
+              <button
+                key={f.id}
+                onClick={() => onSelect(f.id)}
+                className={`flex w-full items-center justify-between px-3 py-1.5 text-left transition-colors hover:bg-gray-50 dark:hover:bg-gray-800 ${
+                  selectedId === f.id ? 'bg-primary/10 dark:bg-primary/20' : ''
+                }`}
+              >
+                <span className="truncate text-xs text-gray-800 dark:text-gray-200">{f.name}</span>
+                {f.duration > 0 && (
+                  <span className="ml-2 shrink-0 text-[10px] tabular-nums text-gray-400">{fmtDuration(f.duration)}</span>
+                )}
+              </button>
+            ))
+          )}
+        </div>
+      </div>
+
+      {selectedFile ? (
+        <div className="flex items-center gap-2 rounded-md border border-primary/20 bg-primary/5 px-3 py-2 text-xs dark:border-primary/30 dark:bg-primary/10">
+          <svg className="h-3.5 w-3.5 shrink-0 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z" />
+          </svg>
+          <span className="truncate font-medium text-gray-800 dark:text-gray-200">{selectedFile.name}</span>
+          {selectedFile.folder && <span className="text-gray-400">· {selectedFile.folder}</span>}
+          {selectedFile.duration > 0 && (
+            <span className="ml-auto shrink-0 text-gray-500">{fmtDuration(selectedFile.duration)}</span>
+          )}
+        </div>
+      ) : (
+        <p className="text-xs text-gray-400">Select a file above</p>
+      )}
+    </div>
+  )
+}
+
+// ─── Gate Schedules tab ───────────────────────────────────────────────────────
+
+const EMPTY_SCHEDULE_FORM = () => ({
+  name: '', fileId: '', startAt: '08:00:00', repeatEach: '00:00:00', repeatUntil: '08:01:00',
+  daysOfWeek: [1, 2, 3, 4, 5] as number[],
+  dateFrom: '', dateTo: '', specialVolume: -1, durationLimit: '00:00:00',
+})
+
+type ScheduleForm = ReturnType<typeof EMPTY_SCHEDULE_FORM>
+
+interface GateScheduleModalProps {
+  form:     ScheduleForm
+  onChange: (f: ScheduleForm) => void
+  files:    AipGateRemoteFile[]
+  folders:  AipGateRemoteFolder[]
+  isNew:    boolean
+  saving:   boolean
+  onSave:   () => void
+  onDelete?: () => void
+  onClose:  () => void
+}
+
+function GateScheduleModal({ form, onChange, files, folders, isNew, saving, onSave, onDelete, onClose }: GateScheduleModalProps) {
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const set = (patch: Partial<ScheduleForm>) => onChange({ ...form, ...patch })
+
+  const inputCls = 'w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100'
+  const labelCls = 'mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400'
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="w-full max-w-2xl max-h-[95vh] overflow-y-auto rounded-xl bg-white shadow-2xl dark:bg-gray-900 dark:text-gray-100">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white px-5 py-4 dark:border-gray-700 dark:bg-gray-900">
+          <h2 className="text-base font-semibold">{isNew ? 'New schedule' : 'Edit schedule'}</h2>
+          <button onClick={onClose} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800">
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="space-y-5 px-6 py-5">
+          <div>
+            <label className={labelCls}>Name</label>
+            <input type="text" value={form.name} onChange={(e) => set({ name: e.target.value })} placeholder="e.g. Morning announcement" className={inputCls} />
+          </div>
+
+          <div>
+            <label className={labelCls}>Message file</label>
+            <MiniFileExplorer
+              files={files}
+              folders={folders}
+              selectedId={form.fileId}
+              loading={false}
+              onSelect={(id) => set({ fileId: id })}
+            />
+          </div>
+
+          <div>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Timing</p>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              <div>
+                <label className={labelCls}>Start time</label>
+                <input type="text" value={form.startAt} onChange={(e) => set({ startAt: e.target.value })} placeholder="HH:MM:SS" className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>Repeat each</label>
+                <input type="text" value={form.repeatEach} onChange={(e) => set({ repeatEach: e.target.value })} placeholder="HH:MM:SS" className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>Repeat until</label>
+                <input type="text" value={form.repeatUntil} onChange={(e) => set({ repeatUntil: e.target.value })} placeholder="HH:MM:SS" className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>Duration limit</label>
+                <input type="text" value={form.durationLimit} onChange={(e) => set({ durationLimit: e.target.value })} placeholder="HH:MM:SS" className={inputCls} />
+              </div>
+            </div>
+            <div className="mt-3">
+              <label className={labelCls}>Days</label>
+              <DaysCheckboxes days={form.daysOfWeek} onChange={(d) => set({ daysOfWeek: d })} />
+            </div>
+          </div>
+
+          <div>
+            <label className={labelCls}>Special volume (−1 = default)</label>
+            <input
+              type="number"
+              min={-1} max={100}
+              value={form.specialVolume}
+              onChange={(e) => set({ specialVolume: parseInt(e.target.value) || -1 })}
+              className={`${inputCls} w-32`}
+            />
+          </div>
+        </div>
+
+        <div className="sticky bottom-0 flex items-center justify-between gap-3 border-t border-gray-200 bg-white px-5 py-4 dark:border-gray-700 dark:bg-gray-900">
+          <div>
+            {!isNew && onDelete && (
+              showDeleteConfirm ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-red-500">Delete "{form.name}"?</span>
+                  <button onClick={onDelete} className="rounded-lg bg-red-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-600">Delete</button>
+                  <button onClick={() => setShowDeleteConfirm(false)} className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs text-gray-500 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800">Cancel</button>
+                </div>
+              ) : (
+                <button onClick={() => setShowDeleteConfirm(true)} className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-500 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/20">Delete</button>
+              )
+            )}
+          </div>
+          <div className="flex gap-2">
+            <button onClick={onClose} className="rounded-lg border border-gray-200 px-4 py-2 text-sm text-gray-500 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-800">Cancel</button>
+            <button onClick={onSave} disabled={!form.name.trim() || !form.fileId || !form.startAt || saving} className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 disabled:opacity-50">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function SchedulesTab({
+  gateMac, deviceIp, gateWebConfig,
+}: {
+  gateMac: string; deviceIp: string; gateWebConfig: AipGateWebConfig | undefined
+}) {
+  const { t } = useTranslation('webserver')
+  const { gateSchedules, setGateSchedules, gateFiles, setGateFiles, gateFolders, setGateFolders } = useWebserverStore()
+  const [loading, setLoading] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [form, setForm] = useState(EMPTY_SCHEDULE_FORM())
+  const [editId, setEditId] = useState<string | null>(null)
+  const [showModal, setShowModal] = useState(false)
+  const authEnabled = gateWebConfig?.authEnabled ?? false
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+
+  const buildConfig = useCallback((): AipGateConnectionConfig => ({
+    ip: deviceIp, sslEnabled: gateWebConfig?.sslEnabled ?? false,
+    username: authEnabled ? username : undefined,
+    password: authEnabled ? password : undefined,
+  }), [deviceIp, gateWebConfig, authEnabled, username, password])
+
+  const schedules   = gateSchedules.get(gateMac) ?? []
+  const msgFiles    = (gateFiles.get(gateMac) ?? []).filter((f) => f.category === 'messages')
+  const msgFolders  = (gateFolders.get(gateMac) ?? []).filter((f) => f.category === 'messages')
+
+  const refresh = useCallback(async () => {
+    setLoading(true)
+    try {
+      await window.electronAPI.aip.gateFetchSchedules(gateMac, buildConfig())
+      const list = await window.electronAPI.aip.gateGetSchedules(gateMac)
+      setGateSchedules(gateMac, list)
+    } finally { setLoading(false) }
+  }, [gateMac, buildConfig, setGateSchedules])
+
+  useEffect(() => { void refresh() }, [gateMac])
+
+  useEffect(() => {
+    return window.electronAPI.aip.onGateSchedulesUpdated((ev) => {
+      if (ev.mac === gateMac) setGateSchedules(gateMac, ev.schedules)
+    })
+  }, [gateMac, setGateSchedules])
+
+  // Auto-load message files via push events (same path as FilesTab)
+  useEffect(() => {
+    const u1 = window.electronAPI.aip.onGateFilesUpdated((ev: AipGateFilesUpdatedEvent) => {
+      if (ev.mac === gateMac) setGateFiles(gateMac, ev.files)
+    })
+    const u2 = window.electronAPI.aip.onGateFoldersUpdated((ev: AipGateFoldersUpdatedEvent) => {
+      if (ev.mac === gateMac) setGateFolders(gateMac, ev.folders)
+    })
+    void (async () => {
+      try {
+        const cfg = buildConfig()
+        await window.electronAPI.aip.gateFetchFiles(gateMac, cfg)
+        await window.electronAPI.aip.gateFetchFolders(gateMac, cfg)
+      } catch { /* silent — store keeps whatever is already there */ }
+    })()
+    return () => { u1(); u2() }
+  }, [gateMac])
+
+  const openCreate = () => {
+    setForm(EMPTY_SCHEDULE_FORM()); setEditId(null); setShowModal(true)
+  }
+  const openEdit = (sch: AipGateRemoteSchedule) => {
+    setForm({
+      name: sch.name, fileId: sch.fileId, startAt: sch.startAt,
+      repeatEach: sch.repeatEach, repeatUntil: sch.repeatUntil,
+      daysOfWeek: [...sch.daysOfWeek], dateFrom: sch.dateFrom, dateTo: sch.dateTo,
+      specialVolume: sch.specialVolume, durationLimit: sch.durationLimit,
+    })
+    setEditId(sch.id); setShowModal(true)
+  }
+
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      const payload = {
+        name: form.name, fileId: form.fileId, startAt: form.startAt,
+        repeatEach: form.repeatEach, repeatUntil: form.repeatUntil,
+        daysOfWeek: form.daysOfWeek,
+        dateRange: { from: form.dateFrom, to: form.dateTo },
+        specialVolume: form.specialVolume, durationLimit: form.durationLimit,
+      }
+      if (editId) await window.electronAPI.aip.gateUpdateSchedule(gateMac, buildConfig(), editId, payload)
+      else         await window.electronAPI.aip.gateCreateSchedule(gateMac, buildConfig(), payload)
+      setShowModal(false)
+      await refresh()
+    } finally { setSaving(false) }
+  }
+
+  const handleDelete = async () => {
+    if (!editId) return
+    await window.electronAPI.aip.gateDeleteSchedule(gateMac, buildConfig(), editId)
+    setShowModal(false)
+    await refresh()
+  }
+
+  const handleCancel = async (id: string) => {
+    await window.electronAPI.aip.gateCancelSchedule(gateMac, buildConfig(), id)
+    await refresh()
+  }
+
+  return (
+    <div className="flex h-full flex-col gap-4 p-5">
+      {authEnabled && (
+        <div className="flex gap-3">
+          <div className="flex-1">
+            <label className="mb-1 block text-xs font-medium text-gray-500">{t('files.gate.username')}</label>
+            <TextInput value={username} onChange={setUsername} placeholder={t('files.gate.username')} />
+          </div>
+          <div className="flex-1">
+            <label className="mb-1 block text-xs font-medium text-gray-500">{t('files.gate.password')}</label>
+            <TextInput value={password} onChange={setPassword} type="password" placeholder={t('files.gate.password')} />
+          </div>
+        </div>
+      )}
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          {t('schedules.count', { count: schedules.length })}
+        </span>
+        <div className="flex gap-2">
+          {loading && <SpinnerIcon />}
+          <Btn onClick={refresh} variant="default">{t('buttons.refresh', { ns: 'common' })}</Btn>
+          <Btn onClick={openCreate} variant="primary"><PlusIcon />{t('schedules.create')}</Btn>
+        </div>
+      </div>
+      <div className="flex-1 overflow-auto rounded-xl border border-gray-200 dark:border-gray-700">
+        <table className="min-w-full">
+          <thead className="sticky top-0 bg-gray-50 dark:bg-gray-800/80">
+            <tr>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">{t('schedules.columns.name')}</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">{t('schedules.columns.startAt')}</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">{t('schedules.columns.days')}</th>
+              <th className="px-4 py-3" />
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50">
+            {schedules.length === 0 && (
+              <tr><td colSpan={4} className="px-4 py-10 text-center text-sm text-gray-400">{t('schedules.empty')}</td></tr>
+            )}
+            {schedules.map((sch) => (
+              <tr key={sch.id} className="bg-white hover:bg-gray-50 dark:bg-gray-900 dark:hover:bg-gray-800/60">
+                <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">{sch.name}</td>
+                <td className="px-4 py-3 text-sm tabular-nums text-gray-500">{sch.startAt}</td>
+                <td className="px-4 py-3"><DaysDisplay days={sch.daysOfWeek} /></td>
+                <td className="px-4 py-3 text-right">
+                  <div className="flex justify-end gap-1">
+                    <Btn onClick={() => openEdit(sch)} variant="default" size="xs"><EditIcon /></Btn>
+                    <Btn onClick={() => handleCancel(sch.id)} variant="ghost" size="xs" title={t('schedules.cancel')}>
+                      <XIcon />
+                    </Btn>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {showModal && (
+        <GateScheduleModal
+          form={form}
+          onChange={setForm}
+          files={msgFiles}
+          folders={msgFolders}
+          isNew={!editId}
+          saving={saving}
+          onSave={handleSave}
+          onDelete={editId ? handleDelete : undefined}
+          onClose={() => setShowModal(false)}
+        />
+      )}
+    </div>
+  )
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 const DEVICE_TYPE_LABEL: Record<number, string> = {
@@ -1058,9 +2171,12 @@ const DEVICE_TYPE_LABEL: Record<number, string> = {
 }
 
 const TABS: { key: WebserverTab; tKey: string; Icon: React.FC }[] = [
-  { key: 'sip-extensions',  tKey: 'tabs.extensions',  Icon: PhoneIcon  },
-  { key: 'sip-conferences', tKey: 'tabs.conferences',  Icon: UsersIcon  },
-  { key: 'files',           tKey: 'tabs.files',        Icon: FolderIcon },
+  { key: 'sip-extensions',  tKey: 'tabs.extensions',    Icon: PhoneIcon    },
+  { key: 'sip-conferences', tKey: 'tabs.conferences',    Icon: UsersIcon    },
+  { key: 'files',           tKey: 'tabs.files',          Icon: FolderIcon   },
+  { key: 'channel-players', tKey: 'tabs.channelPlayers', Icon: PlayIcon     },
+  { key: 'scenes',          tKey: 'tabs.scenes',         Icon: SceneIcon    },
+  { key: 'schedules',       tKey: 'tabs.schedules',      Icon: ScheduleIcon },
 ]
 
 export default function Webserver() {
@@ -1170,6 +2286,27 @@ export default function Webserver() {
             gateMac={selectedDevice.mac}
             deviceIp={selectedDevice.network.ip}
             deviceName={selectedDevice.name}
+            gateWebConfig={gateWebConfig}
+          />
+        )}
+        {activeTab === 'channel-players' && (
+          <ChannelPlayersTab
+            gateMac={selectedDevice.mac}
+            deviceIp={selectedDevice.network.ip}
+            gateWebConfig={gateWebConfig}
+          />
+        )}
+        {activeTab === 'scenes' && (
+          <ScenesTab
+            gateMac={selectedDevice.mac}
+            deviceIp={selectedDevice.network.ip}
+            gateWebConfig={gateWebConfig}
+          />
+        )}
+        {activeTab === 'schedules' && (
+          <SchedulesTab
+            gateMac={selectedDevice.mac}
+            deviceIp={selectedDevice.network.ip}
             gateWebConfig={gateWebConfig}
           />
         )}

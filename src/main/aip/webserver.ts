@@ -10,6 +10,9 @@ import type {
   AipGateConnectionConfig,
   AipGateRemoteFile,
   AipGateRemoteFolder,
+  AipGateChannelPlayer,
+  AipGateRemoteScene,
+  AipGateRemoteSchedule,
 } from '../../shared/ipc'
 
 /**
@@ -219,5 +222,83 @@ export class AipWebserver {
 
   async gateRenameFolder(mac: string, config: AipGateConnectionConfig, name: string, newName: string, category: string): Promise<void> {
     await this.core.client.renameGateFolder(mac, config, name, newName, category)
+  }
+
+  // Gate channel players
+
+  async gateFetchChannelPlayers(mac: string, config: AipGateConnectionConfig): Promise<void> {
+    await this.core.client.fetchGateChannelPlayers(mac, config)
+  }
+
+  async gateGetChannelPlayers(mac: string): Promise<AipGateChannelPlayer[]> {
+    try {
+      return (await this.core.client.getGateChannelPlayers(mac)) as AipGateChannelPlayer[]
+    } catch {
+      return []
+    }
+  }
+
+  async gateActivateChannelPlayer(mac: string, config: AipGateConnectionConfig, name: string, source: string): Promise<void> {
+    await this.core.client.activateGateChannelPlayer(mac, config, name, source)
+  }
+
+  async gateDeactivateChannelPlayer(mac: string, config: AipGateConnectionConfig, playerId: string): Promise<void> {
+    await this.core.client.deactivateGateChannelPlayer(mac, config, playerId)
+  }
+
+  // Gate scenes
+
+  async gateFetchScenes(mac: string, config: AipGateConnectionConfig): Promise<void> {
+    await this.core.client.fetchGateScenes(mac, config)
+  }
+
+  async gateGetScenes(mac: string): Promise<AipGateRemoteScene[]> {
+    try {
+      return (await this.core.client.getGateScenes(mac)) as AipGateRemoteScene[]
+    } catch {
+      return []
+    }
+  }
+
+  async gateCreateScene(mac: string, config: AipGateConnectionConfig, scene: object): Promise<void> {
+    await this.core.client.createGateScene(mac, config, scene)
+  }
+
+  async gateUpdateScene(mac: string, config: AipGateConnectionConfig, sceneId: string, scene: object): Promise<void> {
+    await this.core.client.updateGateScene(mac, config, sceneId, scene)
+  }
+
+  async gateDeleteScene(mac: string, config: AipGateConnectionConfig, sceneId: string): Promise<void> {
+    await this.core.client.deleteGateScene(mac, config, sceneId)
+  }
+
+  // Gate schedules
+
+  async gateFetchSchedules(mac: string, config: AipGateConnectionConfig): Promise<void> {
+    await this.core.client.fetchGateSchedules(mac, config)
+  }
+
+  async gateGetSchedules(mac: string): Promise<AipGateRemoteSchedule[]> {
+    try {
+      return (await this.core.client.getGateSchedules(mac)) as AipGateRemoteSchedule[]
+    } catch {
+      return []
+    }
+  }
+
+  async gateCreateSchedule(mac: string, config: AipGateConnectionConfig, schedule: object): Promise<void> {
+    await this.core.client.createGateSchedule(mac, config, schedule)
+  }
+
+  async gateUpdateSchedule(mac: string, config: AipGateConnectionConfig, scheduleId: string, schedule: object): Promise<void> {
+    await this.core.client.updateGateSchedule(mac, config, scheduleId, schedule)
+  }
+
+  async gateDeleteSchedule(mac: string, config: AipGateConnectionConfig, scheduleId: string): Promise<void> {
+    await this.core.client.deleteGateSchedule(mac, config, scheduleId)
+  }
+
+  async gateCancelSchedule(mac: string, config: AipGateConnectionConfig, scheduleId: string): Promise<void> {
+    await this.core.client.cancelGateSchedule(mac, config, scheduleId)
   }
 }

@@ -319,6 +319,81 @@ export function registerIpcHandlers(): void {
       aipWebserver.gateRenameFolder(mac, config, name, newName, category)
   )
 
+  // ── AIP — Gate channel players ────────────────────────────────────────────
+  ipcMain.handle(IPC.AIP.GATE_FETCH_CHANNEL_PLAYERS,
+    (_e, mac: string, config: AipGateConnectionConfig) =>
+      aipWebserver.gateFetchChannelPlayers(mac, config)
+  )
+
+  ipcMain.handle(IPC.AIP.GATE_GET_CHANNEL_PLAYERS, (_e, mac: string) =>
+    aipWebserver.gateGetChannelPlayers(mac)
+  )
+
+  ipcMain.handle(IPC.AIP.GATE_ACTIVATE_CHANNEL_PLAYER,
+    (_e, mac: string, config: AipGateConnectionConfig, name: string, source: string) =>
+      aipWebserver.gateActivateChannelPlayer(mac, config, name, source)
+  )
+
+  ipcMain.handle(IPC.AIP.GATE_DEACTIVATE_CHANNEL_PLAYER,
+    (_e, mac: string, config: AipGateConnectionConfig, playerId: string) =>
+      aipWebserver.gateDeactivateChannelPlayer(mac, config, playerId)
+  )
+
+  // ── AIP — Gate scenes ─────────────────────────────────────────────────────
+  ipcMain.handle(IPC.AIP.GATE_FETCH_SCENES,
+    (_e, mac: string, config: AipGateConnectionConfig) =>
+      aipWebserver.gateFetchScenes(mac, config)
+  )
+
+  ipcMain.handle(IPC.AIP.GATE_GET_SCENES, (_e, mac: string) =>
+    aipWebserver.gateGetScenes(mac)
+  )
+
+  ipcMain.handle(IPC.AIP.GATE_CREATE_SCENE,
+    (_e, mac: string, config: AipGateConnectionConfig, scene: object) =>
+      aipWebserver.gateCreateScene(mac, config, scene)
+  )
+
+  ipcMain.handle(IPC.AIP.GATE_UPDATE_SCENE,
+    (_e, mac: string, config: AipGateConnectionConfig, sceneId: string, scene: object) =>
+      aipWebserver.gateUpdateScene(mac, config, sceneId, scene)
+  )
+
+  ipcMain.handle(IPC.AIP.GATE_DELETE_SCENE,
+    (_e, mac: string, config: AipGateConnectionConfig, sceneId: string) =>
+      aipWebserver.gateDeleteScene(mac, config, sceneId)
+  )
+
+  // ── AIP — Gate schedules ──────────────────────────────────────────────────
+  ipcMain.handle(IPC.AIP.GATE_FETCH_SCHEDULES,
+    (_e, mac: string, config: AipGateConnectionConfig) =>
+      aipWebserver.gateFetchSchedules(mac, config)
+  )
+
+  ipcMain.handle(IPC.AIP.GATE_GET_SCHEDULES, (_e, mac: string) =>
+    aipWebserver.gateGetSchedules(mac)
+  )
+
+  ipcMain.handle(IPC.AIP.GATE_CREATE_SCHEDULE,
+    (_e, mac: string, config: AipGateConnectionConfig, schedule: object) =>
+      aipWebserver.gateCreateSchedule(mac, config, schedule)
+  )
+
+  ipcMain.handle(IPC.AIP.GATE_UPDATE_SCHEDULE,
+    (_e, mac: string, config: AipGateConnectionConfig, scheduleId: string, schedule: object) =>
+      aipWebserver.gateUpdateSchedule(mac, config, scheduleId, schedule)
+  )
+
+  ipcMain.handle(IPC.AIP.GATE_DELETE_SCHEDULE,
+    (_e, mac: string, config: AipGateConnectionConfig, scheduleId: string) =>
+      aipWebserver.gateDeleteSchedule(mac, config, scheduleId)
+  )
+
+  ipcMain.handle(IPC.AIP.GATE_CANCEL_SCHEDULE,
+    (_e, mac: string, config: AipGateConnectionConfig, scheduleId: string) =>
+      aipWebserver.gateCancelSchedule(mac, config, scheduleId)
+  )
+
   // Calendar + Scene — in-memory mock stores
 
   const now = new Date()

@@ -9,6 +9,9 @@ import type {
   AipAudioFile,
   AipGateRemoteFile,
   AipGateRemoteFolder,
+  AipGateChannelPlayer,
+  AipGateRemoteScene,
+  AipGateRemoteSchedule,
 } from '@shared/ipc'
 
 // ─── File transfer tracking ───────────────────────────────────────────────────
@@ -30,7 +33,7 @@ export interface TrackedFile {
 
 // ─── Store shape ──────────────────────────────────────────────────────────────
 
-export type WebserverTab = 'sip-extensions' | 'sip-conferences' | 'files'
+export type WebserverTab = 'sip-extensions' | 'sip-conferences' | 'files' | 'channel-players' | 'scenes' | 'schedules'
 export type FilesSubTab  = FileCategory
 
 // Compound key for conference selection: `${mac}|${conferenceNumber}`
@@ -52,6 +55,10 @@ interface WebserverState {
   gateFiles:   Map<string, AipGateRemoteFile[]>
   gateFolders: Map<string, AipGateRemoteFolder[]>
 
+  gateChannelPlayers: Map<string, AipGateChannelPlayer[]>
+  gateScenes:         Map<string, AipGateRemoteScene[]>
+  gateSchedules:      Map<string, AipGateRemoteSchedule[]>
+
   setActiveTab:            (tab: WebserverTab) => void
   setFilesSubTab:          (tab: FilesSubTab) => void
   setSelectedConfKey:      (key: string | null) => void
@@ -69,6 +76,10 @@ interface WebserverState {
 
   setGateFiles:   (mac: string, files: AipGateRemoteFile[]) => void
   setGateFolders: (mac: string, folders: AipGateRemoteFolder[]) => void
+
+  setGateChannelPlayers: (mac: string, players: AipGateChannelPlayer[]) => void
+  setGateScenes:         (mac: string, scenes: AipGateRemoteScene[]) => void
+  setGateSchedules:      (mac: string, schedules: AipGateRemoteSchedule[]) => void
 
   addFile:           (file: TrackedFile) => void
   applyProgress:     (event: AipFileTransferProgressEvent) => void
@@ -89,8 +100,11 @@ export const useWebserverStore = create<WebserverState>((set) => ({
   gateWebConfigs:   new Map(),
   deviceAudioFiles: [],
   files:            [],
-  gateFiles:        new Map(),
-  gateFolders:      new Map(),
+  gateFiles:          new Map(),
+  gateFolders:        new Map(),
+  gateChannelPlayers: new Map(),
+  gateScenes:         new Map(),
+  gateSchedules:      new Map(),
 
   setActiveTab:       (tab) => set({ activeTab: tab }),
   setFilesSubTab:     (tab) => set({ filesSubTab: tab }),
@@ -147,6 +161,27 @@ export const useWebserverStore = create<WebserverState>((set) => ({
       const next = new Map(s.gateFolders)
       next.set(mac, folders)
       return { gateFolders: next }
+    }),
+
+  setGateChannelPlayers: (mac, players) =>
+    set((s) => {
+      const next = new Map(s.gateChannelPlayers)
+      next.set(mac, players)
+      return { gateChannelPlayers: next }
+    }),
+
+  setGateScenes: (mac, scenes) =>
+    set((s) => {
+      const next = new Map(s.gateScenes)
+      next.set(mac, scenes)
+      return { gateScenes: next }
+    }),
+
+  setGateSchedules: (mac, schedules) =>
+    set((s) => {
+      const next = new Map(s.gateSchedules)
+      next.set(mac, schedules)
+      return { gateSchedules: next }
     }),
 
   addFile: (file) => set((s) => ({ files: [...s.files, file] })),

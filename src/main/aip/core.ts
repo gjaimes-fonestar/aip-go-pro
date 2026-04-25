@@ -93,6 +93,27 @@ export class AipCore {
       }
     })
 
+    this.client.setOnGateChannelPlayersUpdated((json: string) => {
+      for (const win of BrowserWindow.getAllWindows()) {
+        if (!win.isDestroyed())
+          win.webContents.send(IPC.AIP.GATE_CHANNEL_PLAYERS_UPDATED, json)
+      }
+    })
+
+    this.client.setOnGateScenesUpdated((json: string) => {
+      for (const win of BrowserWindow.getAllWindows()) {
+        if (!win.isDestroyed())
+          win.webContents.send(IPC.AIP.GATE_SCENES_UPDATED, json)
+      }
+    })
+
+    this.client.setOnGateSchedulesUpdated((json: string) => {
+      for (const win of BrowserWindow.getAllWindows()) {
+        if (!win.isDestroyed())
+          win.webContents.send(IPC.AIP.GATE_SCHEDULES_UPDATED, json)
+      }
+    })
+
     this.client.connect()
   }
 

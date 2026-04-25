@@ -2,15 +2,111 @@ import { useEffect, useCallback } from 'react'
 import { RouterProvider } from 'react-router-dom'
 import { router } from './router'
 import { useAppStore } from './store/app.store'
-import { useTransfersStore } from './store/transfers.store'
+import { useTransfersStore, OPERATION_TO_KIND } from './store/transfers.store'
+import { useToastStore, type Toast } from './store/toast.store'
 import type { AipGateOperationCompletedEvent, AipGateOperationErrorEvent } from '@shared/ipc'
 
 const POLL_INTERVAL_MS = 3_000
+const TOAST_DURATION_MS = 4500
+
+const OP_SUCCESS_LABEL: Record<string, string> = {
+  uploadFile:   'File uploaded successfully',
+  downloadFile: 'File downloaded successfully',
+  deleteFile:   'File deleted',
+  createFolder: 'Folder created',
+  deleteFolder: 'Folder deleted',
+  renameFolder: 'Folder renamed',
+}
+
+function CheckCircleIcon() {
+  return (
+    <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  )
+}
+
+function AlertCircleIcon() {
+  return (
+    <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+        d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  )
+}
+
+function XSmallIcon() {
+  return (
+    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+    </svg>
+  )
+}
+
+function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string) => void }) {
+  const isSuccess = toast.kind === 'success'
+  return (
+    <div
+      className="pointer-events-auto w-80 overflow-hidden rounded-xl border border-white/10 bg-gray-900 shadow-2xl dark:bg-gray-800"
+      style={{ animation: 'toast-in 0.25s cubic-bezier(0.34,1.56,0.64,1) both' }}
+    >
+      <div className="flex items-start gap-3 px-4 pt-3.5 pb-2.5">
+        <div className={`mt-0.5 ${isSuccess ? 'text-green-400' : 'text-red-400'}`}>
+          {isSuccess ? <CheckCircleIcon /> : <AlertCircleIcon />}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+            {isSuccess ? 'Success' : 'Error'}
+          </p>
+          <p className="mt-0.5 text-sm leading-snug text-white">{toast.message}</p>
+        </div>
+        <button
+          onClick={() => onDismiss(toast.id)}
+          className="shrink-0 rounded-md p-0.5 text-gray-500 hover:bg-white/10 hover:text-white transition-colors"
+          aria-label="Dismiss"
+        >
+          <XSmallIcon />
+        </button>
+      </div>
+      <div className="mx-4 mb-3 h-0.5 overflow-hidden rounded-full bg-white/10">
+        <div
+          className={`h-full origin-left rounded-full ${isSuccess ? 'bg-green-500' : 'bg-red-500'}`}
+          style={{ animation: `toast-progress ${TOAST_DURATION_MS}ms linear forwards` }}
+        />
+      </div>
+    </div>
+  )
+}
+
+function ToastContainer() {
+  const { toasts, dismiss } = useToastStore()
+  return (
+    <>
+      <style>{`
+        @keyframes toast-in {
+          from { transform: translateX(110%); opacity: 0; }
+          to   { transform: translateX(0);    opacity: 1; }
+        }
+        @keyframes toast-progress {
+          from { transform: scaleX(1); }
+          to   { transform: scaleX(0); }
+        }
+      `}</style>
+      <div className="fixed bottom-5 right-5 z-[9999] flex flex-col gap-2 pointer-events-none">
+        {toasts.map((toast) => (
+          <ToastItem key={toast.id} toast={toast} onDismiss={dismiss} />
+        ))}
+      </div>
+    </>
+  )
+}
 
 export default function App() {
   const pollBackendStatus = useAppStore((s) => s.pollBackendStatus)
   const resolveRecord     = useTransfersStore((s) => s.resolveRecord)
   const rejectRecord      = useTransfersStore((s) => s.rejectRecord)
+  const pushToast         = useToastStore((s) => s.push)
 
   useEffect(() => {
     pollBackendStatus()
@@ -20,11 +116,14 @@ export default function App() {
 
   const handleOpCompleted = useCallback((event: AipGateOperationCompletedEvent) => {
     resolveRecord(event.mac, event.operation)
-  }, [resolveRecord])
+    const kind = OPERATION_TO_KIND[event.operation]
+    if (kind) pushToast(OP_SUCCESS_LABEL[event.operation] ?? 'Operation completed', 'success')
+  }, [resolveRecord, pushToast])
 
   const handleOpError = useCallback((event: AipGateOperationErrorEvent) => {
     rejectRecord(event.mac, event.operation, event.message)
-  }, [rejectRecord])
+    pushToast(event.message, 'error')
+  }, [rejectRecord, pushToast])
 
   useEffect(() => {
     const u1 = window.electronAPI.aip.onGateOperationCompleted(handleOpCompleted)
@@ -32,5 +131,10 @@ export default function App() {
     return () => { u1(); u2() }
   }, [handleOpCompleted, handleOpError])
 
-  return <RouterProvider router={router} />
+  return (
+    <>
+      <RouterProvider router={router} />
+      <ToastContainer />
+    </>
+  )
 }

@@ -10,7 +10,7 @@ export type TransferKind =
   | 'ftp-upload'
   | 'ftp-download'
 
-export type TransferStatus = 'pending' | 'done' | 'error' | 'cancelled'
+export type TransferStatus = 'waiting' | 'pending' | 'done' | 'error' | 'cancelled'
 
 export interface TransferRecord {
   id:         string
@@ -24,16 +24,25 @@ export interface TransferRecord {
   error?:     string
 }
 
-interface TransfersState {
-  records: TransferRecord[]
-  addRecord:       (r: TransferRecord) => void
-  resolveRecord:   (mac: string, operation: string) => void
-  rejectRecord:    (mac: string, operation: string, error: string) => void
-  clearCompleted:  () => void
-  clearAll:        () => void
+interface QueuedOp {
+  recordId: string
+  execute:  () => Promise<void>
 }
 
-const OPERATION_TO_KIND: Record<string, TransferKind> = {
+interface TransfersState {
+  records:      TransferRecord[]
+  opQueue:      QueuedOp[]
+  processingId: string | null
+
+  addRecord:      (r: TransferRecord) => void
+  enqueueOp:      (recordId: string, execute: () => Promise<void>) => void
+  resolveRecord:  (mac: string, operation: string) => void
+  rejectRecord:   (mac: string, operation: string, error: string) => void
+  clearCompleted: () => void
+  clearAll:       () => void
+}
+
+export const OPERATION_TO_KIND: Record<string, TransferKind> = {
   uploadFile:    'gate-upload',
   downloadFile:  'gate-download',
   deleteFile:    'gate-delete',
@@ -42,42 +51,104 @@ const OPERATION_TO_KIND: Record<string, TransferKind> = {
   renameFolder:  'gate-folder-rename',
 }
 
-export const useTransfersStore = create<TransfersState>((set) => ({
-  records: [],
+const updateStatus = (
+  s: TransfersState,
+  id: string,
+  status: TransferStatus,
+  error?: string,
+): Partial<TransfersState> => {
+  const idx = s.records.findIndex((r) => r.id === id)
+  if (idx < 0) return {}
+  const records = [...s.records]
+  records[idx] = { ...records[idx], status, ...(error !== undefined ? { error } : {}) }
+  return { records }
+}
 
-  addRecord: (r) =>
-    set((s) => ({ records: [r, ...s.records] })),
+export const useTransfersStore = create<TransfersState>((set, get) => {
+  const startNext = () => {
+    const { opQueue } = get()
+    if (opQueue.length === 0) {
+      set({ processingId: null })
+      return
+    }
+    const [next, ...rest] = opQueue
+    set((s) => ({
+      opQueue: rest,
+      processingId: next.recordId,
+      ...updateStatus(s, next.recordId, 'pending'),
+    }))
+    next.execute().then(
+      () => {
+        set((s) => ({ ...updateStatus(s, next.recordId, 'done') }))
+        startNext()
+      },
+      (err: unknown) => {
+        set((s) => ({ ...updateStatus(s, next.recordId, 'error', String(err)) }))
+        startNext()
+      },
+    )
+  }
 
-  resolveRecord: (mac, operation) => {
-    const kind = OPERATION_TO_KIND[operation]
-    if (!kind) return
-    set((s) => {
-      const idx = s.records.findIndex(
-        (r) => r.mac === mac && r.kind === kind && r.status === 'pending',
-      )
-      if (idx < 0) return s
-      const next = [...s.records]
-      next[idx] = { ...next[idx], status: 'done' }
-      return { records: next }
-    })
-  },
+  return {
+    records:      [],
+    opQueue:      [],
+    processingId: null,
 
-  rejectRecord: (mac, operation, error) => {
-    const kind = OPERATION_TO_KIND[operation]
-    if (!kind) return
-    set((s) => {
-      const idx = s.records.findIndex(
-        (r) => r.mac === mac && r.kind === kind && r.status === 'pending',
-      )
-      if (idx < 0) return s
-      const next = [...s.records]
-      next[idx] = { ...next[idx], status: 'error', error }
-      return { records: next }
-    })
-  },
+    addRecord: (r) => set((s) => ({ records: [r, ...s.records] })),
 
-  clearCompleted: () =>
-    set((s) => ({ records: s.records.filter((r) => r.status === 'pending') })),
+    enqueueOp: (recordId, execute) => {
+      if (get().processingId === null) {
+        set((s) => ({ processingId: recordId, ...updateStatus(s, recordId, 'pending') }))
+        execute().then(
+          () => {
+            set((s) => ({ ...updateStatus(s, recordId, 'done') }))
+            startNext()
+          },
+          (err: unknown) => {
+            set((s) => ({ ...updateStatus(s, recordId, 'error', String(err)) }))
+            startNext()
+          },
+        )
+      } else {
+        set((s) => ({ opQueue: [...s.opQueue, { recordId, execute }] }))
+      }
+    },
 
-  clearAll: () => set({ records: [] }),
-}))
+    resolveRecord: (mac, operation) => {
+      const kind = OPERATION_TO_KIND[operation]
+      if (!kind) return
+      set((s) => {
+        const idx = s.records.findIndex(
+          (r) => r.mac === mac && r.kind === kind && r.status === 'pending',
+        )
+        if (idx < 0) return s
+        const records = [...s.records]
+        records[idx] = { ...records[idx], status: 'done' }
+        return { records }
+      })
+    },
+
+    rejectRecord: (mac, operation, error) => {
+      const kind = OPERATION_TO_KIND[operation]
+      if (!kind) return
+      set((s) => {
+        const idx = s.records.findIndex(
+          (r) => r.mac === mac && r.kind === kind && r.status === 'pending',
+        )
+        if (idx < 0) return s
+        const records = [...s.records]
+        records[idx] = { ...records[idx], status: 'error', error }
+        return { records }
+      })
+    },
+
+    clearCompleted: () =>
+      set((s) => ({
+        records: s.records.filter(
+          (r) => r.status === 'pending' || r.status === 'waiting',
+        ),
+      })),
+
+    clearAll: () => set({ records: [], opQueue: [], processingId: null }),
+  }
+})

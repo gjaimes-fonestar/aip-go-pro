@@ -104,12 +104,14 @@ const KIND_COLOR: Record<TransferKind, string> = {
 function StatusBadge({ status }: { status: TransferRecord['status'] }) {
   const { t } = useTranslation('transfers')
   const styles: Record<TransferRecord['status'], string> = {
+    waiting:   'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400',
     pending:   'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400',
     done:      'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400',
     error:     'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400',
     cancelled: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-500',
   }
   const icons: Record<TransferRecord['status'], React.ReactNode> = {
+    waiting:   <span className="h-1.5 w-1.5 rounded-full bg-current inline-block" />,
     pending:   <SpinnerIcon />,
     done:      <CheckIcon />,
     error:     <XIcon />,
@@ -167,7 +169,7 @@ export default function Transfers() {
   const { t } = useTranslation('transfers')
   const { records, clearCompleted, clearAll } = useTransfersStore()
 
-  const pendingCount = records.filter((r) => r.status === 'pending').length
+  const pendingCount = records.filter((r) => r.status === 'pending' || r.status === 'waiting').length
 
   return (
     <div className="flex h-full flex-col overflow-hidden">

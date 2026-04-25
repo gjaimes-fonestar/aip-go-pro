@@ -18,9 +18,10 @@
     "ftp-download": "FTP Download"
   },
   "status": {
-    "pending": "In progress",
-    "done": "Done",
-    "error": "Error",
+    "waiting":   "Waiting",
+    "pending":   "In progress",
+    "done":      "Done",
+    "error":     "Error",
     "cancelled": "Cancelled"
   }
 }

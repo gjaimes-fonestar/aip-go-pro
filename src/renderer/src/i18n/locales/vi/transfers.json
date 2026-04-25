@@ -18,9 +18,10 @@
     "ftp-download": "Tải xuống FTP"
   },
   "status": {
-    "pending": "Đang thực hiện",
-    "done": "Hoàn thành",
-    "error": "Lỗi",
+    "waiting":   "Đang chờ",
+    "pending":   "Đang thực hiện",
+    "done":      "Hoàn thành",
+    "error":     "Lỗi",
     "cancelled": "Đã hủy"
   }
 }
