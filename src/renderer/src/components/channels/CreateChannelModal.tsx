@@ -4,7 +4,7 @@ import { useStreamsStore } from '../../store/streams.store'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type AudioSource = 'local' | 'online' | 'windows'
+type AudioSource = 'local' | 'online'
 type StartWith   = 'files' | 'playlist'
 type Quality     = 'low' | 'normal' | 'high'
 type Channels    = 'mono' | 'stereo'
@@ -14,7 +14,6 @@ export interface NewChannelForm {
   sourceType:     AudioSource
   startWith:      StartWith
   streamUrl:      string
-  windowsDevice:  string
   quality:        Quality
   audioChannels:  Channels
   loopAll:        boolean
@@ -36,7 +35,6 @@ const DEFAULTS: NewChannelForm = {
   sourceType:     'local',
   startWith:      'files',
   streamUrl:      '',
-  windowsDevice:  'Default audio device',
   quality:        'normal',
   audioChannels:  'stereo',
   loopAll:        false,
@@ -212,23 +210,6 @@ export default function CreateChannelModal({ open, onClose, onCreate }: Props) {
                 </div>
               )}
 
-              <RadioOption
-                label={t('modal.windowsCapture')}
-                checked={form.sourceType === 'windows'}
-                onChange={() => set('sourceType', 'windows')}
-              />
-              {form.sourceType === 'windows' && (
-                <div className="ml-6">
-                  <select
-                    value={form.windowsDevice}
-                    onChange={(e) => set('windowsDevice', e.target.value)}
-                    className="w-full h-8 rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 focus:border-primary focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
-                  >
-                    <option>Default audio device</option>
-                    <option>Speakers (High Definition Audio Device)</option>
-                  </select>
-                </div>
-              )}
             </div>
           </div>
 
