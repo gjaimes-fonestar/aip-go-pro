@@ -160,6 +160,32 @@ function DeviceContextMenu({
   )
 }
 
+function AccordionSection({
+  title, open, onToggle, children,
+}: {
+  title: string; open: boolean; onToggle: () => void; children: React.ReactNode
+}) {
+  return (
+    <div className="border-b border-gray-100 dark:border-gray-700/60 last:border-0">
+      <button
+        onClick={onToggle}
+        className="flex w-full items-center justify-between px-4 py-2.5 text-left"
+      >
+        <span className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+          {title}
+        </span>
+        <svg
+          className={`h-3.5 w-3.5 shrink-0 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`}
+          fill="none" stroke="currentColor" viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      {open && <div className="px-4 pb-4">{children}</div>}
+    </div>
+  )
+}
+
 function ActionsPanel({
   device, lastSeen, sipConfigured, onConfigure,
 }: {
@@ -171,13 +197,18 @@ function ActionsPanel({
   const { t } = useTranslation('devices')
   const optimisticVolume = useDevicesStore((s) => s.optimisticVolume)
   const caps = device ? {
-    hasVolume:     hasVolumeControl(device.device_type),
-    isPlayer:      isPlayerDevice(device.device_type),
+    hasVolume:      hasVolumeControl(device.device_type),
+    isPlayer:       isPlayerDevice(device.device_type),
     isConfigurable: isConfigurableDevice(device.device_type),
   } : null
-  const [sliderVolume,      setSliderVolume]      = useState(50)
+
+  const [openSections,     setOpenSections]     = useState<Record<string, boolean>>({ info: true, volume: true, channel: true })
+  const [sliderVolume,     setSliderVolume]      = useState(50)
   const [availableChannels, setAvailableChannels] = useState<AipChannelInfo[]>([])
   const [selectedChannelId, setSelectedChannelId] = useState<number | ''>('')
+
+  const toggle = (key: string) =>
+    setOpenSections((s) => ({ ...s, [key]: !s[key] }))
 
   useEffect(() => {
     if (device) setSliderVolume(device.volume)
@@ -209,13 +240,10 @@ function ActionsPanel({
   }
 
   return (
-    <div className="flex flex-col gap-4 p-4">
-      {/* Identity */}
-      <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800">
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-          {t(getTypeLabelKey(device.device_type))}
-        </p>
-        <p className="mt-0.5 font-semibold text-gray-900 dark:text-white">{device.name}</p>
+    <div className="flex flex-col">
+      {/* Device info */}
+      <AccordionSection title={t(getTypeLabelKey(device.device_type))} open={!!openSections.info} onToggle={() => toggle('info')}>
+        <p className="font-semibold text-gray-900 dark:text-white">{device.name}</p>
         <p className="text-xs text-gray-500">{device.network.ip}</p>
         <p className="font-mono text-[10px] text-gray-400">{device.mac}</p>
         {lastSeen && (
@@ -226,16 +254,14 @@ function ActionsPanel({
           {device.channels_locked && <Badge label={t('badges.chLocked')}  variant="warning" />}
           {sipConfigured          && <Badge label={t('badges.sip')}        variant="success" />}
         </div>
-      </div>
+      </AccordionSection>
 
-      {/* Volume — only for devices that support it */}
+      {/* Volume */}
       {caps?.hasVolume && (
-        <div>
-          <div className="mb-1.5 flex items-center justify-between">
-            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">{t('columns.volume')}</span>
-            <span className="text-xs font-medium tabular-nums text-gray-700 dark:text-gray-300">
-              {sliderVolume}%
-            </span>
+        <AccordionSection title={t('columns.volume')} open={!!openSections.volume} onToggle={() => toggle('volume')}>
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-xs text-gray-500 dark:text-gray-400">Level</span>
+            <span className="text-xs font-medium tabular-nums text-gray-700 dark:text-gray-300">{sliderVolume}%</span>
           </div>
           <input
             type="range" min={0} max={100} value={sliderVolume}
@@ -245,60 +271,62 @@ function ActionsPanel({
             onTouchEnd={() => handleVolumeCommit(sliderVolume)}
             className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-gray-200 accent-primary disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-700"
           />
-        </div>
+        </AccordionSection>
       )}
 
-      {/* Channel assignment — only for player-type devices */}
+      {/* Channel assignment */}
       {caps?.isPlayer && (
-        <div className="flex flex-col gap-2">
-          <select
-            value={selectedChannelId}
-            onChange={(e) => setSelectedChannelId(e.target.value === '' ? '' : Number(e.target.value))}
-            className="h-8 w-full rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 focus:border-primary focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
-          >
-            <option value="">{t('selectChannel')}</option>
-            {availableChannels.map((ch) => (
-              <option key={ch.id} value={ch.id}>{ch.name}</option>
-            ))}
-          </select>
-          <button
-            disabled={selectedChannelId === ''}
-            onClick={() => {
-              if (!device || selectedChannelId === '') return
-              window.electronAPI.aip.linkChannelToDevice(selectedChannelId as number, device.mac).catch(console.error)
-            }}
-            className="w-full rounded-lg bg-primary py-2 text-sm font-semibold text-white hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            {t('playChannel')}
-          </button>
-          <button
-            onClick={() => window.electronAPI.aip.stopAudio(device.mac).catch(console.error)}
-            className="w-full rounded-lg border border-gray-200 bg-white py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
-          >
-            {t('stopPlayback')}
-          </button>
-        </div>
+        <AccordionSection title={t('columns.channel')} open={!!openSections.channel} onToggle={() => toggle('channel')}>
+          <div className="flex flex-col gap-2">
+            <select
+              value={selectedChannelId}
+              onChange={(e) => setSelectedChannelId(e.target.value === '' ? '' : Number(e.target.value))}
+              className="h-8 w-full rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 focus:border-primary focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
+            >
+              <option value="">{t('selectChannel')}</option>
+              {availableChannels.map((ch) => (
+                <option key={ch.id} value={ch.id}>{ch.name}</option>
+              ))}
+            </select>
+            <button
+              disabled={selectedChannelId === ''}
+              onClick={() => {
+                if (!device || selectedChannelId === '') return
+                window.electronAPI.aip.linkChannelToDevice(selectedChannelId as number, device.mac).catch(console.error)
+              }}
+              className="w-full rounded-lg bg-primary py-2 text-sm font-semibold text-white hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {t('playChannel')}
+            </button>
+            <button
+              onClick={() => window.electronAPI.aip.stopAudio(device.mac).catch(console.error)}
+              className="w-full rounded-lg border border-gray-200 bg-white py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+            >
+              {t('stopPlayback')}
+            </button>
+          </div>
+        </AccordionSection>
       )}
 
-      {/* Configure button — hidden for non-configurable devices (PC Server) */}
+      {/* Configure */}
       {caps?.isConfigurable && (
-        <button
-          onClick={onConfigure}
-          className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
-        >
-          <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-              d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
-          {t('contextMenu.configureDevice')}
-        </button>
+        <AccordionSection title={t('contextMenu.configureDevice')} open={!!openSections.configure} onToggle={() => toggle('configure')}>
+          <button
+            onClick={onConfigure}
+            className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-primary py-2 text-sm font-semibold text-white hover:bg-primary/90"
+          >
+            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            {t('contextMenu.configureDevice')}
+          </button>
+        </AccordionSection>
       )}
     </div>
   )
 }
-
-type GroupBy = 'none' | 'areas' | 'groups'
 
 const COLUMN_KEYS = ['type', 'model', 'name', 'status', 'channel', 'volume', 'ip', 'mac', 'lastSeen'] as const
 type ColumnKey = (typeof COLUMN_KEYS)[number]
@@ -311,10 +339,7 @@ export default function Devices() {
   const { applySipConfigEvent, applySoundMeterConfigEvent, getSipConfig, getSoundMeterConfig } =
     useDeviceConfigStore()
 
-  const [groupBy,       setGroupBy]    = useState<GroupBy>('none')
-  const [filterEnabled, setFilter]    = useState(false)
-  const [filterType,    setFilterType] = useState<string>('None')
-  const [search,        setSearch]    = useState('')
+  const [search, setSearch] = useState('')
   const [configOpen,    setConfigOpen] = useState(false)
   const unsubRefs = useRef<Array<() => void>>([])
 
@@ -372,15 +397,14 @@ export default function Devices() {
   const allEntries = useMemo(() => Array.from(entries.values()), [entries])
 
   const visible = useMemo(() => allEntries.filter(({ device }) => {
-    if (search &&
-      !device.name.toLowerCase().includes(search.toLowerCase()) &&
-      !device.network.ip.includes(search) &&
-      !getModelName(device.device_type, device.device_sub_type).toLowerCase().includes(search.toLowerCase())
-    ) return false
-    if (filterEnabled && filterType !== 'None' && getTypeLabelKey(device.device_type) !== filterType)
-      return false
-    return true
-  }), [allEntries, search, filterEnabled, filterType])
+    if (!search) return true
+    const q = search.toLowerCase()
+    return (
+      device.name.toLowerCase().includes(q) ||
+      device.network.ip.includes(q) ||
+      getModelName(device.device_type, device.device_sub_type).toLowerCase().includes(q)
+    )
+  }), [allEntries, search])
 
   const selectedEntry  = selectedMac ? entries.get(selectedMac) ?? null : null
   const selectedDevice = selectedEntry?.device ?? null
@@ -425,6 +449,9 @@ export default function Devices() {
               <h1 className="text-base font-bold text-gray-900 dark:text-white">{t('pageHeading')}</h1>
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 {t('pageSubtitle', { count: allEntries.length })}
+                {search && visible.length !== allEntries.length && (
+                  <span className="ml-1 text-primary">{visible.length} shown</span>
+                )}
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -567,40 +594,6 @@ export default function Devices() {
             </table>
           </div>
 
-          {/* Bottom filter bar */}
-          <div className="flex flex-wrap items-center gap-4 border-t border-gray-200 px-5 py-2.5 dark:border-gray-700">
-            <div className="flex items-center gap-3">
-              <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">Group</span>
-              {(['none', 'areas', 'groups'] as GroupBy[]).map((g) => (
-                <label key={g} className="flex cursor-pointer items-center gap-1">
-                  <input type="radio" name="groupBy" value={g} checked={groupBy === g}
-                    onChange={() => setGroupBy(g)} className="accent-primary" />
-                  <span className="text-xs capitalize text-gray-600 dark:text-gray-300">{g}</span>
-                </label>
-              ))}
-            </div>
-            <div className="h-4 w-px bg-gray-200 dark:bg-gray-700" />
-            <div className="flex items-center gap-2">
-              <label className="flex cursor-pointer items-center gap-1">
-                <input type="checkbox" checked={filterEnabled} onChange={(e) => setFilter(e.target.checked)}
-                  className="rounded accent-primary" />
-                <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">Filter</span>
-              </label>
-              <select
-                value={filterType}
-                onChange={(e) => setFilterType(e.target.value)}
-                disabled={!filterEnabled}
-                className="h-7 rounded border border-gray-200 bg-white px-2 text-xs text-gray-700 disabled:opacity-40 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300"
-              >
-                {['None', 'Receiver', 'Transmitter', 'Amplifier', 'Gate'].map((t) => (
-                  <option key={t}>{t}</option>
-                ))}
-              </select>
-            </div>
-            <span className="ml-auto text-xs tabular-nums text-gray-400">
-              {visible.length} / {allEntries.length}
-            </span>
-          </div>
         </div>
 
         {/* Right config panel — edge toggle */}
