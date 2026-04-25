@@ -4,6 +4,7 @@ import { Badge } from '../components/ui/Badge'
 import CreateChannelModal, { type NewChannelForm } from '../components/channels/CreateChannelModal'
 import { useDevicesStore } from '../store/devices.store'
 import { useStreamsStore } from '../store/streams.store'
+import { isPlayerDevice } from '../utils/deviceTypes'
 import type {
   AipChannelInfo,
   AipChannelConfig,
@@ -191,10 +192,18 @@ function DeleteConfirm({ name, onConfirm, onCancel }: {
 
 // ─── Channel row ──────────────────────────────────────────────────────────────
 
+function formatTime(sec: number): string {
+  const m = Math.floor(sec / 60)
+  const s = sec % 60
+  return `${m}:${String(s).padStart(2, '0')}`
+}
+
 function ChannelRow({
   channel,
   devices,
   errorMessage,
+  positionSec,
+  totalSec,
   onPlay,
   onStop,
   onPrev,
@@ -205,6 +214,8 @@ function ChannelRow({
   channel:       AipChannelInfo
   devices:       AipDeviceJson[]
   errorMessage?: string
+  positionSec:   number
+  totalSec:      number
   onPlay:        (id: number, isPlaying: boolean) => void
   onStop:        (id: number) => void
   onPrev:        (id: number) => void
@@ -348,14 +359,22 @@ function ChannelRow({
               <TransportBtn onClick={handleNext} title="Next"><Ico.Next /></TransportBtn>
               <TransportBtn onClick={handleStop} title="Stop"><Ico.Stop /></TransportBtn>
 
-              <div className="flex flex-1 items-center gap-3 mx-2">
-                <div className="flex-1 h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-primary transition-all"
-                    style={{ width: isPlaying ? '35%' : '0%' }}
-                  />
+              {sourceType !== 'online' && (
+                <div className="flex flex-1 items-center gap-2 mx-2 min-w-0">
+                  <span className="shrink-0 text-xs tabular-nums text-gray-400 dark:text-gray-500 w-10 text-right">
+                    {formatTime(positionSec)}
+                  </span>
+                  <div className="flex-1 h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-primary transition-all duration-1000"
+                      style={{ width: totalSec > 0 ? `${Math.min(100, (positionSec / totalSec) * 100)}%` : '0%' }}
+                    />
+                  </div>
+                  <span className="shrink-0 text-xs tabular-nums text-gray-400 dark:text-gray-500 w-10">
+                    {totalSec > 0 ? formatTime(totalSec) : '--:--'}
+                  </span>
                 </div>
-              </div>
+              )}
 
               {/* Flags */}
               <TransportBtn onClick={(e) => e.stopPropagation()} active={channel.loop} title="Loop">
@@ -531,7 +550,7 @@ function NetworkChannelRow({
 
 const ALLOWED_STREAM_SCHEMES = ['http://', 'https://', 'rtsp://', 'rtsps://']
 
-const DISCOVERY_MS = 120_000  // 2 minutes — wait for AIP multicast discovery
+const DISCOVERY_MS = 30_000  // 30 seconds — wait for AIP multicast discovery
 
 function formatCountdown(seconds: number): string {
   const m = Math.floor(seconds / 60)
@@ -549,6 +568,7 @@ export default function Channels() {
   const [channels, setChannels] = useState<AipChannelInfo[]>([])
   const [showCreate, setCreate] = useState(false)
   const [channelErrors, setChannelErrors] = useState<Record<number, string>>({})
+  const [channelPositions, setChannelPositions] = useState<Record<number, { elapsedSec: number; totalSec: number }>>({})
   const unsubRef = useRef<(() => void) | null>(null)
 
   const [networkChannels, setNetworkChannels] = useState<AipNetworkChannel[]>([])
@@ -574,7 +594,7 @@ export default function Channels() {
   }, [discoveryStartedAt])
 
   const devices = useMemo<AipDeviceJson[]>(
-    () => Array.from(entries.values()).map((e) => e.device),
+    () => Array.from(entries.values()).map((e) => e.device).filter((d) => isPlayerDevice(d.device_type)),
     [entries]
   )
 
@@ -603,6 +623,15 @@ export default function Channels() {
     refreshNetworkChannels().catch(console.error)
   }, [aipReady])
 
+  // Refresh network channels whenever a channel is added, updated, or removed on the network.
+  useEffect(() => {
+    if (!aipReady) return
+    const unsub = window.electronAPI.aip.onNetworkChannelEvent(() => {
+      refreshNetworkChannels().catch(console.error)
+    })
+    return unsub
+  }, [aipReady, refreshNetworkChannels])
+
   // Subscribe to channel player events pushed from the main process.
   useEffect(() => {
     if (!aipReady) return
@@ -610,6 +639,13 @@ export default function Channels() {
     unsubRef.current = window.electronAPI.aip.onChannelEvent((ev: AipChannelPlayerEvent) => {
       if (ev.event === 'channel_error') {
         setChannelErrors((prev) => ({ ...prev, [ev.channel_id]: ev.message ?? 'Unknown error' }))
+      } else if (ev.event === 'channel_position') {
+        setChannelPositions((prev) => ({
+          ...prev,
+          [ev.channel_id]: { elapsedSec: ev.elapsed_sec ?? 0, totalSec: ev.total_sec ?? 0 },
+        }))
+      } else if (ev.event === 'channel_stopped' || ev.event === 'channel_finished') {
+        setChannelPositions((prev) => ({ ...prev, [ev.channel_id]: { elapsedSec: 0, totalSec: 0 } }))
       }
       // Refresh state on transitions that change PlayerState
       const refreshEvents = new Set([
@@ -648,8 +684,6 @@ export default function Channels() {
         return
       }
       urls = [trimmed]
-    } else {
-      urls = [`wasapi://${form.windowsDevice}`]
     }
 
     const config: AipChannelConfig = {
@@ -784,7 +818,10 @@ export default function Channels() {
 
             {activeTab === 'network' && (
               <button
-                onClick={() => refreshNetworkChannels().catch(console.error)}
+                onClick={() => {
+                  window.electronAPI.aip.requestAllStreams().catch(console.error)
+                  refreshNetworkChannels().catch(console.error)
+                }}
                 disabled={!aipReady}
                 title={t('actions.refresh')}
                 className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors shadow-sm disabled:opacity-40 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
@@ -846,6 +883,8 @@ export default function Channels() {
                   channel={ch}
                   devices={devices}
                   errorMessage={channelErrors[ch.id]}
+                  positionSec={channelPositions[ch.id]?.elapsedSec ?? 0}
+                  totalSec={channelPositions[ch.id]?.totalSec ?? 0}
                   onPlay={handlePlay}
                   onStop={handleStop}
                   onPrev={handlePrev}
