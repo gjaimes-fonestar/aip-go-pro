@@ -9,7 +9,7 @@
     "preview": "electron-vite preview",
     "daemon:build": "cmake --build ../aip-go-services/build --target aip-daemon",
     "daemon:copy:linux": "mkdir -p resources/bin/linux && cp ../aip-go-services/build/bin/aip-daemon resources/bin/linux/aip-daemon && chmod +x resources/bin/linux/aip-daemon",
-    "daemon:copy:win": "mkdir -p resources/bin/windows && cp ../aip-go-services/build/bin/aip-daemon.exe resources/bin/windows/aip-daemon.exe",
+    "daemon:copy:win": "powershell -Command \"New-Item -ItemType Directory -Force -Path resources/bin/windows | Out-Null; Copy-Item -Force ../aip-go-services/build/bin/aip-daemon.exe resources/bin/windows/aip-daemon.exe\"",
     "daemon:install:linux": "npm run daemon:build && npm run daemon:copy:linux",
     "package:win": "npm run build && electron-builder --win",
     "package:linux": "npm run build && electron-builder --linux",
