@@ -617,7 +617,11 @@ export default function Devices() {
                   const hasSip       = getSipConfig(device.mac)?.config.configured === true
                   const model        = getModelName(device.device_type, device.device_sub_type)
                   const showVolume   = hasVolumeControl(device.device_type)
-                  const chInfo       = deviceChannelMap.get(device.mac)
+                  // Prefer live stream_config from device broadcast; fall back to linked-channel map.
+                  const sc           = device.stream_config?.active ? device.stream_config : undefined
+                  const chInfo       = sc
+                    ? { name: sc.name, streamType: -1, sourceMac: sc.source_mac }
+                    : deviceChannelMap.get(device.mac)
                   return (
                     <tr
                       key={device.mac}
@@ -684,7 +688,7 @@ export default function Devices() {
                         )}
                       </td>
                       <td className="whitespace-nowrap px-4 py-2.5 text-xs text-gray-500 dark:text-gray-400">
-                        {chInfo ? (STREAM_TYPE_LABEL[chInfo.streamType] ?? `${chInfo.streamType}`) : <span className="text-gray-300 dark:text-gray-600">—</span>}
+                        {chInfo && chInfo.streamType >= 0 ? (STREAM_TYPE_LABEL[chInfo.streamType] ?? `${chInfo.streamType}`) : <span className="text-gray-300 dark:text-gray-600">—</span>}
                       </td>
                       <td className="whitespace-nowrap px-4 py-2.5 font-mono text-xs text-gray-500 dark:text-gray-400">
                         {chInfo ? chInfo.sourceMac : <span className="text-gray-300 dark:text-gray-600">—</span>}
