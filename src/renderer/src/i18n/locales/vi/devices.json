@@ -32,13 +32,13 @@
   "types": {
     "player": "Máy phát",
     "amplifier": "Bộ khuếch đại",
-    "pcServer": "Máy chủ PC",
+    "pcServer": "PC",
     "microphone": "Micrô",
     "proMicrophone": "Micrô Pro",
     "intercom": "Intercom",
     "gateway": "Cổng kết nối",
     "transmitter": "Máy phát sóng",
-    "webserver": "Máy chủ Web",
+    "webserver": "Gate",
     "soundMeter": "Máy đo âm",
     "sensorIO": "Cảm biến I/O",
     "device": "Thiết bị"

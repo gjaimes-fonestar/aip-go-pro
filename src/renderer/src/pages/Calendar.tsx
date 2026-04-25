@@ -18,6 +18,7 @@ import 'react-big-calendar/lib/css/react-big-calendar.css'
 import { useCalendarStore } from '../store/calendar.store'
 import type { CalendarViewMode } from '../store/calendar.store'
 import { useDevicesStore } from '../store/devices.store'
+import { getModelName } from '../utils/deviceTypes'
 import { useScenesStore } from '../store/scenes.store'
 import { useStreamsStore } from '../store/streams.store'
 import type {
@@ -133,23 +134,6 @@ function fromDatetimeLocal(val: string): string {
   return new Date(val).toISOString()
 }
 
-/** Returns a short human-readable model label for a device_type number. */
-function deviceTypeLabel(type: number): string {
-  switch (type) {
-    case 0x00: return 'AIP-3010'
-    case 0x01: return 'AIP-3010A'
-    case 0x02: return 'AIP-PC'
-    case 0x03: return 'AIP-MIC'
-    case 0x04: return 'AIP-PMIC'
-    case 0x05: return 'AIP-INT'
-    case 0x07: return 'AIP-GW'
-    case 0x08: return 'AIP-4010'
-    case 0x09: return 'AIP-WEB'
-    case 0x0A: return 'AIP-SM'
-    case 0x0B: return 'AIP-IO'
-    default:   return `0x${type.toString(16).toUpperCase().padStart(2, '0')}`
-  }
-}
 
 interface EventModalProps {
   event: Partial<CalendarEvent> | null
@@ -763,7 +747,7 @@ function EventModal({ event, onSave, onDelete, onClose }: EventModalProps) {
                           {d.name}
                         </span>
                         <span className="block truncate text-xs text-gray-400">
-                          {deviceTypeLabel(d.device_type)} · {d.mac}
+                          {getModelName(d.device_type, d.device_sub_type)} · {d.mac}
                         </span>
                       </span>
                     </label>

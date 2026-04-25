@@ -2,26 +2,8 @@ import { useEffect, useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useScenesStore } from '../store/scenes.store'
 import { useDevicesStore } from '../store/devices.store'
+import { getModelName } from '../utils/deviceTypes'
 import type { Scene, SceneStep, SceneStepAction } from '@shared/scene'
-
-// helpers
-
-function deviceTypeLabel(type: number): string {
-  switch (type) {
-    case 0x00: return 'AIP-3010'
-    case 0x01: return 'AIP-3010A'
-    case 0x02: return 'AIP-PC'
-    case 0x03: return 'AIP-MIC'
-    case 0x04: return 'AIP-PMIC'
-    case 0x05: return 'AIP-INT'
-    case 0x07: return 'AIP-GW'
-    case 0x08: return 'AIP-4010'
-    case 0x09: return 'AIP-WEB'
-    case 0x0A: return 'AIP-SM'
-    case 0x0B: return 'AIP-IO'
-    default:   return `0x${type.toString(16).toUpperCase().padStart(2, '0')}`
-  }
-}
 
 // Icon picker — Heroicons outline paths keyed by name
 
@@ -111,7 +93,7 @@ function StepRow({ step, devices, onChange, onRemove }: StepRowProps) {
         <option value="all">{t('steps.allDevices')}</option>
         {deviceList.map((d) => (
           <option key={d.mac} value={d.mac}>
-            {d.name} ({deviceTypeLabel(d.device_type)})
+            {d.name} ({getModelName(d.device_type, d.device_sub_type)})
           </option>
         ))}
       </select>

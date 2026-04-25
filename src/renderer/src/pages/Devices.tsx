@@ -7,6 +7,14 @@ import { InterfaceSelectModal } from '../components/ui/InterfaceSelectModal'
 import { DeviceConfigPanel } from '../components/devices/DeviceConfigPanel'
 import { useDevicesStore } from '../store/devices.store'
 import { useDeviceConfigStore } from '../store/device-config.store'
+import {
+  getModelName,
+  getTypeLabelKey,
+  hasVolumeControl,
+  isWebserverDevice,
+  isPlayerDevice,
+  isConfigurableDevice,
+} from '../utils/deviceTypes'
 import type { AipDeviceJson, AipChannelInfo, AipNetworkChannel } from '@shared/ipc'
 
 // PlayerState dot colours
@@ -18,53 +26,6 @@ const CH_STATE_DOT: Record<number, string> = {
   4: 'bg-red-400',
 }
 
-// ─── Device type capabilities ─────────────────────────────────────────────────
-
-interface DevTypeCaps {
-  label:      string
-  model:      string
-  hasVolume:  boolean
-}
-
-function devTypeCaps(type: number): DevTypeCaps {
-  switch (type) {
-    case 0x00: return { label: 'Player',          model: 'AIP-3010',  hasVolume: true  }
-    case 0x01: return { label: 'Amplifier',        model: 'AIP-3010A', hasVolume: true  }
-    case 0x02: return { label: 'PC Server',        model: 'AIP-PC',    hasVolume: false }
-    case 0x03: return { label: 'Microphone',       model: 'AIP-MIC',   hasVolume: false }
-    case 0x04: return { label: 'Pro Microphone',   model: 'AIP-PMIC',  hasVolume: false }
-    case 0x05: return { label: 'Intercom',         model: 'AIP-INT',   hasVolume: true  }
-    case 0x07: return { label: 'Gateway',          model: 'AIP-GW',    hasVolume: false }
-    case 0x08: return { label: 'Transmitter',      model: 'AIP-4010',  hasVolume: true  }
-    case 0x09: return { label: 'Webserver',        model: 'AIP-WEB',   hasVolume: false }
-    case 0x0A: return { label: 'Sound Meter',      model: 'AIP-SM',    hasVolume: false }
-    case 0x0B: return { label: 'Sensor I/O',       model: 'AIP-IO',    hasVolume: false }
-    default:   return {
-      label:     `Device`,
-      model:     `0x${type.toString(16).toUpperCase().padStart(2, '0')}`,
-      hasVolume: false,
-    }
-  }
-}
-
-/** Returns the i18n key for the human-readable device type label. */
-function devTypeLabelKey(type: number): string {
-  switch (type) {
-    case 0x00: return 'types.player'
-    case 0x01: return 'types.amplifier'
-    case 0x02: return 'types.pcServer'
-    case 0x03: return 'types.microphone'
-    case 0x04: return 'types.proMicrophone'
-    case 0x05: return 'types.intercom'
-    case 0x07: return 'types.gateway'
-    case 0x08: return 'types.transmitter'
-    case 0x09: return 'types.webserver'
-    case 0x0A: return 'types.soundMeter'
-    case 0x0B: return 'types.sensorIO'
-    default:   return 'types.device'
-  }
-}
-
 function formatLastSeen(epoch: number): string {
   return new Date(epoch).toLocaleTimeString([], {
     hour: '2-digit', minute: '2-digit', second: '2-digit',
@@ -74,9 +35,9 @@ function formatLastSeen(epoch: number): string {
 // ─── Context menu ─────────────────────────────────────────────────────────────
 
 function DeviceContextMenu({
-  x, y, mac, name, isPlayer, channels, networkChannels, onClose, onAssign, onAssignNetwork, onStop, onConfigure,
+  x, y, mac, name, isPlayer, isConfigurable, channels, networkChannels, onClose, onAssign, onAssignNetwork, onStop, onConfigure,
 }: {
-  x: number; y: number; mac: string; name: string; isPlayer: boolean
+  x: number; y: number; mac: string; name: string; isPlayer: boolean; isConfigurable: boolean
   channels:        AipChannelInfo[]
   networkChannels: AipNetworkChannel[]
   onClose:          () => void
@@ -128,17 +89,19 @@ function DeviceContextMenu({
         <p className="font-mono text-xs text-gray-400">{mac}</p>
       </div>
 
-      <button
-        onClick={onConfigure}
-        className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-primary hover:bg-primary/5 dark:hover:bg-primary/10"
-      >
-        <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-        {t('contextMenu.configureDevice')}
-      </button>
+      {isConfigurable && (
+        <button
+          onClick={onConfigure}
+          className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-primary hover:bg-primary/5 dark:hover:bg-primary/10"
+        >
+          <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+              d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          {t('contextMenu.configureDevice')}
+        </button>
+      )}
 
       {isPlayer && hasAnyChannels && (
         <>
@@ -207,7 +170,11 @@ function ActionsPanel({
 }) {
   const { t } = useTranslation('devices')
   const optimisticVolume = useDevicesStore((s) => s.optimisticVolume)
-  const caps = device ? devTypeCaps(device.device_type) : null
+  const caps = device ? {
+    hasVolume:     hasVolumeControl(device.device_type),
+    isPlayer:      isPlayerDevice(device.device_type),
+    isConfigurable: isConfigurableDevice(device.device_type),
+  } : null
   const [sliderVolume,      setSliderVolume]      = useState(50)
   const [availableChannels, setAvailableChannels] = useState<AipChannelInfo[]>([])
   const [selectedChannelId, setSelectedChannelId] = useState<number | ''>('')
@@ -246,7 +213,7 @@ function ActionsPanel({
       {/* Identity */}
       <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800">
         <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-          {t(devTypeLabelKey(device.device_type))}
+          {t(getTypeLabelKey(device.device_type))}
         </p>
         <p className="mt-0.5 font-semibold text-gray-900 dark:text-white">{device.name}</p>
         <p className="text-xs text-gray-500">{device.network.ip}</p>
@@ -281,34 +248,40 @@ function ActionsPanel({
         </div>
       )}
 
-      {/* Channel assignment */}
-      <div className="flex flex-col gap-2">
-        <select
-          value={selectedChannelId}
-          onChange={(e) => setSelectedChannelId(e.target.value === '' ? '' : Number(e.target.value))}
-          className="h-8 w-full rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 focus:border-primary focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
-        >
-          <option value="">{t('selectChannel')}</option>
-          {availableChannels.map((ch) => (
-            <option key={ch.id} value={ch.id}>{ch.name}</option>
-          ))}
-        </select>
-        <button
-          disabled={selectedChannelId === ''}
-          onClick={() => {
-            if (!device || selectedChannelId === '') return
-            window.electronAPI.aip.linkChannelToDevice(selectedChannelId as number, device.mac).catch(console.error)
-          }}
-          className="w-full rounded-lg bg-primary py-2 text-sm font-semibold text-white hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          {t('playChannel')}
-        </button>
-        <button
-          onClick={() => window.electronAPI.aip.stopAudio(device.mac).catch(console.error)}
-          className="w-full rounded-lg border border-gray-200 bg-white py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
-        >
-          {t('stopPlayback')}
-        </button>
+      {/* Channel assignment — only for player-type devices */}
+      {caps?.isPlayer && (
+        <div className="flex flex-col gap-2">
+          <select
+            value={selectedChannelId}
+            onChange={(e) => setSelectedChannelId(e.target.value === '' ? '' : Number(e.target.value))}
+            className="h-8 w-full rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 focus:border-primary focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
+          >
+            <option value="">{t('selectChannel')}</option>
+            {availableChannels.map((ch) => (
+              <option key={ch.id} value={ch.id}>{ch.name}</option>
+            ))}
+          </select>
+          <button
+            disabled={selectedChannelId === ''}
+            onClick={() => {
+              if (!device || selectedChannelId === '') return
+              window.electronAPI.aip.linkChannelToDevice(selectedChannelId as number, device.mac).catch(console.error)
+            }}
+            className="w-full rounded-lg bg-primary py-2 text-sm font-semibold text-white hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {t('playChannel')}
+          </button>
+          <button
+            onClick={() => window.electronAPI.aip.stopAudio(device.mac).catch(console.error)}
+            className="w-full rounded-lg border border-gray-200 bg-white py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+          >
+            {t('stopPlayback')}
+          </button>
+        </div>
+      )}
+
+      {/* Configure button — hidden for non-configurable devices (PC Server) */}
+      {caps?.isConfigurable && (
         <button
           onClick={onConfigure}
           className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
@@ -320,7 +293,7 @@ function ActionsPanel({
           </svg>
           {t('contextMenu.configureDevice')}
         </button>
-      </div>
+      )}
     </div>
   )
 }
@@ -402,9 +375,9 @@ export default function Devices() {
     if (search &&
       !device.name.toLowerCase().includes(search.toLowerCase()) &&
       !device.network.ip.includes(search) &&
-      !devTypeCaps(device.device_type).model.toLowerCase().includes(search.toLowerCase())
+      !getModelName(device.device_type, device.device_sub_type).toLowerCase().includes(search.toLowerCase())
     ) return false
-    if (filterEnabled && filterType !== 'None' && devTypeCaps(device.device_type).label !== filterType)
+    if (filterEnabled && filterType !== 'None' && getTypeLabelKey(device.device_type) !== filterType)
       return false
     return true
   }), [allEntries, search, filterEnabled, filterType])
@@ -414,18 +387,11 @@ export default function Devices() {
   const sipCfgEntry    = selectedMac ? getSipConfig(selectedMac)        : undefined
   const smCfgEntry     = selectedMac ? getSoundMeterConfig(selectedMac) : undefined
 
-  const isWebserverDevice = useCallback(
-    (deviceType: number) => deviceType === 7 || deviceType === 9,
-    [],
-  )
-
   const openConfig = useCallback(() => {
-    if (selectedDevice && isWebserverDevice(selectedDevice.device_type)) {
-      navigate('/webserver')
-    } else {
-      setConfigOpen(true)
-    }
-  }, [selectedDevice, isWebserverDevice, navigate])
+    if (!selectedDevice || !isConfigurableDevice(selectedDevice.device_type)) return
+    if (isWebserverDevice(selectedDevice.device_type)) navigate('/webserver')
+    else setConfigOpen(true)
+  }, [selectedDevice, navigate])
 
   return (
     <>
@@ -517,7 +483,8 @@ export default function Devices() {
                 {visible.map(({ device, lastSeen }) => {
                   const isSelected  = device.mac === selectedMac
                   const hasSip      = getSipConfig(device.mac)?.config.configured === true
-                  const caps        = devTypeCaps(device.device_type)
+                  const model       = getModelName(device.device_type, device.device_sub_type)
+                  const showVolume  = hasVolumeControl(device.device_type)
                   const channelName = deviceChannelMap.get(device.mac)
                   return (
                     <tr
@@ -525,11 +492,9 @@ export default function Devices() {
                       onClick={() => selectDevice(isSelected ? null : device.mac)}
                       onDoubleClick={() => {
                         selectDevice(device.mac)
-                        if (isWebserverDevice(device.device_type)) {
-                          navigate('/webserver')
-                        } else {
-                          setConfigOpen(true)
-                        }
+                        if (!isConfigurableDevice(device.device_type)) return
+                        if (isWebserverDevice(device.device_type)) navigate('/webserver')
+                        else setConfigOpen(true)
                       }}
                       onContextMenu={(e) => {
                         e.preventDefault()
@@ -553,12 +518,12 @@ export default function Devices() {
                             }
                           />
                           <span className="text-sm font-medium text-gray-900 dark:text-white">
-                            {t(devTypeLabelKey(device.device_type))}
+                            {t(getTypeLabelKey(device.device_type))}
                           </span>
                         </div>
                       </td>
                       <td className="whitespace-nowrap px-4 py-2.5 text-sm text-gray-500 dark:text-gray-400">
-                        {caps.model}
+                        {model}
                       </td>
                       <td className="whitespace-nowrap px-4 py-2.5">
                         <span className="text-sm font-semibold text-gray-900 dark:text-white">
@@ -584,7 +549,7 @@ export default function Devices() {
                         )}
                       </td>
                       <td className="whitespace-nowrap px-4 py-2.5">
-                        {caps.hasVolume ? <VolumeBar value={device.volume} /> : <span className="text-xs text-gray-300 dark:text-gray-600">—</span>}
+                        {showVolume ? <VolumeBar value={device.volume} /> : <span className="text-xs text-gray-300 dark:text-gray-600">—</span>}
                       </td>
                       <td className="whitespace-nowrap px-4 py-2.5 font-mono text-xs text-gray-600 dark:text-gray-300">
                         {device.network.ip}
@@ -680,17 +645,17 @@ export default function Devices() {
           y={ctxMenu.y}
           mac={ctxMenu.mac}
           name={ctxMenu.name}
-          isPlayer={ctxMenu.deviceType === 0}
+          isPlayer={isPlayerDevice(ctxMenu.deviceType)}
+          isConfigurable={isConfigurableDevice(ctxMenu.deviceType)}
           channels={ctxChannels}
           networkChannels={networkChannels}
           onClose={() => setCtxMenu(null)}
           onConfigure={() => {
             selectDevice(ctxMenu.mac)
             const ctxDev = entries.get(ctxMenu.mac)?.device
-            if (ctxDev && isWebserverDevice(ctxDev.device_type)) {
-              navigate('/webserver')
-            } else {
-              setConfigOpen(true)
+            if (ctxDev && isConfigurableDevice(ctxDev.device_type)) {
+              if (isWebserverDevice(ctxDev.device_type)) navigate('/webserver')
+              else setConfigOpen(true)
             }
             setCtxMenu(null)
           }}

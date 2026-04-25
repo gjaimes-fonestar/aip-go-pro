@@ -32,13 +32,13 @@
   "types": {
     "player": "播放器",
     "amplifier": "放大器",
-    "pcServer": "PC 服务器",
+    "pcServer": "PC",
     "microphone": "麦克风",
     "proMicrophone": "专业麦克风",
     "intercom": "对讲机",
     "gateway": "网关",
     "transmitter": "发射器",
-    "webserver": "Web 服务器",
+    "webserver": "Gate",
     "soundMeter": "声级计",
     "sensorIO": "传感器 I/O",
     "device": "设备"

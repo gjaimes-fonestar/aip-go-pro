@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from '../store/app.store'
 import { useDevicesStore } from '../store/devices.store'
+import { isWebserverDevice } from '../utils/deviceTypes'
 import type { BackendStatus } from '@shared/ipc'
 
 // Icons
@@ -86,7 +87,7 @@ export default function Sidebar() {
   const selectedMac         = useDevicesStore((s) => s.selectedMac)
   const selectedEntry       = selectedMac ? entries.get(selectedMac) : undefined
   const selectedIsWebserver = selectedEntry
-    ? selectedEntry.device.device_type === 7 || selectedEntry.device.device_type === 9
+    ? isWebserverDevice(selectedEntry.device.device_type)
     : false
 
   const WebserverIconAnimated = useCallback(() => (

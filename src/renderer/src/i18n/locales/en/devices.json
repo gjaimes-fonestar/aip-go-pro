@@ -32,13 +32,13 @@
   "types": {
     "player": "Player",
     "amplifier": "Amplifier",
-    "pcServer": "PC Server",
+    "pcServer": "PC",
     "microphone": "Microphone",
     "proMicrophone": "Pro Microphone",
     "intercom": "Intercom",
     "gateway": "Gateway",
     "transmitter": "Transmitter",
-    "webserver": "Webserver",
+    "webserver": "Gate",
     "soundMeter": "Sound Meter",
     "sensorIO": "Sensor I/O",
     "device": "Device"

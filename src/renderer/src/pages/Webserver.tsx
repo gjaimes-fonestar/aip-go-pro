@@ -24,6 +24,7 @@ import type {
   AipGateRemoteSchedule,
 } from '@shared/ipc'
 import { useDevicesStore } from '../store/devices.store'
+import { getModelName, isWebserverDevice } from '../utils/deviceTypes'
 import {
   useWebserverStore,
   confKey,
@@ -2165,10 +2166,6 @@ function SchedulesTab({
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-const DEVICE_TYPE_LABEL: Record<number, string> = {
-  7: 'AIP-GATE',
-  9: 'AIP-WEB',
-}
 
 const TABS: { key: WebserverTab; tKey: string; Icon: React.FC }[] = [
   { key: 'sip-extensions',  tKey: 'tabs.extensions',    Icon: PhoneIcon    },
@@ -2187,9 +2184,7 @@ export default function Webserver() {
 
   const selectedEntry  = selectedMac ? entries.get(selectedMac) : undefined
   const selectedDevice = selectedEntry?.device ?? null
-  const isWebserver    = selectedDevice
-    ? selectedDevice.device_type === 7 || selectedDevice.device_type === 9
-    : false
+  const isWebserver    = selectedDevice ? isWebserverDevice(selectedDevice.device_type) : false
 
   const gateWebConfig = selectedDevice ? gateWebConfigs.get(selectedDevice.mac) : undefined
 
@@ -2229,7 +2224,7 @@ export default function Webserver() {
     )
   }
 
-  const typeLabel = DEVICE_TYPE_LABEL[selectedDevice.device_type] ?? `Type ${selectedDevice.device_type}`
+  const typeLabel = getModelName(selectedDevice.device_type, selectedDevice.device_sub_type)
 
   return (
     <div className="flex h-full flex-col overflow-hidden">

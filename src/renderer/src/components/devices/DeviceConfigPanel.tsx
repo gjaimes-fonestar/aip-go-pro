@@ -18,6 +18,7 @@ import type {
   AipDeviceNetworkConfig,
   AipSensorRelayConfig,
 } from '@shared/ipc'
+import { isWebserverDevice } from '../../utils/deviceTypes'
 
 // ─── Capabilities ─────────────────────────────────────────────────────────────
 
@@ -785,7 +786,7 @@ export function DeviceConfigPanel({
   onClose,
 }: DeviceConfigPanelProps) {
   const caps = deviceCaps(device.device_type)
-  const isGate = device.device_type === 7 || device.device_type === 9
+  const isGate = isWebserverDevice(device.device_type)
 
   const [activeTab, setActiveTab] = useState<ConfigTab>(caps.tabs[0])
 
