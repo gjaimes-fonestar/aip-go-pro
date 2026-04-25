@@ -45,6 +45,9 @@
     "sensorIO": "Sensor E/S",
     "device": "Dispositivo"
   },
+  "labels": {
+    "callingInProgress": "Llamada en curso"
+  },
   "contextMenu": {
     "configureDevice": "Configurar dispositivo",
     "linkChannel": "Vincular canal",

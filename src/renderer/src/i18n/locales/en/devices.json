@@ -45,6 +45,9 @@
     "sensorIO": "Sensor I/O",
     "device": "Device"
   },
+  "labels": {
+    "callingInProgress": "Calling in progress"
+  },
   "contextMenu": {
     "configureDevice": "Configure device",
     "linkChannel": "Link channel",

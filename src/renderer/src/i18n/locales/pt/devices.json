@@ -45,6 +45,9 @@
     "sensorIO": "Sensor E/S",
     "device": "Dispositivo"
   },
+  "labels": {
+    "callingInProgress": "Chamada em andamento"
+  },
   "contextMenu": {
     "configureDevice": "Configurar dispositivo",
     "linkChannel": "Vincular canal",

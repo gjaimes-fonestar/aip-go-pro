@@ -45,6 +45,9 @@
     "sensorIO": "Cảm biến I/O",
     "device": "Thiết bị"
   },
+  "labels": {
+    "callingInProgress": "Đang gọi"
+  },
   "contextMenu": {
     "configureDevice": "Cấu hình thiết bị",
     "linkChannel": "Liên kết kênh",

@@ -45,6 +45,9 @@
     "sensorIO": "传感器 I/O",
     "device": "设备"
   },
+  "labels": {
+    "callingInProgress": "通话中"
+  },
   "contextMenu": {
     "configureDevice": "配置设备",
     "linkChannel": "关联频道",
