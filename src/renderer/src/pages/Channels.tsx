@@ -5,6 +5,7 @@ import CreateChannelModal, { type NewChannelForm } from '../components/channels/
 import { useDevicesStore } from '../store/devices.store'
 import { useStreamsStore } from '../store/streams.store'
 import { isPlayerDevice } from '../utils/deviceTypes'
+import { getStreamTypeLabel } from '../utils/streamTypes'
 import type {
   AipChannelInfo,
   AipChannelConfig,
@@ -484,9 +485,6 @@ function ChannelRow({
 
 // ─── Network channel row ──────────────────────────────────────────────────────
 
-const STREAM_TYPE_LABEL: Record<number, string> = {
-  0: 'Unicast', 1: 'Multicast', 2: 'Broadcast',
-}
 
 function NetworkChannelRow({
   channel,
@@ -525,7 +523,7 @@ function NetworkChannelRow({
           <p className="mt-0.5 font-mono text-xs text-gray-400 dark:text-gray-500">
             {channel.multicastAddress}:{channel.port}
             {' · '}ch {channel.channelNumber}
-            {' · '}{STREAM_TYPE_LABEL[channel.streamType] ?? `Type ${channel.streamType}`}
+            {' · '}{getStreamTypeLabel(channel.streamType)}
           </p>
         </div>
 

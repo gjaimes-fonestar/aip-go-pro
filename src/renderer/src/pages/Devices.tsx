@@ -15,6 +15,7 @@ import {
   isPlayerDevice,
   isConfigurableDevice,
 } from '../utils/deviceTypes'
+import { getStreamTypeLabel } from '../utils/streamTypes'
 import type { AipDeviceJson, AipChannelInfo, AipNetworkChannel } from '@shared/ipc'
 
 // PlayerState dot colours
@@ -431,7 +432,6 @@ function ActionsPanel({
   )
 }
 
-const STREAM_TYPE_LABEL: Record<number, string> = { 0: 'Unicast', 1: 'Multicast', 2: 'Broadcast' }
 
 const COLUMN_KEYS = ['type', 'model', 'name', 'status', 'channel', 'channelType', 'source', 'volume', 'ip', 'mac', 'lastSeen'] as const
 type ColumnKey = (typeof COLUMN_KEYS)[number]
@@ -688,7 +688,7 @@ export default function Devices() {
                         )}
                       </td>
                       <td className="whitespace-nowrap px-4 py-2.5 text-xs text-gray-500 dark:text-gray-400">
-                        {chInfo && chInfo.streamType >= 0 ? (STREAM_TYPE_LABEL[chInfo.streamType] ?? `${chInfo.streamType}`) : <span className="text-gray-300 dark:text-gray-600">—</span>}
+                        {chInfo && chInfo.streamType >= 0 ? getStreamTypeLabel(chInfo.streamType) : <span className="text-gray-300 dark:text-gray-600">—</span>}
                       </td>
                       <td className="whitespace-nowrap px-4 py-2.5 text-xs text-gray-500 dark:text-gray-400">
                         {chInfo ? (
