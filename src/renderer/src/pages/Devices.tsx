@@ -160,6 +160,109 @@ function DeviceContextMenu({
   )
 }
 
+// ─── Device summary bar ───────────────────────────────────────────────────────
+
+const SUMMARY_GROUPS = [
+  {
+    key:   'total',
+    label: 'Total',
+    match: (_: number) => true,
+    icon:  (
+      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+          d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+      </svg>
+    ),
+  },
+  {
+    key:   'players',
+    label: 'Players',
+    match: (t: number) => t === 0x00 || t === 0x01,
+    icon:  (
+      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+          d="M15.75 5.25v13.5m-7.5-13.5v13.5" />
+      </svg>
+    ),
+  },
+  {
+    key:   'pcs',
+    label: "PC's",
+    match: (t: number) => t === 0x02,
+    icon:  (
+      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+          d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25A2.25 2.25 0 015.25 3h13.5A2.25 2.25 0 0121 5.25z" />
+      </svg>
+    ),
+  },
+  {
+    key:   'gates',
+    label: 'Gates',
+    match: (t: number) => t === 0x07 || t === 0x09,
+    icon:  (
+      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+          d="M5.25 14.25h13.5m-13.5 0a3 3 0 01-3-3m3 3a3 3 0 100 6h13.5a3 3 0 100-6m-16.5-3a3 3 0 013-3h13.5a3 3 0 013 3m-19.5 0a4.5 4.5 0 01.9-2.7L5.737 5.1a3.375 3.375 0 012.7-1.35h7.126c1.062 0 2.062.5 2.7 1.35l2.587 3.45a4.5 4.5 0 01.9 2.7m0 0a3 3 0 01-3 3m0 3h.008v.008h-.008v-.008zm0-6h.008v.008h-.008v-.008zm-3 6h.008v.008h-.008v-.008zm0-6h.008v.008h-.008v-.008z" />
+      </svg>
+    ),
+  },
+  {
+    key:   'streamers',
+    label: 'Streamers',
+    match: (t: number) => t === 0x08,
+    icon:  (
+      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+          d="M8.288 15.038a5.25 5.25 0 017.424 0M5.106 11.856c3.807-3.808 9.98-3.808 13.788 0M1.924 8.674c5.565-5.565 14.587-5.565 20.152 0M12 20.25h.008v.008H12v-.008z" />
+      </svg>
+    ),
+  },
+  {
+    key:   'mics',
+    label: 'Mics',
+    match: (t: number) => t === 0x03 || t === 0x04,
+    icon:  (
+      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+          d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" />
+      </svg>
+    ),
+  },
+  {
+    key:   'others',
+    label: 'Others',
+    match: (t: number) => ![0x00,0x01,0x02,0x03,0x04,0x07,0x08,0x09].includes(t),
+    icon:  (
+      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+          d="M6.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM12.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM18.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+      </svg>
+    ),
+  },
+] as const
+
+function DeviceSummaryBar({ entries }: { entries: AipDeviceJson[] }) {
+  return (
+    <div className="flex shrink-0 items-stretch divide-x divide-gray-100 border-t border-gray-200 dark:divide-gray-700/60 dark:border-gray-700">
+      {SUMMARY_GROUPS.map(({ key, label, match, icon }) => {
+        const count = entries.filter((d) => match(d.device_type)).length
+        return (
+          <div key={key} className="flex flex-1 flex-col items-center justify-center gap-0.5 px-2 py-2">
+            <span className={`${key === 'total' ? 'text-primary' : 'text-gray-400 dark:text-gray-500'}`}>
+              {icon}
+            </span>
+            <span className={`text-sm font-bold tabular-nums ${key === 'total' ? 'text-primary' : 'text-gray-800 dark:text-gray-100'}`}>
+              {count}
+            </span>
+            <span className="text-[10px] font-medium text-gray-400 dark:text-gray-500">{label}</span>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 function AccordionSection({
   title, open, onToggle, children,
 }: {
@@ -516,10 +619,13 @@ export default function Devices() {
                   return (
                     <tr
                       key={device.mac}
-                      onClick={() => selectDevice(isSelected ? null : device.mac)}
-                      onDoubleClick={() => {
-                        selectDevice(device.mac)
+                      onClick={() => {
                         if (!isConfigurableDevice(device.device_type)) return
+                        selectDevice(isSelected ? null : device.mac)
+                      }}
+                      onDoubleClick={() => {
+                        if (!isConfigurableDevice(device.device_type)) return
+                        selectDevice(device.mac)
                         if (isWebserverDevice(device.device_type)) navigate('/webserver')
                         else setConfigOpen(true)
                       }}
@@ -593,6 +699,9 @@ export default function Devices() {
               </tbody>
             </table>
           </div>
+
+          {/* Device type summary bar */}
+          <DeviceSummaryBar entries={allEntries.map((e) => e.device)} />
 
         </div>
 
