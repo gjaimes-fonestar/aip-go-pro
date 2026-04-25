@@ -693,20 +693,12 @@ export default function Devices() {
                       <td className="whitespace-nowrap px-4 py-2.5 text-xs text-gray-500 dark:text-gray-400">
                         {chInfo ? (
                           chInfo.streamType === StreamType.Voip ? (
-                            <div className="flex items-center gap-1.5">
-                              <span className="relative flex h-3.5 w-3.5 shrink-0">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-                                <svg className="relative h-3.5 w-3.5 text-green-500" viewBox="0 0 24 24" fill="currentColor">
-                                  <path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24 11.47 11.47 0 003.58.57 1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1 11.47 11.47 0 00.57 3.58 1 1 0 01-.25 1.02l-2.2 2.19z" />
-                                </svg>
-                              </span>
-                              <div>
-                                <p className="font-medium text-green-600 dark:text-green-400">
-                                  {entries.get(chInfo.sourceMac)?.device.name ?? chInfo.sourceMac}
-                                </p>
-                                <p className="font-mono text-gray-400 dark:text-gray-500">{chInfo.sourceMac}</p>
-                              </div>
-                            </div>
+                            <span className="relative flex h-3.5 w-3.5">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+                              <svg className="relative h-3.5 w-3.5 text-green-500" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24 11.47 11.47 0 003.58.57 1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1 11.47 11.47 0 00.57 3.58 1 1 0 01-.25 1.02l-2.2 2.19z" />
+                              </svg>
+                            </span>
                           ) : (
                             <>
                               <p>{entries.get(chInfo.sourceMac)?.device.name ?? chInfo.sourceMac}</p>
