@@ -690,8 +690,13 @@ export default function Devices() {
                       <td className="whitespace-nowrap px-4 py-2.5 text-xs text-gray-500 dark:text-gray-400">
                         {chInfo && chInfo.streamType >= 0 ? (STREAM_TYPE_LABEL[chInfo.streamType] ?? `${chInfo.streamType}`) : <span className="text-gray-300 dark:text-gray-600">—</span>}
                       </td>
-                      <td className="whitespace-nowrap px-4 py-2.5 font-mono text-xs text-gray-500 dark:text-gray-400">
-                        {chInfo ? chInfo.sourceMac : <span className="text-gray-300 dark:text-gray-600">—</span>}
+                      <td className="whitespace-nowrap px-4 py-2.5 text-xs text-gray-500 dark:text-gray-400">
+                        {chInfo ? (
+                          <>
+                            <p>{entries.get(chInfo.sourceMac)?.device.name ?? chInfo.sourceMac}</p>
+                            <p className="font-mono text-gray-400 dark:text-gray-500">{chInfo.sourceMac}</p>
+                          </>
+                        ) : <span className="text-gray-300 dark:text-gray-600">—</span>}
                       </td>
                       <td className="whitespace-nowrap px-4 py-2.5">
                         {showVolume ? <VolumeBar value={device.volume} /> : <span className="text-xs text-gray-300 dark:text-gray-600">—</span>}
