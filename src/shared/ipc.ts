@@ -223,6 +223,7 @@ export interface AipStreamInfo {
   name:           string
   source_mac:     string
   channel_number: number
+  stream_type:    number
 }
 
 /**

@@ -620,7 +620,7 @@ export default function Devices() {
                   // Prefer live stream_config from device broadcast; fall back to linked-channel map.
                   const sc           = device.stream_config?.active ? device.stream_config : undefined
                   const chInfo       = sc
-                    ? { name: sc.name, streamType: -1, sourceMac: sc.source_mac }
+                    ? { name: sc.name, streamType: sc.stream_type, sourceMac: sc.source_mac }
                     : deviceChannelMap.get(device.mac)
                   return (
                     <tr
