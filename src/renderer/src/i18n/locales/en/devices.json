@@ -17,6 +17,8 @@
     "name": "Name",
     "status": "Status",
     "channel": "Channel",
+    "channelType": "Ch. Type",
+    "source": "Source",
     "volume": "Volume",
     "ip": "IP",
     "mac": "MAC",

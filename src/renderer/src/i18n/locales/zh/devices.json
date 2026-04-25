@@ -17,6 +17,8 @@
     "name": "名称",
     "status": "状态",
     "channel": "频道",
+    "channelType": "频道类型",
+    "source": "来源",
     "volume": "音量",
     "ip": "IP",
     "mac": "MAC",

@@ -17,6 +17,8 @@
     "name": "Tên",
     "status": "Trạng thái",
     "channel": "Kênh",
+    "channelType": "Loại kênh",
+    "source": "Nguồn",
     "volume": "Âm lượng",
     "ip": "IP",
     "mac": "MAC",

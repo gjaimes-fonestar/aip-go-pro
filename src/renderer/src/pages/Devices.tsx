@@ -431,7 +431,9 @@ function ActionsPanel({
   )
 }
 
-const COLUMN_KEYS = ['type', 'model', 'name', 'status', 'channel', 'volume', 'ip', 'mac', 'lastSeen'] as const
+const STREAM_TYPE_LABEL: Record<number, string> = { 0: 'Unicast', 1: 'Multicast', 2: 'Broadcast' }
+
+const COLUMN_KEYS = ['type', 'model', 'name', 'status', 'channel', 'channelType', 'source', 'volume', 'ip', 'mac', 'lastSeen'] as const
 type ColumnKey = (typeof COLUMN_KEYS)[number]
 
 export default function Devices() {
@@ -452,12 +454,12 @@ export default function Devices() {
   // Network channels from repository — used to show which channel is assigned to each device
   const [networkChannels, setNetworkChannels] = useState<AipNetworkChannel[]>([])
 
-  // Map from device MAC → channel name (from linkedDevices in the channel repository)
-  const deviceChannelMap = useMemo<Map<string, string>>(() => {
-    const map = new Map<string, string>()
+  // Map from device MAC → channel info (name, streamType, sourceMac)
+  const deviceChannelMap = useMemo<Map<string, { name: string; streamType: number; sourceMac: string }>>(() => {
+    const map = new Map<string, { name: string; streamType: number; sourceMac: string }>()
     for (const ch of networkChannels) {
       for (const mac of ch.linkedDevices) {
-        map.set(mac, ch.name)
+        map.set(mac, { name: ch.name, streamType: ch.streamType, sourceMac: ch.sourceMac })
       }
     }
     return map
@@ -611,11 +613,11 @@ export default function Devices() {
                   </tr>
                 )}
                 {visible.map(({ device, lastSeen }) => {
-                  const isSelected  = device.mac === selectedMac
-                  const hasSip      = getSipConfig(device.mac)?.config.configured === true
-                  const model       = getModelName(device.device_type, device.device_sub_type)
-                  const showVolume  = hasVolumeControl(device.device_type)
-                  const channelName = deviceChannelMap.get(device.mac)
+                  const isSelected   = device.mac === selectedMac
+                  const hasSip       = getSipConfig(device.mac)?.config.configured === true
+                  const model        = getModelName(device.device_type, device.device_sub_type)
+                  const showVolume   = hasVolumeControl(device.device_type)
+                  const chInfo       = deviceChannelMap.get(device.mac)
                   return (
                     <tr
                       key={device.mac}
@@ -670,16 +672,22 @@ export default function Devices() {
                         </div>
                       </td>
                       <td className="whitespace-nowrap px-4 py-2.5">
-                        {channelName ? (
+                        {chInfo ? (
                           <div className="flex items-center gap-1.5">
                             <span className="h-1.5 w-1.5 rounded-full bg-green-400" />
                             <span className="max-w-[120px] truncate text-xs font-medium text-gray-700 dark:text-gray-300">
-                              {channelName}
+                              {chInfo.name}
                             </span>
                           </div>
                         ) : (
                           <span className="text-xs text-gray-300 dark:text-gray-600">—</span>
                         )}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-2.5 text-xs text-gray-500 dark:text-gray-400">
+                        {chInfo ? (STREAM_TYPE_LABEL[chInfo.streamType] ?? `${chInfo.streamType}`) : <span className="text-gray-300 dark:text-gray-600">—</span>}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-2.5 font-mono text-xs text-gray-500 dark:text-gray-400">
+                        {chInfo ? chInfo.sourceMac : <span className="text-gray-300 dark:text-gray-600">—</span>}
                       </td>
                       <td className="whitespace-nowrap px-4 py-2.5">
                         {showVolume ? <VolumeBar value={device.volume} /> : <span className="text-xs text-gray-300 dark:text-gray-600">—</span>}
