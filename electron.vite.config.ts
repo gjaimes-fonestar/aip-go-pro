@@ -5,9 +5,11 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   main: {
     plugins: [externalizeDepsPlugin()],
+    build: { target: 'node20' },
   },
   preload: {
     plugins: [externalizeDepsPlugin()],
+    build: { target: 'node20' },
   },
   renderer: {
     server: {

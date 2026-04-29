@@ -4,7 +4,7 @@
   "description": "AIP Go Pro – Professional Management UI",
   "main": "./out/main/index.js",
   "scripts": {
-    "dev": "electron-vite dev",
+    "dev": "ELECTRON_DISABLE_SANDBOX=1 electron-vite dev",
     "build": "electron-vite build",
     "preview": "electron-vite preview",
     "daemon:build": "cmake --build ../aip-go-services/build --target aip-daemon",
