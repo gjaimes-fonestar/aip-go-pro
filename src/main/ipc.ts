@@ -18,16 +18,16 @@ import type {
   AipGateConnectionConfig,
 } from '../shared/ipc'
 import type {
-  CalendarEvent,
   CalendarCreatePayload,
   CalendarUpdatePayload,
   CalendarTogglePayload,
 } from '../shared/calendar'
-import type { Scene, SceneCreatePayload, SceneUpdatePayload } from '../shared/scene'
-import type { Stream, StreamCreatePayload, StreamUpdatePayload } from '../shared/stream'
+import type { SceneCreatePayload, SceneUpdatePayload } from '../shared/scene'
+import type { StreamCreatePayload, StreamUpdatePayload } from '../shared/stream'
 import { backendManager } from './backend'
 import { daemonManager } from './daemon'
 import { aipCore, aipDevices, aipChannels, aipWebserver } from './aip'
+import { schedulerManager } from './schedulerManager'
 
 export function registerIpcHandlers(): void {
   // ── Window controls ───────────────────────────────────────────────────────
@@ -394,224 +394,91 @@ export function registerIpcHandlers(): void {
       aipWebserver.gateCancelSchedule(mac, config, scheduleId)
   )
 
-  // Calendar + Scene — in-memory mock stores
+  // ── Calendar — backed by schedulerManager.db.messages ────────────────────
 
-  const now = new Date()
-  const iso = (d: Date): string => d.toISOString()
-  const todayAt = (h: number, m = 0): string => {
-    const d = new Date(now); d.setHours(h, m, 0, 0); return iso(d)
-  }
-  const todayEnd = (h: number, m = 0): string => {
-    const d = new Date(now); d.setHours(h, m, 0, 0); return iso(d)
-  }
+  ipcMain.handle(IPC.CALENDAR.LIST, () =>
+    schedulerManager.db.messages.list()
+  )
 
-  const mockEvents: CalendarEvent[] = [
-    {
-      id: 'evt-001',
-      title: 'Morning BGM',
-      description: 'Lobby background music on weekday mornings.',
-      color: '#6366f1',
-      dtStart: todayAt(8, 0),
-      dtEnd: todayEnd(12, 0),
-      recurrence: { freq: 'weekly', interval: 1, byDay: ['MO', 'TU', 'WE', 'TH', 'FR'], end: { type: 'never' } },
-      action: { type: 'playlist', filePaths: ['/audio/lobby-01.mp3', '/audio/lobby-02.mp3'] },
-      volume: 60,
-      targetDevices: [],
-      enabled: true,
-      createdAt: iso(now),
-      updatedAt: iso(now),
-    },
-    {
-      id: 'evt-002',
-      title: 'End of Business',
-      description: 'Activate EOB scene at close of day.',
-      color: '#f59e0b',
-      dtStart: todayAt(18, 0),
-      dtEnd: todayEnd(18, 1),
-      recurrence: { freq: 'weekly', interval: 1, byDay: ['MO', 'TU', 'WE', 'TH', 'FR'], end: { type: 'never' } },
-      action: { type: 'scene', sceneId: 'scene-001', sceneName: 'End of Business' },
-      targetDevices: [],
-      enabled: true,
-      createdAt: iso(now),
-      updatedAt: iso(now),
-    },
-  ]
+  ipcMain.handle(IPC.CALENDAR.GET, (_e, id: string) =>
+    schedulerManager.db.messages.get(id)
+  )
 
-  const calendarStore = new Map<string, CalendarEvent>(mockEvents.map((e) => [e.id, e]))
-
-  ipcMain.handle(IPC.CALENDAR.LIST, () => {
-    const events = Array.from(calendarStore.values())
-    console.log('[calendar:list]', events.length, 'events')
-    return events
+  ipcMain.handle(IPC.CALENDAR.CREATE, async (_e, payload: CalendarCreatePayload) => {
+    const msg = await schedulerManager.db.messages.create(payload.event)
+    void schedulerManager.reload()
+    return msg
   })
 
-  ipcMain.handle(IPC.CALENDAR.GET, (_e, id: string) => {
-    const event = calendarStore.get(id) ?? null
-    console.log('[calendar:get]', id, event ? 'found' : 'not found')
-    return event
+  ipcMain.handle(IPC.CALENDAR.UPDATE, async (_e, payload: CalendarUpdatePayload) => {
+    const msg = await schedulerManager.db.messages.update(payload.id, payload.changes)
+    if (msg) void schedulerManager.reload()
+    return msg
   })
 
-  ipcMain.handle(IPC.CALENDAR.CREATE, (_e, payload: CalendarCreatePayload) => {
-    const id = `evt-${Date.now()}`
-    const ts = new Date().toISOString()
-    const event: CalendarEvent = { id, ...payload.event, createdAt: ts, updatedAt: ts }
-    calendarStore.set(id, event)
-    console.log('[calendar:create]', event)
-    return event
-  })
-
-  ipcMain.handle(IPC.CALENDAR.UPDATE, (_e, payload: CalendarUpdatePayload) => {
-    const existing = calendarStore.get(payload.id)
-    if (!existing) return null
-    const updated: CalendarEvent = { ...existing, ...payload.changes, updatedAt: new Date().toISOString() }
-    calendarStore.set(payload.id, updated)
-    console.log('[calendar:update]', updated)
-    return updated
-  })
-
-  ipcMain.handle(IPC.CALENDAR.DELETE, (_e, id: string) => {
-    const removed = calendarStore.delete(id)
-    console.log('[calendar:delete]', id, removed)
+  ipcMain.handle(IPC.CALENDAR.DELETE, async (_e, id: string) => {
+    const removed = await schedulerManager.db.messages.delete(id)
+    if (removed) void schedulerManager.reload()
     return { removed }
   })
 
-  ipcMain.handle(IPC.CALENDAR.TOGGLE, (_e, payload: CalendarTogglePayload) => {
-    const existing = calendarStore.get(payload.id)
-    if (!existing) return null
-    const updated: CalendarEvent = { ...existing, enabled: payload.enabled, updatedAt: new Date().toISOString() }
-    calendarStore.set(payload.id, updated)
-    console.log('[calendar:toggle]', payload.id, payload.enabled)
-    return updated
+  ipcMain.handle(IPC.CALENDAR.TOGGLE, async (_e, payload: CalendarTogglePayload) => {
+    const msg = await schedulerManager.db.messages.toggle(payload.id, payload.enabled)
+    if (msg) void schedulerManager.reload()
+    return msg
   })
 
-  ipcMain.handle(IPC.CALENDAR.TRIGGER, (_e, id: string) => {
-    const event = calendarStore.get(id)
-    if (!event) return { fired: false }
-    console.log('[calendar:trigger] manual fire:', event)
-    return { fired: true, event }
-  })
+  ipcMain.handle(IPC.CALENDAR.TRIGGER, (_e, id: string) =>
+    schedulerManager.triggerNow(id)
+  )
 
-  // Scene — in-memory mock store
+  // ── Scene — backed by schedulerManager.db.scenes ──────────────────────────
 
-  const mockScenes: Scene[] = [
-    {
-      id: 'scene-001',
-      name: 'End of Business',
-      description: 'Fade out audio and lower volume at end of day.',
-      steps: [
-        { id: 'step-001-1', targetDevice: 'all', action: { type: 'fade_out', durationSecs: 10 } },
-        { id: 'step-001-2', targetDevice: 'all', action: { type: 'set_volume', value: 30 } },
-      ],
-      createdAt: iso(now),
-      updatedAt: iso(now),
-    },
-    {
-      id: 'scene-002',
-      name: 'Emergency Alert',
-      description: 'Max volume and play the emergency announcement.',
-      steps: [
-        { id: 'step-002-1', targetDevice: 'all', action: { type: 'set_volume', value: 100 } },
-        { id: 'step-002-2', targetDevice: 'all', action: { type: 'play_file', filePath: '/messages/emergency.wav', fileName: 'Emergency Alert', durationSecs: 60 } },
-      ],
-      createdAt: iso(now),
-      updatedAt: iso(now),
-    },
-  ]
+  ipcMain.handle(IPC.SCENE.LIST, () =>
+    schedulerManager.db.scenes.list()
+  )
 
-  const sceneStore = new Map<string, Scene>(mockScenes.map((s) => [s.id, s]))
+  ipcMain.handle(IPC.SCENE.GET, (_e, id: string) =>
+    schedulerManager.db.scenes.get(id)
+  )
 
-  ipcMain.handle(IPC.SCENE.LIST, () => Array.from(sceneStore.values()))
+  ipcMain.handle(IPC.SCENE.CREATE, (_e, payload: SceneCreatePayload) =>
+    schedulerManager.db.scenes.create(payload.scene)
+  )
 
-  ipcMain.handle(IPC.SCENE.GET, (_e, id: string) => sceneStore.get(id) ?? null)
+  ipcMain.handle(IPC.SCENE.UPDATE, (_e, payload: SceneUpdatePayload) =>
+    schedulerManager.db.scenes.update(payload.id, payload.changes)
+  )
 
-  ipcMain.handle(IPC.SCENE.CREATE, (_e, payload: SceneCreatePayload) => {
-    const id = `scene-${Date.now()}`
-    const ts = new Date().toISOString()
-    const scene: Scene = { id, ...payload.scene, createdAt: ts, updatedAt: ts }
-    sceneStore.set(id, scene)
-    return scene
-  })
-
-  ipcMain.handle(IPC.SCENE.UPDATE, (_e, payload: SceneUpdatePayload) => {
-    const existing = sceneStore.get(payload.id)
-    if (!existing) return null
-    const updated: Scene = { ...existing, ...payload.changes, updatedAt: new Date().toISOString() }
-    sceneStore.set(payload.id, updated)
-    return updated
-  })
-
-  ipcMain.handle(IPC.SCENE.DELETE, (_e, id: string) => {
-    const removed = sceneStore.delete(id)
+  ipcMain.handle(IPC.SCENE.DELETE, async (_e, id: string) => {
+    const removed = await schedulerManager.db.scenes.delete(id)
     return { removed }
   })
 
-  ipcMain.handle(IPC.SCENE.TRIGGER, (_e, id: string) => {
-    const scene = sceneStore.get(id)
-    if (!scene) return { fired: false }
-    console.log('[scene:trigger] activate:', scene.name, scene.steps.length, 'steps')
-    return { fired: true }
-  })
+  ipcMain.handle(IPC.SCENE.TRIGGER, (_e, id: string) =>
+    schedulerManager.triggerScene(id)
+  )
 
-  // Stream handlers
-  const mockStreams: Stream[] = [
-    {
-      id: 'stream-001',
-      name: 'Radio Hits',
-      url: 'https://ice1.somafm.com/groovesalad-128-mp3',
-      description: 'SomaFM Groove Salad — ambient/downtempo',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-    {
-      id: 'stream-002',
-      name: 'Jazz FM',
-      url: 'https://ice1.somafm.com/dronezone-128-mp3',
-      description: 'SomaFM Drone Zone — atmospheric ambient',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-    {
-      id: 'stream-003',
-      name: 'La Mega',
-      url: 'https://stream.emisorasmusicales.net/listen/la_mega/lamega.mp3',
-      description: 'La Mega — música urbana y tropical',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-    {
-      id: 'stream-004',
-      name: 'Los 40 Venezuela',
-      url: 'https://stream-175.zeno.fm/xc0q62tc9f0uv?zt=eyJhbGciOiJIUzI1NiJ9.eyJzdHJlYW0iOiJ4YzBxNjJ0YzlmMHV2IiwiaG9zdCI6InN0cmVhbS0xNzUuemVuby5mbSIsInJ0dGwiOjUsImp0aSI6IkxIdzh3emtLU2lpcm1XR3NrMDM0QVEiLCJpYXQiOjE3NzYwMjA3OTAsImV4cCI6MTc3NjAyMDg1MH0.cyIBxLhEylEprcZPW1u0N66wWVPVderUKYjrlAJ3jlc',
-      description: 'Los 40 Venezuela — los mejores éxitos',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-  ]
+  // ── Stream — backed by schedulerManager.db.streams ────────────────────────
 
-  const streamStore = new Map<string, Stream>(mockStreams.map((s) => [s.id, s]))
+  ipcMain.handle(IPC.STREAM.LIST, () =>
+    schedulerManager.db.streams.list()
+  )
 
-  ipcMain.handle(IPC.STREAM.LIST, () => Array.from(streamStore.values()))
+  ipcMain.handle(IPC.STREAM.GET, (_e, id: string) =>
+    schedulerManager.db.streams.get(id)
+  )
 
-  ipcMain.handle(IPC.STREAM.GET, (_e, id: string) => streamStore.get(id) ?? null)
+  ipcMain.handle(IPC.STREAM.CREATE, (_e, payload: StreamCreatePayload) =>
+    schedulerManager.db.streams.create(payload.stream)
+  )
 
-  ipcMain.handle(IPC.STREAM.CREATE, (_e, payload: StreamCreatePayload) => {
-    const id = `stream-${Date.now()}`
-    const ts = new Date().toISOString()
-    const stream: Stream = { id, ...payload.stream, createdAt: ts, updatedAt: ts }
-    streamStore.set(id, stream)
-    return stream
-  })
+  ipcMain.handle(IPC.STREAM.UPDATE, (_e, payload: StreamUpdatePayload) =>
+    schedulerManager.db.streams.update(payload.id, payload.changes)
+  )
 
-  ipcMain.handle(IPC.STREAM.UPDATE, (_e, payload: StreamUpdatePayload) => {
-    const existing = streamStore.get(payload.id)
-    if (!existing) return null
-    const updated: Stream = { ...existing, ...payload.changes, id: existing.id, updatedAt: new Date().toISOString() }
-    streamStore.set(payload.id, updated)
-    return updated
-  })
-
-  ipcMain.handle(IPC.STREAM.DELETE, (_e, id: string) => {
-    const removed = streamStore.delete(id)
+  ipcMain.handle(IPC.STREAM.DELETE, async (_e, id: string) => {
+    const removed = await schedulerManager.db.streams.delete(id)
     return { removed }
   })
 

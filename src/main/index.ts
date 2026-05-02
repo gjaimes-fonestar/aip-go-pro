@@ -4,6 +4,7 @@ import { backendManager } from './backend'
 import { daemonManager } from './daemon'
 import { registerIpcHandlers } from './ipc'
 import { aipCore } from './aip'
+import { schedulerManager } from './schedulerManager'
 
 const isDev = !app.isPackaged
 
@@ -52,6 +53,7 @@ app.whenReady().then(async () => {
   // The daemon starts with a default interface; the user will pick a real one
   // in the UI which triggers daemonManager.restart(iface) via aip:initialize.
   backendManager.start().catch(console.error)
+  schedulerManager.start().catch(console.error)
   // Daemon is started by the user via the interface selection modal (aip:initialize)
 
   createWindow()
@@ -70,6 +72,8 @@ async function runCleanup(): Promise<void> {
   cleanupStarted = true
 
   aipCore.disconnect()
+
+  schedulerManager.stop()
 
   try {
     await Promise.race([

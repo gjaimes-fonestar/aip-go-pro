@@ -939,6 +939,50 @@ export default function Calendar() {
     return expanded
   }, [events, rangeStart, rangeEnd])
 
+  // Dynamic slot height: scale up when many events overlap in the visible range.
+  // Uses 10-min buckets to find the peak simultaneous-event count, then maps that
+  // to a slot min-height override injected via <style>.
+  const slotMinHeight = useMemo(() => {
+    const DEFAULT_HEIGHT = 100  // 100px × 4 slots = 400px per hour — generous, scrollable
+    if (view === 'month' || view === 'agenda') return 20
+    if (rbcEvents.length === 0) return DEFAULT_HEIGHT
+
+    // Visible date window for the current view
+    let viewStart: Date
+    let viewEnd: Date
+    if (view === 'day') {
+      viewStart = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+      viewEnd   = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1)
+    } else {
+      viewStart = startOfWeek(date)
+      viewEnd   = new Date(viewStart.getTime() + 7 * 24 * 60 * 60 * 1000)
+    }
+
+    const visible = rbcEvents.filter((ev) => {
+      const s = ev.start as Date
+      const e = ev.end   as Date
+      return s < viewEnd && e > viewStart
+    })
+    if (visible.length === 0) return DEFAULT_HEIGHT
+
+    // Fill 10-min buckets to find peak concurrent-event count
+    const BUCKET_MS = 10 * 60 * 1000
+    const buckets = new Map<number, number>()
+    for (const ev of visible) {
+      const evStart = ev.start as Date
+      const evEnd   = ev.end   as Date
+      const first = Math.floor(evStart.getTime() / BUCKET_MS)
+      const last  = Math.ceil(evEnd.getTime()    / BUCKET_MS)
+      for (let b = first; b < last; b++) {
+        buckets.set(b, (buckets.get(b) ?? 0) + 1)
+      }
+    }
+
+    const maxOverlap = Math.max(1, ...buckets.values())
+    // Scale up further when events are very dense; cap at 120px
+    return Math.min(200, Math.max(DEFAULT_HEIGHT, Math.ceil(maxOverlap / 4) * 50))
+  }, [rbcEvents, view, date])
+
   const modalEvent = useMemo(() => {
     if (modalEventId === null) {
       if (pendingSlot) return { dtStart: pendingSlot.start.toISOString(), dtEnd: pendingSlot.end.toISOString() }
@@ -1053,6 +1097,11 @@ export default function Calendar() {
 
       {/* Calendar body */}
       <div className="relative flex-1 overflow-hidden bg-white dark:bg-gray-900">
+        <style>{`
+          .rbc-time-slot { min-height: ${slotMinHeight}px !important; }
+          .rbc-event-content { font-size: 13px !important; line-height: 1.4 !important; }
+          .rbc-event-label   { font-size: 12px !important; }
+        `}</style>
         {loading && (
           <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/70 dark:bg-gray-900/70">
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
@@ -1073,6 +1122,7 @@ export default function Calendar() {
           components={{ dateCellWrapper: DateCellWithEvents }}
           messages={messages}
           style={{ height: '100%', padding: '8px' }}
+          scrollToTime={new Date(1970, 1, 1, 8, 0, 0)}
           popup
         />
       </div>

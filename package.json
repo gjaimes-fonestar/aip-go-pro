@@ -4,13 +4,14 @@
   "description": "AIP Go Pro – Professional Management UI",
   "main": "./out/main/index.js",
   "scripts": {
-    "dev": "ELECTRON_DISABLE_SANDBOX=1 electron-vite dev",
+    "dev": "cross-env ELECTRON_DISABLE_SANDBOX=1 electron-vite dev",
     "build": "electron-vite build",
     "preview": "electron-vite preview",
     "daemon:build": "cmake --build ../aip-go-services/build --target aip-daemon",
     "daemon:copy:linux": "mkdir -p resources/bin/linux && cp ../aip-go-services/build/bin/aip-daemon resources/bin/linux/aip-daemon && chmod +x resources/bin/linux/aip-daemon",
     "daemon:copy:win": "powershell -Command \"New-Item -ItemType Directory -Force -Path resources/bin/windows | Out-Null; Copy-Item -Force ../aip-go-services/build/bin/aip-daemon.exe resources/bin/windows/aip-daemon.exe\"",
     "daemon:install:linux": "npm run daemon:build && npm run daemon:copy:linux",
+    "rebuild": "electron-rebuild -f -w better-sqlite3",
     "package:win": "npm run build && electron-builder --win",
     "package:linux": "npm run build && electron-builder --linux",
     "package": "npm run build && electron-builder --win --linux"
@@ -18,6 +19,8 @@
   "dependencies": {
     "@types/react-big-calendar": "^1.16.3",
     "aip-client": "file:../aip-go-services/aip-client",
+    "aip-database": "file:../aip-go-services/aip-database",
+    "aip-scheduler": "file:../aip-go-services/aip-scheduler",
     "axios": "^1.7.9",
     "date-fns": "^4.1.0",
     "i18next": "^26.0.4",
@@ -29,12 +32,24 @@
     "rrule": "^2.8.1",
     "zustand": "^5.0.2"
   },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "better-sqlite3",
+      "electron",
+      "esbuild",
+      "electron-winstaller",
+      "@prisma/engines",
+      "prisma"
+    ]
+  },
   "devDependencies": {
+    "@electron/rebuild": "^3.7.1",
     "@types/node": "^22.10.0",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
+    "cross-env": "^10.1.0",
     "electron": "^41.2.1",
     "electron-builder": "^26.8.1",
     "electron-vite": "^5.0.0",

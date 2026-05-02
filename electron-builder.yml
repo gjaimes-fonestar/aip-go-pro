@@ -9,6 +9,13 @@ directories:
 files:
   - out/**/*
 
+# Unpack native .node addons — they cannot be loaded from inside an asar archive.
+asarUnpack:
+  - "**/*.node"
+
+# Rebuild native modules (e.g. better-sqlite3) against Electron's Node before packaging.
+npmRebuild: true
+
 extraResources:
   - from: resources/bin/${os}/
     to: bin/
