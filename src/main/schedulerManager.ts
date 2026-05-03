@@ -235,6 +235,10 @@ class SchedulerManager {
 
   private async _dispatchScene(scene: Scene, allMacs: string[]): Promise<void> {
     console.log('[schedulerManager] scene:', scene.name, scene.steps.length, 'step(s)')
+    const firedAt = new Date().toISOString()
+    for (const win of BrowserWindow.getAllWindows()) {
+      win.webContents.send(IPC.SCENE.FIRED, scene.id, scene.name, firedAt)
+    }
     // Steps are designed to fire simultaneously.
     await Promise.allSettled(scene.steps.map((step) => this._dispatchStep(step, allMacs)))
   }

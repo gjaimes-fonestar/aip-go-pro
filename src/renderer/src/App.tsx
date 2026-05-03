@@ -2,8 +2,10 @@ import { useEffect, useCallback } from 'react'
 import { RouterProvider } from 'react-router-dom'
 import { router } from './router'
 import { useAppStore } from './store/app.store'
+import { useCalendarStore } from './store/calendar.store'
 import { useTransfersStore, OPERATION_TO_KIND } from './store/transfers.store'
 import { useToastStore, type Toast } from './store/toast.store'
+import { useLogStore } from './store/log.store'
 import type { AipGateOperationCompletedEvent, AipGateOperationErrorEvent } from '@shared/ipc'
 
 const POLL_INTERVAL_MS = 3_000
@@ -130,6 +132,32 @@ export default function App() {
     const u2 = window.electronAPI.aip.onGateOperationError(handleOpError)
     return () => { u1(); u2() }
   }, [handleOpCompleted, handleOpError])
+
+  // ── Scheduler fired events → log ────────────────────────────────────────
+  useEffect(() => {
+    return window.electronAPI.calendar.onEventFired((id, firedAt) => {
+      const ev = useCalendarStore.getState().events.find((e) => e.id === id)
+      useLogStore.getState().push({
+        timestamp: firedAt,
+        level:     'info',
+        category:  'scheduler',
+        message:   ev ? `Fired: "${ev.title}"` : `Fired: event ${id}`,
+        details:   ev ? `action=${ev.action.type}` : `id=${id}`,
+      })
+    })
+  }, [])
+
+  // ── Scene dispatched → log ───────────────────────────────────────────────
+  useEffect(() => {
+    return window.electronAPI.scene.onSceneFired((_id, name, firedAt) => {
+      useLogStore.getState().push({
+        timestamp: firedAt,
+        level:     'info',
+        category:  'scene',
+        message:   `Dispatched: "${name}"`,
+      })
+    })
+  }, [])
 
   return (
     <>

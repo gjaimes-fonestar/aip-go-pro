@@ -40,6 +40,7 @@ export const IPC = {
     UPDATE:  'scene:update',
     DELETE:  'scene:delete',
     TRIGGER: 'scene:trigger',
+    FIRED:   'scene:fired',
   },
   STREAM: {
     LIST:     'stream:list',

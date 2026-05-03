@@ -100,6 +100,11 @@ const electronAPI = {
     update:  (payload: SceneUpdatePayload): Promise<Scene | null>      => ipcRenderer.invoke(IPC.SCENE.UPDATE, payload),
     delete:  (id: string): Promise<{ removed: boolean }>  => ipcRenderer.invoke(IPC.SCENE.DELETE, id),
     trigger: (id: string): Promise<{ fired: boolean }>    => ipcRenderer.invoke(IPC.SCENE.TRIGGER, id),
+    onSceneFired: (cb: (id: string, name: string, firedAt: string) => void): (() => void) => {
+      const listener = (_e: Electron.IpcRendererEvent, id: string, name: string, firedAt: string): void => cb(id, name, firedAt)
+      ipcRenderer.on(IPC.SCENE.FIRED, listener)
+      return () => ipcRenderer.removeListener(IPC.SCENE.FIRED, listener)
+    },
   },
 
   stream: {

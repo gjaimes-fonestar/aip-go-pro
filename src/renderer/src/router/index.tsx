@@ -4,6 +4,7 @@ import Devices from '../pages/Devices'
 import Dashboard from '../pages/Dashboard'
 import NotFound from '../pages/NotFound'
 import Placeholder from '../pages/Placeholder'
+import Log from '../pages/Log'
 import Channels from '../pages/Channels'
 import Webserver from '../pages/Webserver'
 import Calendar from '../pages/Calendar'
@@ -32,7 +33,7 @@ export const router = createHashRouter([
       { path: 'scenes',          element: <Scenes /> },
       { path: 'transfers',       element: <Transfers /> },
       { path: 'sip-devices',     element: <Placeholder title="SIP Devices" /> },
-      { path: 'log',             element: <Placeholder title="Log" /> },
+      { path: 'log',             element: <Log /> },
     ],
   },
   { path: '*', element: <NotFound /> },
