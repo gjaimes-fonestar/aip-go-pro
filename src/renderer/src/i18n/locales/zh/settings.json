@@ -1,0 +1,32 @@
+{
+  "title": "设置",
+  "subtitle": "应用程序首选项",
+  "tabs": {
+    "main": "常规",
+    "network": "网络",
+    "security": "安全"
+  },
+  "main": {
+    "minimizeToTray": "最小化到托盘",
+    "minimizeOnClose": "关闭时最小化",
+    "bootOnStartup": "开机自启动",
+    "language": "语言"
+  },
+  "network": {
+    "mode": "网络名称模式",
+    "modeDefault": "默认",
+    "modePersonalized": "自定义",
+    "customName": "自定义网络名称",
+    "customNamePlaceholder": "例如 Studio-A"
+  },
+  "security": {
+    "enabled": "启用安全功能",
+    "password": "密码",
+    "askOnStart": "启动时验证密码",
+    "askOnExit": "退出时验证密码",
+    "allowVoice": "无需密码允许语音"
+  },
+  "error": {
+    "load": "无法加载设置。"
+  }
+}

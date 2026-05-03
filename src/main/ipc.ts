@@ -506,4 +506,14 @@ export function registerIpcHandlers(): void {
       }
     })
   })
+
+  // ── AppSettings — application preferences ────────────────────────────────
+
+  ipcMain.handle(IPC.SETTINGS.GET, () =>
+    schedulerManager.db.settings.get()
+  )
+
+  ipcMain.handle(IPC.SETTINGS.SAVE, (_e, changes: import('../shared/settings').UpdateAppSettings) =>
+    schedulerManager.db.settings.save(changes)
+  )
 }

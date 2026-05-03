@@ -1,0 +1,32 @@
+{
+  "title": "Settings",
+  "subtitle": "Application preferences",
+  "tabs": {
+    "main": "Main",
+    "network": "Network",
+    "security": "Security"
+  },
+  "main": {
+    "minimizeToTray": "Minimize to tray",
+    "minimizeOnClose": "Minimize on close",
+    "bootOnStartup": "Launch on startup",
+    "language": "Language"
+  },
+  "network": {
+    "mode": "Network name mode",
+    "modeDefault": "default",
+    "modePersonalized": "personalized",
+    "customName": "Custom network name",
+    "customNamePlaceholder": "e.g. Studio-A"
+  },
+  "security": {
+    "enabled": "Enable security",
+    "password": "Password",
+    "askOnStart": "Ask password on start",
+    "askOnExit": "Ask password on exit",
+    "allowVoice": "Allow voice without password"
+  },
+  "error": {
+    "load": "Could not load settings."
+  }
+}

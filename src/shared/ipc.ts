@@ -50,6 +50,10 @@ export const IPC = {
     DELETE:   'stream:delete',
     VALIDATE: 'stream:validate',
   },
+  SETTINGS: {
+    GET:  'settings:get',
+    SAVE: 'settings:save',
+  },
   AIP: {
     // Core
     GET_STATUS:     'aip:getStatus',

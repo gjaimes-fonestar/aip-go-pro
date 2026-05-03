@@ -7,6 +7,7 @@ import { useTransfersStore, OPERATION_TO_KIND } from './store/transfers.store'
 import { useToastStore, type Toast } from './store/toast.store'
 import { useLogStore } from './store/log.store'
 import type { AipGateOperationCompletedEvent, AipGateOperationErrorEvent } from '@shared/ipc'
+import i18n, { saveLanguage, type LanguageCode } from './i18n'
 
 const POLL_INTERVAL_MS = 3_000
 const TOAST_DURATION_MS = 4500
@@ -109,6 +110,16 @@ export default function App() {
   const resolveRecord     = useTransfersStore((s) => s.resolveRecord)
   const rejectRecord      = useTransfersStore((s) => s.rejectRecord)
   const pushToast         = useToastStore((s) => s.push)
+
+  // ── Sync language from DB on startup ────────────────────────────────────
+  useEffect(() => {
+    window.electronAPI.settings.get()
+      .then((s) => {
+        i18n.changeLanguage(s.language)
+        saveLanguage(s.language as LanguageCode)
+      })
+      .catch(() => { /* keep localStorage fallback language */ })
+  }, [])
 
   useEffect(() => {
     pollBackendStatus()

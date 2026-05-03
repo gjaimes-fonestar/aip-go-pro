@@ -1,0 +1,32 @@
+{
+  "title": "Configuración",
+  "subtitle": "Preferencias de la aplicación",
+  "tabs": {
+    "main": "General",
+    "network": "Red",
+    "security": "Seguridad"
+  },
+  "main": {
+    "minimizeToTray": "Minimizar a la bandeja del sistema",
+    "minimizeOnClose": "Minimizar al cerrar",
+    "bootOnStartup": "Iniciar con el sistema",
+    "language": "Idioma"
+  },
+  "network": {
+    "mode": "Modo de nombre de red",
+    "modeDefault": "predeterminado",
+    "modePersonalized": "personalizado",
+    "customName": "Nombre de red personalizado",
+    "customNamePlaceholder": "ej. Estudio-A"
+  },
+  "security": {
+    "enabled": "Activar seguridad",
+    "password": "Contraseña",
+    "askOnStart": "Pedir contraseña al iniciar",
+    "askOnExit": "Pedir contraseña al salir",
+    "allowVoice": "Permitir voz sin contraseña"
+  },
+  "error": {
+    "load": "No se pudo cargar la configuración."
+  }
+}

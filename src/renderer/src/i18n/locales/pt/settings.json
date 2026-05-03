@@ -1,0 +1,32 @@
+{
+  "title": "Configurações",
+  "subtitle": "Preferências do aplicativo",
+  "tabs": {
+    "main": "Geral",
+    "network": "Rede",
+    "security": "Segurança"
+  },
+  "main": {
+    "minimizeToTray": "Minimizar para a bandeja",
+    "minimizeOnClose": "Minimizar ao fechar",
+    "bootOnStartup": "Iniciar com o sistema",
+    "language": "Idioma"
+  },
+  "network": {
+    "mode": "Modo do nome de rede",
+    "modeDefault": "padrão",
+    "modePersonalized": "personalizado",
+    "customName": "Nome de rede personalizado",
+    "customNamePlaceholder": "ex. Estúdio-A"
+  },
+  "security": {
+    "enabled": "Ativar segurança",
+    "password": "Senha",
+    "askOnStart": "Pedir senha ao iniciar",
+    "askOnExit": "Pedir senha ao sair",
+    "allowVoice": "Permitir voz sem senha"
+  },
+  "error": {
+    "load": "Não foi possível carregar as configurações."
+  }
+}

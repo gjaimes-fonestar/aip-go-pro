@@ -1,0 +1,32 @@
+{
+  "title": "Cài đặt",
+  "subtitle": "Tùy chọn ứng dụng",
+  "tabs": {
+    "main": "Chung",
+    "network": "Mạng",
+    "security": "Bảo mật"
+  },
+  "main": {
+    "minimizeToTray": "Thu nhỏ xuống khay hệ thống",
+    "minimizeOnClose": "Thu nhỏ khi đóng",
+    "bootOnStartup": "Khởi động cùng hệ thống",
+    "language": "Ngôn ngữ"
+  },
+  "network": {
+    "mode": "Chế độ tên mạng",
+    "modeDefault": "mặc định",
+    "modePersonalized": "tùy chỉnh",
+    "customName": "Tên mạng tùy chỉnh",
+    "customNamePlaceholder": "vd. Studio-A"
+  },
+  "security": {
+    "enabled": "Bật bảo mật",
+    "password": "Mật khẩu",
+    "askOnStart": "Yêu cầu mật khẩu khi khởi động",
+    "askOnExit": "Yêu cầu mật khẩu khi thoát",
+    "allowVoice": "Cho phép giọng nói không cần mật khẩu"
+  },
+  "error": {
+    "load": "Không thể tải cài đặt."
+  }
+}

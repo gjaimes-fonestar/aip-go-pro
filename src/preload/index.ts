@@ -8,6 +8,7 @@ import type {
 } from '../shared/calendar'
 import type { Scene, SceneCreatePayload, SceneUpdatePayload } from '../shared/scene'
 import type { Stream, StreamCreatePayload, StreamUpdatePayload } from '../shared/stream'
+import type { AppSettings, UpdateAppSettings } from '../shared/settings'
 import type {
   BackendInfo,
   DialogOpenOptions,
@@ -114,6 +115,11 @@ const electronAPI = {
     update:   (payload: StreamUpdatePayload): Promise<Stream | null>        => ipcRenderer.invoke(IPC.STREAM.UPDATE, payload),
     delete:   (id: string): Promise<{ removed: boolean }>                   => ipcRenderer.invoke(IPC.STREAM.DELETE, id),
     validate: (url: string): Promise<{ ok: boolean; message: string }>      => ipcRenderer.invoke(IPC.STREAM.VALIDATE, url),
+  },
+
+  settings: {
+    get:  (): Promise<AppSettings>                        => ipcRenderer.invoke(IPC.SETTINGS.GET),
+    save: (changes: UpdateAppSettings): Promise<AppSettings> => ipcRenderer.invoke(IPC.SETTINGS.SAVE, changes),
   },
 
   aip: {
