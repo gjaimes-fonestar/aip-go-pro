@@ -28,5 +28,13 @@
   },
   "error": {
     "load": "Could not load settings."
+  },
+  "auth": {
+    "startupSubtitle": "Enter your password to continue",
+    "exitSubtitle": "Enter your password to exit",
+    "passwordPlaceholder": "Password",
+    "unlock": "Unlock",
+    "exit": "Exit",
+    "wrongPassword": "Incorrect password. Please try again."
   }
 }

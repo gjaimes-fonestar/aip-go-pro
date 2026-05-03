@@ -28,5 +28,13 @@
   },
   "error": {
     "load": "No se pudo cargar la configuración."
+  },
+  "auth": {
+    "startupSubtitle": "Introduzca su contraseña para continuar",
+    "exitSubtitle": "Introduzca su contraseña para salir",
+    "passwordPlaceholder": "Contraseña",
+    "unlock": "Desbloquear",
+    "exit": "Salir",
+    "wrongPassword": "Contraseña incorrecta. Inténtelo de nuevo."
   }
 }

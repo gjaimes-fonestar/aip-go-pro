@@ -55,9 +55,15 @@ import type {
  */
 const electronAPI = {
   appWindow: {
-    minimize: (): Promise<void> => ipcRenderer.invoke(IPC.WINDOW.MINIMIZE),
-    maximize: (): Promise<void> => ipcRenderer.invoke(IPC.WINDOW.MAXIMIZE),
-    close:    (): Promise<void> => ipcRenderer.invoke(IPC.WINDOW.CLOSE),
+    minimize:     (): Promise<void> => ipcRenderer.invoke(IPC.WINDOW.MINIMIZE),
+    maximize:     (): Promise<void> => ipcRenderer.invoke(IPC.WINDOW.MAXIMIZE),
+    close:        (): Promise<void> => ipcRenderer.invoke(IPC.WINDOW.CLOSE),
+    confirmExit:  (): Promise<void> => ipcRenderer.invoke(IPC.WINDOW.CONFIRM_EXIT),
+    onExitRequested: (cb: () => void): (() => void) => {
+      const listener = (): void => cb()
+      ipcRenderer.on(IPC.WINDOW.EXIT_REQUESTED, listener)
+      return () => ipcRenderer.removeListener(IPC.WINDOW.EXIT_REQUESTED, listener)
+    },
   },
 
   backend: {

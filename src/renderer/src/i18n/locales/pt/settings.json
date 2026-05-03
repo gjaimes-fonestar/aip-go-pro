@@ -28,5 +28,13 @@
   },
   "error": {
     "load": "Não foi possível carregar as configurações."
+  },
+  "auth": {
+    "startupSubtitle": "Digite sua senha para continuar",
+    "exitSubtitle": "Digite sua senha para sair",
+    "passwordPlaceholder": "Senha",
+    "unlock": "Desbloquear",
+    "exit": "Sair",
+    "wrongPassword": "Senha incorreta. Tente novamente."
   }
 }

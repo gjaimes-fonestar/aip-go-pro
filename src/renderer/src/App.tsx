@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react'
+import { useEffect, useCallback, useState } from 'react'
 import { RouterProvider } from 'react-router-dom'
 import { router } from './router'
 import { useAppStore } from './store/app.store'
@@ -8,6 +8,7 @@ import { useToastStore, type Toast } from './store/toast.store'
 import { useLogStore } from './store/log.store'
 import type { AipGateOperationCompletedEvent, AipGateOperationErrorEvent } from '@shared/ipc'
 import i18n, { saveLanguage, type LanguageCode } from './i18n'
+import { LoginGate } from './components/LoginGate'
 
 const POLL_INTERVAL_MS = 3_000
 const TOAST_DURATION_MS = 4500
@@ -111,14 +112,36 @@ export default function App() {
   const rejectRecord      = useTransfersStore((s) => s.rejectRecord)
   const pushToast         = useToastStore((s) => s.push)
 
-  // ── Sync language from DB on startup ────────────────────────────────────
+  // null = still loading, true = locked (show startup gate), false = unlocked
+  const [locked,        setLocked]        = useState<boolean | null>(null)
+  const [exitRequested, setExitRequested] = useState(false)
+  const [securityPass,  setSecurityPass]  = useState('')
+
+  // ── Load settings: sync language + check startup lock ───────────────────
   useEffect(() => {
     window.electronAPI.settings.get()
       .then((s) => {
         i18n.changeLanguage(s.language)
         saveLanguage(s.language as LanguageCode)
+        const needsLock = !!(s.securityEnabled && s.securityAskOnStart && s.securityPassword)
+        setSecurityPass(s.securityPassword ?? '')
+        setLocked(needsLock)
       })
-      .catch(() => { /* keep localStorage fallback language */ })
+      .catch(() => { setLocked(false) /* allow in on error */ })
+  }, [])
+
+  // ── Listen for exit-auth request from main process ───────────────────────
+  useEffect(() => {
+    return window.electronAPI.appWindow.onExitRequested(() => {
+      window.electronAPI.settings.get()
+        .then((s) => {
+          setSecurityPass(s.securityPassword ?? '')
+          setExitRequested(true)
+        })
+        .catch(() => {
+          void window.electronAPI.appWindow.confirmExit()
+        })
+    })
   }, [])
 
   useEffect(() => {
@@ -170,10 +193,30 @@ export default function App() {
     })
   }, [])
 
+  // Startup lock: blank screen while loading, then gate until unlocked
+  if (locked === null) return null
+  if (locked) {
+    return (
+      <LoginGate
+        password={securityPass}
+        mode="startup"
+        onSuccess={() => setLocked(false)}
+      />
+    )
+  }
+
   return (
     <>
       <RouterProvider router={router} />
       <ToastContainer />
+      {exitRequested && (
+        <LoginGate
+          password={securityPass}
+          mode="exit"
+          onSuccess={() => void window.electronAPI.appWindow.confirmExit()}
+          onCancel={() => setExitRequested(false)}
+        />
+      )}
     </>
   )
 }

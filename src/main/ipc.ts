@@ -1,7 +1,9 @@
 import { ipcMain, dialog, app, BrowserWindow } from 'electron'
+import { ensureTray, destroyTray } from './trayManager'
 import http from 'http'
 import https from 'https'
 import { IPC } from '../shared/ipc'
+import { setExitConfirmed } from './exitState'
 import type {
   AipChannelConfig,
   AipSipConfigWrite,
@@ -513,7 +515,22 @@ export function registerIpcHandlers(): void {
     schedulerManager.db.settings.get()
   )
 
-  ipcMain.handle(IPC.SETTINGS.SAVE, (_e, changes: import('../shared/settings').UpdateAppSettings) =>
-    schedulerManager.db.settings.save(changes)
-  )
+  ipcMain.handle(IPC.SETTINGS.SAVE, async (_e, changes: import('../shared/settings').UpdateAppSettings) => {
+    const saved = await schedulerManager.db.settings.save(changes)
+    // Apply side-effects immediately
+    app.setLoginItemSettings({ openAtLogin: saved.bootOnStartup })
+    const win = BrowserWindow.getAllWindows()[0]
+    if (win) {
+      if (saved.minimizeToTray) ensureTray(win)
+      else destroyTray()
+    }
+    return saved
+  })
+
+  // ── Window exit auth ──────────────────────────────────────────────────────
+
+  ipcMain.handle(IPC.WINDOW.CONFIRM_EXIT, () => {
+    setExitConfirmed()
+    BrowserWindow.getAllWindows().forEach((w) => w.close())
+  })
 }

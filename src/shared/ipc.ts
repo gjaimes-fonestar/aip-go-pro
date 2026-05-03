@@ -6,9 +6,11 @@
 
 export const IPC = {
   WINDOW: {
-    MINIMIZE: 'window:minimize',
-    MAXIMIZE: 'window:maximize',
-    CLOSE:    'window:close',
+    MINIMIZE:       'window:minimize',
+    MAXIMIZE:       'window:maximize',
+    CLOSE:          'window:close',
+    EXIT_REQUESTED: 'window:exit-requested',  // push: main → renderer
+    CONFIRM_EXIT:   'window:confirm-exit',    // invoke: renderer → main
   },
   BACKEND: {
     GET_INFO: 'backend:getInfo',

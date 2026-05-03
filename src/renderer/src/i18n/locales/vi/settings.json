@@ -28,5 +28,13 @@
   },
   "error": {
     "load": "Không thể tải cài đặt."
+  },
+  "auth": {
+    "startupSubtitle": "Nhập mật khẩu để tiếp tục",
+    "exitSubtitle": "Nhập mật khẩu để thoát",
+    "passwordPlaceholder": "Mật khẩu",
+    "unlock": "Mở khóa",
+    "exit": "Thoát",
+    "wrongPassword": "Mật khẩu không đúng. Vui lòng thử lại."
   }
 }
