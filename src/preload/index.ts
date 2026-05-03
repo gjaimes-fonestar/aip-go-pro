@@ -9,6 +9,7 @@ import type {
 import type { Scene, SceneCreatePayload, SceneUpdatePayload } from '../shared/scene'
 import type { Stream, StreamCreatePayload, StreamUpdatePayload } from '../shared/stream'
 import type { AppSettings, UpdateAppSettings } from '../shared/settings'
+import type { AudioChannel, NewAudioChannel, UpdateAudioChannel, AudioChannelSource, AudioChannelDevice } from '../shared/audioChannel'
 import type {
   BackendInfo,
   DialogOpenOptions,
@@ -126,6 +127,18 @@ const electronAPI = {
   settings: {
     get:  (): Promise<AppSettings>                        => ipcRenderer.invoke(IPC.SETTINGS.GET),
     save: (changes: UpdateAppSettings): Promise<AppSettings> => ipcRenderer.invoke(IPC.SETTINGS.SAVE, changes),
+  },
+
+  channel: {
+    list:         (): Promise<AudioChannel[]>                                  => ipcRenderer.invoke(IPC.CHANNEL.LIST),
+    get:          (id: number): Promise<AudioChannel | null>                   => ipcRenderer.invoke(IPC.CHANNEL.GET, id),
+    create:       (data: NewAudioChannel): Promise<AudioChannel>               => ipcRenderer.invoke(IPC.CHANNEL.CREATE, data),
+    update:       (id: number, changes: UpdateAudioChannel): Promise<AudioChannel | null> => ipcRenderer.invoke(IPC.CHANNEL.UPDATE, id, changes),
+    delete:       (id: number): Promise<{ removed: boolean }>                  => ipcRenderer.invoke(IPC.CHANNEL.DELETE, id),
+    addSource:    (channelId: number, path: string): Promise<AudioChannelSource>  => ipcRenderer.invoke(IPC.CHANNEL.ADD_SOURCE, channelId, path),
+    removeSource: (id: number): Promise<{ removed: boolean }>                  => ipcRenderer.invoke(IPC.CHANNEL.REMOVE_SOURCE, id),
+    addDevice:    (channelId: number, mac: string): Promise<AudioChannelDevice>   => ipcRenderer.invoke(IPC.CHANNEL.ADD_DEVICE, channelId, mac),
+    removeDevice: (id: number): Promise<{ removed: boolean }>                  => ipcRenderer.invoke(IPC.CHANNEL.REMOVE_DEVICE, id),
   },
 
   aip: {

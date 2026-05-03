@@ -509,6 +509,59 @@ export function registerIpcHandlers(): void {
     })
   })
 
+  // ── AudioChannel — persistent channel storage ────────────────────────────
+
+  ipcMain.handle(IPC.CHANNEL.LIST, () =>
+    schedulerManager.db.channels.list()
+  )
+
+  ipcMain.handle(IPC.CHANNEL.GET, (_e, id: number) =>
+    schedulerManager.db.channels.get(id)
+  )
+
+  ipcMain.handle(IPC.CHANNEL.CREATE, (_e, data: import('../shared/audioChannel').NewAudioChannel) =>
+    schedulerManager.db.channels.create({
+      name:                 data.name,
+      audioSource:          data.audioSource,
+      quality:              data.quality,
+      isMono:               data.isMono,
+      loopAll:              data.loopAll,
+      shuffle:              data.shuffle,
+      startWhenCreated:     data.startWhenCreated,
+      restoreDeviceList:    data.restoreDeviceList,
+      restorePlaybackState: data.restorePlaybackState,
+      sources:              data.sources.map((s) => ({ path: s.path })),
+      devices:              data.devices.map((d) => ({ mac: d.mac })),
+    })
+  )
+
+  ipcMain.handle(IPC.CHANNEL.UPDATE, (_e, id: number, changes: import('../shared/audioChannel').UpdateAudioChannel) =>
+    schedulerManager.db.channels.update(id, changes)
+  )
+
+  ipcMain.handle(IPC.CHANNEL.DELETE, async (_e, id: number) => {
+    const removed = await schedulerManager.db.channels.delete(id)
+    return { removed }
+  })
+
+  ipcMain.handle(IPC.CHANNEL.ADD_SOURCE, (_e, channelId: number, path: string) =>
+    schedulerManager.db.channels.addSource(channelId, path)
+  )
+
+  ipcMain.handle(IPC.CHANNEL.REMOVE_SOURCE, async (_e, id: number) => {
+    const removed = await schedulerManager.db.channels.removeSource(id)
+    return { removed }
+  })
+
+  ipcMain.handle(IPC.CHANNEL.ADD_DEVICE, (_e, channelId: number, mac: string) =>
+    schedulerManager.db.channels.addDevice(channelId, mac)
+  )
+
+  ipcMain.handle(IPC.CHANNEL.REMOVE_DEVICE, async (_e, id: number) => {
+    const removed = await schedulerManager.db.channels.removeDevice(id)
+    return { removed }
+  })
+
   // ── AppSettings — application preferences ────────────────────────────────
 
   ipcMain.handle(IPC.SETTINGS.GET, () =>

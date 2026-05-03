@@ -205,6 +205,7 @@ function ChannelRow({
   errorMessage,
   positionSec,
   totalSec,
+  dbChannelId,
   onPlay,
   onStop,
   onPrev,
@@ -212,17 +213,18 @@ function ChannelRow({
   onDelete,
   onDismissError,
 }: {
-  channel:       AipChannelInfo
-  devices:       AipDeviceJson[]
-  errorMessage?: string
-  positionSec:   number
-  totalSec:      number
-  onPlay:        (id: number, isPlaying: boolean) => void
-  onStop:        (id: number) => void
-  onPrev:        (id: number) => void
-  onNext:        (id: number) => void
-  onDelete:      (id: number) => void
-  onDismissError:(id: number) => void
+  channel:        AipChannelInfo
+  devices:        AipDeviceJson[]
+  errorMessage?:  string
+  positionSec:    number
+  totalSec:       number
+  dbChannelId?:   number
+  onPlay:         (id: number, isPlaying: boolean) => void
+  onStop:         (id: number) => void
+  onPrev:         (id: number) => void
+  onNext:         (id: number) => void
+  onDelete:       (id: number) => void
+  onDismissError: (id: number) => void
 }) {
   const { t } = useTranslation('channels')
   const [expanded, setExpanded]           = useState(false)
@@ -458,7 +460,12 @@ function ChannelRow({
                         </div>
                         <div className="flex shrink-0 gap-1">
                           <button
-                            onClick={() => window.electronAPI.aip.linkChannelToDevice(channel.id, d.mac).catch(console.error)}
+                            onClick={() => {
+                              window.electronAPI.aip.linkChannelToDevice(channel.id, d.mac).catch(console.error)
+                              if (dbChannelId !== undefined) {
+                                window.electronAPI.channel.addDevice(dbChannelId, d.mac).catch(console.error)
+                              }
+                            }}
                             className="rounded-md bg-primary px-2 py-1 text-xs font-medium text-white hover:bg-primary/90"
                           >
                             {t('assign')}
@@ -571,6 +578,10 @@ export default function Channels() {
   const [channelErrors, setChannelErrors] = useState<Record<number, string>>({})
   const [channelPositions, setChannelPositions] = useState<Record<number, { elapsedSec: number; totalSec: number }>>({})
   const unsubRef = useRef<(() => void) | null>(null)
+  // aip runtime id → db row id, populated for persistent channels only
+  const [dbIdMap, setDbIdMap] = useState<Record<number, number>>({})
+  // guard: restore from DB only once per AIP session (prevents double-creates on re-mount)
+  const restoredRef = useRef(false)
 
   const [networkChannels, setNetworkChannels] = useState<AipNetworkChannel[]>([])
 
@@ -619,6 +630,48 @@ export default function Channels() {
   useEffect(() => {
     refreshChannels().catch(console.error)
   }, [aipReady])
+
+  // Restore persistent channels from DB once discovery completes.
+  // We wait for discovery to end (not just aipReady) because createChannel calls
+  // may fail if the AIP daemon hasn't fully initialised during the discovery window.
+  useEffect(() => {
+    if (!aipReady || discovering || restoredRef.current) return
+    restoredRef.current = true
+    void (async () => {
+      try {
+        const saved = await window.electronAPI.channel.list()
+        if (saved.length === 0) return
+        const newMap: Record<number, number> = {}
+        for (const ch of saved) {
+          try {
+            const aipId = await window.electronAPI.aip.createChannel({
+              name:      ch.name,
+              urls:      ch.sources.map((s) => s.path),
+              quality:   ({ LOW: 0, NORMAL: 1, HIGH: 2 } as const)[ch.quality],
+              audioMode: ch.isMono ? 1 : 2,
+              loop:      ch.loopAll,
+              shuffle:   ch.shuffle,
+            })
+            newMap[aipId] = ch.id
+            if (ch.restoreDeviceList) {
+              for (const d of ch.devices) {
+                await window.electronAPI.aip.linkChannelToDevice(aipId, d.mac).catch(console.error)
+              }
+            }
+            if (ch.restorePlaybackState) {
+              await window.electronAPI.aip.playChannel(aipId).catch(console.error)
+            }
+          } catch (e) {
+            console.error('[channel restore] createChannel failed for', ch.name, e)
+          }
+        }
+        setDbIdMap((prev) => ({ ...prev, ...newMap }))
+        await refreshChannels()
+      } catch (e) {
+        console.error('[channel restore] channel.list() failed:', e)
+      }
+    })()
+  }, [aipReady, discovering, refreshChannels])
 
   useEffect(() => {
     refreshNetworkChannels().catch(console.error)
@@ -697,9 +750,29 @@ export default function Channels() {
     }
 
     try {
-      const id = await window.electronAPI.aip.createChannel(config)
+      const aipId = await window.electronAPI.aip.createChannel(config)
       if (form.startOnCreate) {
-        await window.electronAPI.aip.playChannel(id).catch(console.error)
+        await window.electronAPI.aip.playChannel(aipId).catch(console.error)
+      }
+      if (form.permanent) {
+        try {
+          const dbCh = await window.electronAPI.channel.create({
+            name:                 form.name,
+            audioSource:          form.sourceType === 'online' ? 'ONLINE' : 'LOCAL',
+            quality:              (form.quality.toUpperCase() as 'LOW' | 'NORMAL' | 'HIGH'),
+            isMono:               form.audioChannels === 'mono',
+            loopAll:              form.loopAll,
+            shuffle:              form.shuffle,
+            startWhenCreated:     form.startOnCreate,
+            restoreDeviceList:    form.restoreDevices,
+            restorePlaybackState: form.restoreState,
+            sources:              urls.map((path) => ({ path })),
+            devices:              [],
+          })
+          setDbIdMap((prev) => ({ ...prev, [aipId]: dbCh.id }))
+        } catch (e) {
+          console.error('channel:persist failed:', e)
+        }
       }
       await refreshChannels()
     } catch (e) {
@@ -735,8 +808,13 @@ export default function Channels() {
   const handleDelete = useCallback(async (id: number) => {
     await window.electronAPI.aip.stopChannel(id).catch(console.error)
     await window.electronAPI.aip.destroyChannel(id).catch(console.error)
+    const dbId = dbIdMap[id]
+    if (dbId !== undefined) {
+      await window.electronAPI.channel.delete(dbId).catch(console.error)
+      setDbIdMap((prev) => { const n = { ...prev }; delete n[id]; return n })
+    }
     await refreshChannels()
-  }, [refreshChannels])
+  }, [refreshChannels, dbIdMap])
 
   const handleRemoveNetworkChannel = useCallback(async (mac: string, channelNumber: number) => {
     await window.electronAPI.aip.removeNetworkChannelByKey(mac, channelNumber).catch(console.error)
@@ -886,6 +964,7 @@ export default function Channels() {
                   errorMessage={channelErrors[ch.id]}
                   positionSec={channelPositions[ch.id]?.elapsedSec ?? 0}
                   totalSec={channelPositions[ch.id]?.totalSec ?? 0}
+                  dbChannelId={dbIdMap[ch.id]}
                   onPlay={handlePlay}
                   onStop={handleStop}
                   onPrev={handlePrev}

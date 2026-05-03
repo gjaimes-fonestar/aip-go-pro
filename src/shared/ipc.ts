@@ -56,6 +56,17 @@ export const IPC = {
     GET:  'settings:get',
     SAVE: 'settings:save',
   },
+  CHANNEL: {
+    LIST:          'channel:list',
+    GET:           'channel:get',
+    CREATE:        'channel:create',
+    UPDATE:        'channel:update',
+    DELETE:        'channel:delete',
+    ADD_SOURCE:    'channel:addSource',
+    REMOVE_SOURCE: 'channel:removeSource',
+    ADD_DEVICE:    'channel:addDevice',
+    REMOVE_DEVICE: 'channel:removeDevice',
+  },
   AIP: {
     // Core
     GET_STATUS:     'aip:getStatus',
